@@ -30,7 +30,7 @@ pub fn require(s: anytype, world: usize, vision: bool, drafter: bool, drafts: bo
             !(s.first_copy_tokens == 15 and s.verify_rows >= 16) and
             !(s.first_copy_tokens == 31 and s.verify_rows == 32))) return error.BadVerifyRows;
     if (s.verify_rows == 8) return;
-    if (world != 4 or s.pages or s.kv_host != 0 or vision or s.verify_graphs)
+    if ((world != 2 and world != 4) or s.pages or s.kv_host != 0 or vision or s.verify_graphs)
         return error.VerifyRowsScope;
     if (!drafter or !drafts) return error.VerifyRowsNeedsDFlash;
 }

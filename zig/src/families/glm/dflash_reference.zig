@@ -5,7 +5,8 @@ const df = @import("dflash.zig");
 
 pub fn scope(s: anytype, world: usize, has_drafter: bool, bits: u8) !void {
     if (!s.dflash_reference) return;
-    if (world != 4 or !has_drafter or bits != 4 or !s.dflash_attn_tp4 or !s.dflash_mlp_wide or
+    const heads_ok = (world == 4 and s.dflash_attn_tp4) or (world == 2 and !s.dflash_attn_tp4);
+    if (!heads_ok or !has_drafter or bits != 4 or !s.dflash_mlp_wide or
         !s.dflash_confidence_only or s.pages or s.kv_host != 0 or s.verify_graphs or
         !@import("cuda_target_precision.zig").supported(s))
         return error.DrafterReferenceScope;
@@ -27,10 +28,18 @@ fn image(gpa: std.mem.Allocator, io: std.Io, d: *const cuda.Driver, path: []cons
 pub fn configure(gpa: std.mem.Allocator, io: std.Io, e: anytype, dr: *df.Drafter) !void {
     if (!e.settings.dflash_reference) return;
     try scope(e.settings, dr.world, true, 4);
-    if (dr.compat != 7 or dr.attention == null or !dr.split) return error.DrafterReferenceScope;
+    if (dr.compat != 7 or (dr.world == 4 and dr.attention == null) or !dr.split) return error.DrafterReferenceScope;
     var module = try image(gpa, io, e.d, "/opt/glm/dflash_reference.fatbin", "3ffdb516c366c10dced9e36a7abee27bc5484a2a690d992ff9ce36570c7fa9e0");
     errdefer module.unload();
     const kernels = try df.Kernels.load(module);
+    if (dr.world == 2) {
+        try e.stream.synchronize();
+        dr.module.unload();
+        dr.module = module;
+        dr.k = kernels;
+        std.log.info("GLM_DFLASH_REFERENCE rank={d} active=true world=2 attention=replicated confidence_beta=2", .{dr.rank});
+        return;
+    }
     const attention = try @import("dflash_attention.zig").Kernels.load(module);
     var tensor_core = try image(gpa, io, e.d, "/opt/glm/dflash_reference_attention.cubin", "b33690449f594947004f4fd11b2bb08825b56f9a00d779a4d3c8f167cdfc2098");
     errdefer tensor_core.unload();

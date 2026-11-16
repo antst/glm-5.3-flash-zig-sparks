@@ -134,6 +134,7 @@ test {
     _ = @import("dflash_split_graph_test.zig");
     _ = @import("dflash_attention.zig");
     _ = @import("dflash_reference.zig");
+    _ = @import("cuda_native_wire_layout.zig");
     _ = @import("cuda_verify_graph_test.zig");
     _ = @import("cuda_tile.zig");
     _ = @import("heat"); // upstream's heat bands, run where the GLM ranks use them

@@ -30,7 +30,7 @@ test "GLM admission wait: strict cached default and rank agreement" {
         FP.of(4, 0, off, 4096, true, @splat(0), @splat(0), @splat(0)),
         FP.of(4, 1, on, 4096, true, @splat(0), @splat(0), @splat(0)),
     };
-    try t.expectEqual(@as(u32, 61), all[0].layout);
+    try t.expectEqual(@as(u32, 62), all[0].layout);
     try t.expectEqual(FP.Field.admission_us, ranks.mismatch(&all).?.field);
     try t.expectEqualStrings("TF_GLM_ADMISSION_US", @import("cuda_rank_names.zig").explain(FP.Field.admission_us));
     all[0] = FP.of(4, 0, on, 4096, true, @splat(0), @splat(0), @splat(0));
@@ -52,7 +52,7 @@ test "GLM admission wait: unsupported modes refuse before driver access" {
         .{ .admission_us = 4000, .dense_bits = 6 },
         .{ .admission_us = 4000, .head_bits = 8 },
     }) |s| try std.testing.expectError(error.AdmissionWaitScope, run(a, undefined, undefined, undefined, "", undefined, null, 0, 4, .{ .settings = s, .capacity = 4096, .mtp = true, .drafter = true }));
-    try std.testing.expectError(error.AdmissionWaitScope, run(a, undefined, undefined, undefined, "", undefined, null, 0, 2, .{ .settings = .{ .admission_us = 4000 }, .capacity = 4096, .mtp = true, .drafter = true }));
+    try std.testing.expectError(error.AdmissionWaitScope, run(a, undefined, undefined, undefined, "", undefined, null, 0, 3, .{ .settings = .{ .admission_us = 4000 }, .capacity = 4096, .mtp = true, .drafter = true }));
     try std.testing.expectError(error.AdmissionWaitScope, run(a, undefined, undefined, undefined, "", undefined, null, 0, 4, .{ .settings = .{ .admission_us = 4000 }, .capacity = 4096, .mtp = true }));
     const fake = struct { settings: ranks.Settings = .{}, mtp: bool = true, drafter: bool = true, vision: ?u8 = null }{};
     try options.require(fake, 4);

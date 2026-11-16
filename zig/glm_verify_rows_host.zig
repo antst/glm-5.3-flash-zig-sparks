@@ -53,7 +53,7 @@ test "verify rows: strict startup width copy coupling cached values and rank agr
     const FP = glm.ranks.Fingerprint;
     const f0 = FP.of(4, 0, off, 4096, true, @splat(0), @splat(0), @splat(0));
     const f1 = FP.of(4, 1, on, 4096, true, @splat(0), @splat(0), @splat(0));
-    try t.expectEqual(@as(u32, 61), f0.layout);
+    try t.expectEqual(@as(u32, 62), f0.layout);
     try t.expectEqual(FP.Field.verify_rows, glm.ranks.mismatch(&.{ f0, f1 }).?.field);
     const wide_fp = FP.of(4, 1, wide32, 4096, true, @splat(0), @splat(0), @splat(0));
     const old_fp = FP.of(4, 0, on, 4096, true, @splat(0), @splat(0), @splat(0));
@@ -69,7 +69,7 @@ test "verify rows: actual Engine startup refuses scope before allocation or conf
         .{ .verify_rows = width, .verify_graphs = true },
     }) |s| try t.expectError(error.VerifyRowsScope, glm.engine.Engine.init(t.failing_allocator, undefined, undefined, undefined, "", undefined, null, 0, 4, .{ .settings = s, .capacity = 4096, .mtp = true, .drafter = true }));
     try t.expectError(error.VerifyRowsNeedsDFlash, glm.engine.Engine.init(t.failing_allocator, undefined, undefined, undefined, "", undefined, null, 0, 4, .{ .settings = .{ .verify_rows = 16 }, .capacity = 4096, .mtp = true }));
-    try t.expectError(error.VerifyRowsScope, glm.engine.Engine.init(t.failing_allocator, undefined, undefined, undefined, "", undefined, null, 0, 2, .{ .settings = .{ .verify_rows = 16 }, .capacity = 4096, .mtp = true, .drafter = true }));
+    try t.expectError(error.OutOfMemory, glm.engine.Engine.init(t.failing_allocator, undefined, undefined, undefined, "", undefined, null, 0, 2, .{ .settings = .{ .verify_rows = 16 }, .capacity = 4096, .mtp = true, .drafter = true }));
     try t.expectError(error.VerifyRowsScope, glm.engine.Engine.init(t.failing_allocator, undefined, undefined, undefined, "", undefined, null, 0, 4, .{ .settings = .{ .verify_rows = 16 }, .capacity = 4096, .mtp = true, .drafter = true, .vision = .{ .image_tokens = 64, .max_images = 1 } }));
 }
 

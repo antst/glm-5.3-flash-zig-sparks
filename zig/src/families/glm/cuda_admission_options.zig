@@ -12,6 +12,6 @@ pub fn read(value: ?[]const u8, problem: *[]const u8) !u32 {
 pub fn require(o: anytype, world: usize) !void {
     const s = o.settings;
     if (s.admission_us == 0) return;
-    if (s.admission_us != 4000 or world != 4 or !o.mtp or !o.drafter or o.vision != null or
+    if (s.admission_us != 4000 or (world != 2 and world != 4) or !o.mtp or !o.drafter or o.vision != null or
         s.pages or s.kv_host != 0 or !@import("cuda_target_precision.zig").supported(s)) return error.AdmissionWaitScope;
 }

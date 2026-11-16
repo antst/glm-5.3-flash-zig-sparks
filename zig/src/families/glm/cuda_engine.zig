@@ -113,11 +113,11 @@ pub const Engine = struct {
         try @import("cuda_nvfp4_graph.zig").require(o, world);
         try @import("cuda_decode_select.zig").require(o.settings);
         try @import("cuda_ffn_warm.zig").require(o, world);
-        if (o.settings.exl3_fused_decode and (world != 4 or o.settings.verify_graphs))
+        if (o.settings.exl3_fused_decode and ((world != 2 and world != 4) or o.settings.verify_graphs))
             return error.Exl3DecodeScope;
         if (o.settings.prewarm_sequence_slots and (!o.settings.retain_sequence_slots or o.settings.pages or
             o.vision != null or o.settings.kv_host != 0 or o.settings.verify_graphs)) return error.PrewarmSequenceScope;
-        if (o.settings.ffn_graphs and (world != 4 or o.settings.pages or o.settings.kv_host != 0 or
+        if (o.settings.ffn_graphs and ((world != 2 and world != 4) or o.settings.pages or o.settings.kv_host != 0 or
             o.vision != null or !@import("cuda_target_precision.zig").supported(o.settings) or prof_mod.Prof.wanted()))
             return error.FfnGraphScope;
         try @import("cuda_dflash_head_mode.zig").require(o.settings, o.drafter, o.mtp, o.vision != null);

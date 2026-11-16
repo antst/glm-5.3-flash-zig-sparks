@@ -12,7 +12,7 @@ pub fn require(s: anytype, world: usize, vision: bool) !void {
     if (s.q4_python_splits and !s.q4_affine_mse) return error.Q4SplitScope;
     if (s.q4_head_fp8 and !s.q4_affine_mse) return error.HeadFp8Scope;
     if (!s.q4_affine_mse) return;
-    if (world != 4 or s.dense_bits != 4 or s.head_bits != @as(u8, if (s.q4_head_fp8) 8 else 16) or !s.tiled or s.pages or
+    if ((world != 2 and world != 4) or s.dense_bits != 4 or s.head_bits != @as(u8, if (s.q4_head_fp8) 8 else 16) or !s.tiled or s.pages or
         s.kv_host != 0 or s.verify_graphs or vision) return error.AffineTargetScope;
 }
 

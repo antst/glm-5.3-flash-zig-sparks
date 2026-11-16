@@ -2,6 +2,8 @@
 const std = @import("std");
 
 pub fn steps(b: *std.Build, cuda: *std.Build.Module, glm: *std.Build.Module, mods: anytype, step: *std.Build.Step) void {
+    b.step("test-glm-tp2-direct-host", "Direct world2 wire layout and startup scope without devices")
+        .dependOn(&b.addRunArtifact(b.addTest(.{ .root_module = glm, .filters = &.{"TP2 direct:"} })).step);
     b.step("test-glm-warm-turns-host", "Strict background warm-turn opt-in and rank agreement")
         .dependOn(&b.addRunArtifact(b.addTest(.{ .root_module = glm, .filters = &.{"GLM warm turns:"} })).step);
     b.step("test-glm-nvfp4-fact-host", "NVFP4 decode opt-in and actual grouped launch records")

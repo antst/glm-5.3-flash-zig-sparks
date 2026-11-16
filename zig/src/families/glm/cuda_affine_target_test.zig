@@ -31,7 +31,8 @@ test "affine target: strict OFF, scope and rank fingerprint" {
     on.dense_bits = 4;
     try tile.require(on, 4, false);
     try tile.require(off, 1, true);
-    try t.expectError(error.AffineTargetScope, tile.require(on, 2, false));
+    try tile.require(on, 2, false);
+    try t.expectError(error.AffineTargetScope, tile.require(on, 3, false));
     try t.expectError(error.AffineTargetScope, tile.require(on, 4, true));
     inline for (.{ "pages", "verify_graphs" }) |field| {
         var bad = on;

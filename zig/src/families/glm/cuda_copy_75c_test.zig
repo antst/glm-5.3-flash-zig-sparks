@@ -53,7 +53,7 @@ test "GLM 75c copy: strict cached default-off and all-rank fingerprint agreement
     try t.expectEqual(FP.Field.copy_policy_75c, ranks.mismatch(&all).?.field);
     all[0] = FP.of(4, 0, on, 4096, true, @splat(0), @splat(0), @splat(0));
     try t.expect(ranks.mismatch(&all) == null);
-    try t.expectEqual(@as(u32, 61), all[0].layout);
+    try t.expectEqual(@as(u32, 62), all[0].layout);
 }
 
 test "GLM 75c copy: actual factory owns separate requests and OFF retains null/min_match4" {

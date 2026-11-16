@@ -12,7 +12,7 @@ pub const Shape = struct {
     codes: usize,
     scales: usize,
     pub fn make(n: usize, k: usize) !Shape {
-        if (n == 0 or k == 0 or k % 128 != 0 or n > 65536 or k > 65536) return error.HeadFp8Shape;
+        if (n == 0 or k == 0 or k % 128 != 0 or n > 131072 or k > 65536) return error.HeadFp8Shape;
         const npad = cuda.fp8.padded(n);
         return .{ .n = n, .k = k, .npad = npad, .codes = npad * k, .scales = npad * (k / 64) * 4 };
     }
@@ -49,7 +49,7 @@ pub fn load(gpa: std.mem.Allocator, io: std.Io, d: *const cuda.Driver) !cuda.Mod
 }
 
 pub fn pack(gpa: std.mem.Allocator, io: std.Io, w: *weights.Weights, lane: *const cuda.qmmf.Lane, stream: cuda.Stream, d: *const cuda.Driver) !void {
-    if (w.head != .bf16 or w.share.world != 4) return error.HeadFp8Scope;
+    if (w.head != .bf16 or (w.share.world != 2 and w.share.world != 4)) return error.HeadFp8Scope;
     const shape = try Shape.make(w.share.vocab.len(), w.config.hidden);
     const old = w.head.bf16;
     const at = tile.bufferAt(w, old) orelse return error.HeadFp8SharedWeights;

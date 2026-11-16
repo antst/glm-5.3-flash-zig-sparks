@@ -15,7 +15,7 @@ pub const Binding = struct {
 };
 
 pub fn scope(world: usize, split: bool, attention: bool, graphs: bool) !void {
-    if (world != 4 or !split or !attention or !graphs) return error.DFlashNativeGraphScope;
+    if (!((world == 4 and attention) or (world == 2 and !attention)) or !split or !graphs) return error.DFlashNativeGraphScope;
 }
 
 pub fn payload(streams: usize) !usize {

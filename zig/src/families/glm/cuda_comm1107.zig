@@ -1,5 +1,5 @@
 //! Private comparison adapter: pinned 1107 native Ring, lent through Group.Multi.
-//! One TP4 context, one ordered main stream, ordinary rank-major byte gathers.
+//! One TP2 direct or TP4 switched context, one ordered main stream, rank-major byte gathers.
 //! Source-only handoff: no GLM build, hardware, fault or healthy-close certificate.
 const std = @import("std");
 const builtin = @import("builtin");
@@ -8,6 +8,7 @@ const tp = @import("tp");
 const Group = cuda.tp_group.Group;
 const H = ?*anyopaque;
 const cap = 1024 * 1024;
+const shape = @import("cuda_native_wire_layout.zig");
 const bridge_sha = "1bf5042123f471a1c2c90ea67d262c2986e00a7eb34c98724a14f22945eba3b0";
 const kernels_sha = "23affd2303d7da3077ef6afc97f09e1c607f1325aacbb9a24842388389c3bd80";
 
@@ -119,10 +120,10 @@ pub fn open(gpa: std.mem.Allocator, io: std.Io, d: *const cuda.Driver, g: *Group
     }
     const parsed: ?Settings = if (on) Settings.read() catch null else null;
     var mine = std.mem.zeroes(Choice);
-    mine.version = 1;
+    mine.version = 2;
     mine.enabled = @intFromBool(on);
     mine.world = @intCast(g.world);
-    mine.valid = @intFromBool(std.mem.eql(u8, requested, "0") or (on and parsed != null and g.world == 4 and !stock_multi and builtin.os.tag == .linux));
+    mine.valid = @intFromBool(std.mem.eql(u8, requested, "0") or (on and parsed != null and shape.supported(g.world) and !stock_multi and builtin.os.tag == .linux));
     if (parsed) |s| {
         mine.payload = cap;
         mine.slots = 4;
@@ -131,7 +132,7 @@ pub fn open(gpa: std.mem.Allocator, io: std.Io, d: *const cuda.Driver, g: *Group
         mine.stage = 48;
         mine.collect = 48;
         mine.grain = 2;
-        mine.pdl = 1;
+        mine.pdl = if (shape.supported(g.world)) (shape.Layout{ .world = g.world }).createFlags() else 0;
         mine.control_port = s.port;
         mine.timeout_s = s.timeout_s;
         std.crypto.hash.sha2.Sha256.hash(s.master, &mine.master_sha, .{});
@@ -154,7 +155,7 @@ pub fn open(gpa: std.mem.Allocator, io: std.Io, d: *const cuda.Driver, g: *Group
         .connect_timeout_ns = @as(u64, s.timeout_s) * std.time.ns_per_s,
     });
     defer b.close(); // startup control only; this does not supply process liveness later.
-    const local: ?*Wire = create(gpa, io, d, g.rank, main, s) catch |err| blk: {
+    const local: ?*Wire = create(gpa, io, d, g.rank, g.world, main, s) catch |err| blk: {
         std.log.err("rank {d}: native1107 prepare: {s}", .{ g.rank, @errorName(err) });
         break :blk null;
     };
@@ -171,13 +172,13 @@ pub fn open(gpa: std.mem.Allocator, io: std.Io, d: *const cuda.Driver, g: *Group
     try probe(w, g, &b);
     g.multi = .{ .ctx = w, .fits = fits, .gather = gather, .check = check, .abort = abort, .deinit = deinit };
     accepted = true;
-    std.log.info("rank {d}: GLM_NATIVE1107_ACTIVE bridge={s} kernels={s} cpu={d} world=4 cap=1048576 slots=4 stage=48 collect=48 grain=2 PDL=1 GID=3 TC=104 rails=f0,f0-twin SC=OFF idle_gate=unwired", .{ g.rank, bridge_sha, kernels_sha, s.cpu });
+    std.log.info("rank {d}: GLM_NATIVE1107_ACTIVE bridge={s} kernels={s} cpu={d} world={d} cap=1048576 slots=4 stage=48 collect=48 grain=2 PDL=1 GID=3 TC=104 rails={s} SC=OFF idle_gate=unwired", .{ g.rank, bridge_sha, kernels_sha, s.cpu, g.world, w.layout.rails() });
     return true;
 }
 
 /// Only this exact factory may lend the native graph path; no stock or fallback wire is admitted.
 pub fn graphReady(g: *const Group, s: cuda.Stream, bytes: usize) bool {
-    if (g.world != 4 or g.fast != null) return false;
+    if (!shape.supported(g.world) or g.fast != null) return false;
     const m = g.multi orelse return false;
     if (m.gather != gather or m.check != check) return false;
     const w = of(m.ctx);
@@ -190,6 +191,7 @@ const Wire = struct {
     api: Api,
     h: H,
     rank: usize,
+    layout: shape.Layout,
     main: cuda.Stream,
     host_calls: std.atomic.Value(u64) = .init(0),
     host_bytes: std.atomic.Value(u64) = .init(0),
@@ -197,7 +199,8 @@ const Wire = struct {
     aborted: std.atomic.Value(bool) = .init(false),
 };
 
-fn create(gpa: std.mem.Allocator, io: std.Io, d: *const cuda.Driver, rank: usize, main: cuda.Stream, s: Settings) !*Wire {
+fn create(gpa: std.mem.Allocator, io: std.Io, d: *const cuda.Driver, rank: usize, world: usize, main: cuda.Stream, s: Settings) !*Wire {
+    const layout = try shape.Layout.init(world);
     // Load-time file pins require immutable parent-owned mounts to avoid path replacement races.
     const binary = try std.Io.Dir.cwd().readFileAlloc(io, s.library, gpa, .limited(64 << 20));
     defer gpa.free(binary);
@@ -212,7 +215,7 @@ fn create(gpa: std.mem.Allocator, io: std.Io, d: *const cuda.Driver, rank: usize
     try d.check(d.api.cuCtxGetCurrent(&before), "native1107 context before");
     if (before == null) return error.Native1107Context;
     // The pinned factory opens a driver table and module in the caller's context; it must not create a context.
-    const h = api.tf_create(@intCast(rank), 4, image.ptr, image.len, cap, 1, 2) orelse return error.Native1107Create;
+    const h = api.tf_create(@intCast(rank), @intCast(world), image.ptr, image.len, cap, layout.createFlags(), 2) orelse return error.Native1107Create;
     var after: cuda.abi.Context = null;
     const got_context = d.api.cuCtxGetCurrent(&after) == cuda.abi.success;
     if (!got_context or after != before) {
@@ -224,20 +227,21 @@ fn create(gpa: std.mem.Allocator, io: std.Io, d: *const cuda.Driver, rank: usize
     errdefer api.tf_close(h);
     if (api.tf_tune(h, 48, 48, 2, 1, 1) != 0) return error.Native1107Tune;
     const w = try gpa.create(Wire);
-    w.* = .{ .gpa = gpa, .d = d, .api = api, .h = h, .rank = rank, .main = main };
+    w.* = .{ .gpa = gpa, .d = d, .api = api, .h = h, .rank = rank, .layout = layout, .main = main };
     return w;
 }
 
 fn connect(w: *Wire, b: *tp.Bootstrap) !bool {
     var mine: [4 * @sizeOf(Info)]u8 = undefined;
-    for (0..4) |p| w.api.tf_info(w.h, @intCast(p), mine[p * @sizeOf(Info) ..].ptr);
+    for (0..w.layout.world) |p| w.api.tf_info(w.h, @intCast(p), mine[p * @sizeOf(Info) ..].ptr);
     var storage: [4 * @sizeOf(@TypeOf(mine))]u8 = undefined;
     var blobs: [4][]const u8 = undefined;
-    const all = try b.allGather(&mine, &storage, &blobs);
+    const mine_bytes = mine[0 .. w.layout.world * @sizeOf(Info)];
+    const all = try b.allGather(mine_bytes, &storage, &blobs);
     var remote: [4]Info = undefined;
     const own = std.mem.bytesToValue(Info, mine[0..@sizeOf(Info)]);
     for (all, 0..) |blob, p| {
-        if (blob.len != mine.len) return false;
+        if (blob.len != mine_bytes.len) return false;
         remote[p] = std.mem.bytesToValue(Info, blob[w.rank * @sizeOf(Info) ..][0..@sizeOf(Info)]);
         if (remote[p].devices != 2) return false;
         for (0..2) |h| {
@@ -247,7 +251,7 @@ fn connect(w: *Wire, b: *tp.Bootstrap) !bool {
                 !std.mem.eql(u8, own.gid[h][12..15], gid[12..15])) return false;
         }
     }
-    return w.api.tf_connect(w.h, std.mem.sliceAsBytes(&remote).ptr) == 0;
+    return w.api.tf_connect(w.h, std.mem.sliceAsBytes(remote[0..w.layout.world]).ptr) == 0;
 }
 
 // In-place, main-stream 4 KiB native gather versus DIRECT NCCL, with host readiness
@@ -266,14 +270,14 @@ fn probe(w: *Wire, g: *const Group, b: *tp.Bootstrap) !void {
     for (&row, 0..) |*v, i| v.* = @truncate(i * 17 + w.rank * 53);
     const uploaded = blk: {
         buf.?.uploadAsync(w.rank * n, &row, w.main.handle) catch break :blk false;
-        buf.?.uploadAsync((4 + w.rank) * n, &row, w.main.handle) catch break :blk false;
+        buf.?.uploadAsync((w.layout.world + w.rank) * n, &row, w.main.handle) catch break :blk false;
         w.main.synchronize() catch break :blk false;
         break :blk true;
     };
     if (!try every(b, uploaded)) return error.Native1107ProbeUpload;
     const enqueued = w.api.tf_enqueue(w.h, w.main.handle, buf.?.ptr + w.rank * n, buf.?.ptr, n) == 0;
     if (!try every(b, enqueued)) return error.Native1107ProbeEnqueue;
-    const reference_queued = g.lib.api.ncclAllGather(buf.?.ptr + (4 + w.rank) * n, buf.?.ptr + 4 * n, n, .u8, g.comm, w.main.handle) == 0;
+    const reference_queued = g.lib.api.ncclAllGather(buf.?.ptr + (w.layout.world + w.rank) * n, buf.?.ptr + w.layout.world * n, n, .u8, g.comm, w.main.handle) == 0;
     if (!try every(b, reference_queued)) return error.Native1107ProbeNccl;
     const waited = if (w.main.synchronize()) |_| true else |_| blk: {
         w.api.tf_abort(w.h);
@@ -285,7 +289,7 @@ fn probe(w: *Wire, g: *const Group, b: *tp.Bootstrap) !void {
     var got: [8 * n]u8 = undefined;
     const downloaded = if (buf.?.download(0, &got)) |_| true else |_| false;
     if (!try every(b, downloaded)) return error.Native1107ProbeDownload;
-    if (!try every(b, std.mem.eql(u8, got[0 .. 4 * n], got[4 * n ..]))) return error.Native1107ProbeMismatch;
+    if (!try every(b, std.mem.eql(u8, got[0 .. w.layout.world * n], got[w.layout.world * n .. 2 * w.layout.world * n]))) return error.Native1107ProbeMismatch;
     done = true;
 }
 
@@ -341,9 +345,9 @@ fn dispose(w: *Wire) void {
     var ranges: [7]u64 = undefined;
     w.api.tf_host_ranges(w.h, &ranges);
     const meta: [*]const u64 = @ptrFromInt(ranges[4]);
-    const published = @atomicLoad(u64, &meta[16], .acquire); // slots4 * world4
+    const published = @atomicLoad(u64, &meta[w.layout.doorbell()], .acquire);
     var sent_max: u64 = 0;
-    for (21..25) |i| sent_max = @max(sent_max, @atomicLoad(u64, &meta[i], .acquire));
+    for (w.layout.sent()..w.layout.sent() + shape.Layout.slots) |i| sent_max = @max(sent_max, @atomicLoad(u64, &meta[i], .acquire));
     std.log.info("rank {d}: GLM_NATIVE1107_CLOSE host_enqueues={d} host_bytes={d} rejected_count_checks={d} GPU_published_including_probe={d} local_TX_sent_max_before_close={d} aborted={any}", .{ w.rank, w.host_calls.load(.monotonic), w.host_bytes.load(.monotonic), w.rejected_counts.load(.monotonic), published, sent_max, w.aborted.load(.acquire) });
     // Native close has a void ABI: this line is an invocation, not a close-success
     // certificate or proof that the last local TX CQE was reaped before destroy.
