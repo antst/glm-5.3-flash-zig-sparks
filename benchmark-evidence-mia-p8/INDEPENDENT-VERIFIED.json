@@ -1,0 +1,30 @@
+{
+  "passed": true,
+  "profiles": [
+    {
+      "id": "mia-q8-p8",
+      "requests": 41,
+      "levels": {
+        "4": {
+          "legacy": 136.0721539304904,
+          "common": 129.6947928962317
+        },
+        "6": {
+          "legacy": 170.7914152262038,
+          "common": 162.55864056899807
+        },
+        "8": {
+          "legacy": 186.88541526816735,
+          "common": 175.6269980407841
+        }
+      }
+    }
+  ],
+  "requests": 41,
+  "original_body_and_SSE_hashes_verified": true,
+  "source_client_hashes_verified": true,
+  "relative_path_translation_only": true,
+  "both_metrics_reconstructed_from_raw_SSE": true,
+  "no_endpoint_build_or_model_operations": true,
+  "original_Mia_engine_unmodified": true
+}

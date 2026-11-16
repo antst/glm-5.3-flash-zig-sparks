@@ -1,0 +1,113 @@
+{
+  "passed": true,
+  "source_closed_sha256": "1b5f9c6d353cebafc3eea46e126e41d09feb9a3f2d58a0a5d49967362f21ca2e",
+  "active_request_limit": 8,
+  "all48_native_text_usage_raw_valid": true,
+  "common_window_tok_s": {
+    "1": 80.40386304331614,
+    "4": 128.69912934170088,
+    "8": 166.241990957822
+  },
+  "cases": [
+    {
+      "name": "code-lru",
+      "streams": 1,
+      "rep_rates": [
+        108.41405501892376,
+        107.6412298779149
+      ],
+      "median": 108.02764244841933
+    },
+    {
+      "name": "prose-wetlands",
+      "streams": 1,
+      "rep_rates": [
+        65.04532178840132,
+        64.70414096600479
+      ],
+      "median": 64.87473137720306
+    },
+    {
+      "name": "code-csv",
+      "streams": 1,
+      "rep_rates": [
+        93.70324232199167,
+        93.86872768779106
+      ],
+      "median": 93.78598500489136
+    },
+    {
+      "name": "prose-grid",
+      "streams": 1,
+      "rep_rates": [
+        71.3236685802708,
+        70.94478429890354
+      ],
+      "median": 71.13422643958717
+    },
+    {
+      "name": "code-toposort",
+      "streams": 1,
+      "rep_rates": [
+        89.22962658837615,
+        89.26097364094285
+      ],
+      "median": 89.2453001146595
+    },
+    {
+      "name": "prose-vaccines",
+      "streams": 1,
+      "rep_rates": [
+        63.821049268710944,
+        63.543096252911134
+      ],
+      "median": 63.68207276081104
+    },
+    {
+      "name": "code-sql",
+      "streams": 1,
+      "rep_rates": [
+        102.5118237947733,
+        102.41132722402767
+      ],
+      "median": 102.46157550940049
+    },
+    {
+      "name": "prose-heat",
+      "streams": 1,
+      "rep_rates": [
+        64.03247700279807,
+        64.2758121716432
+      ],
+      "median": 64.15414458722063
+    },
+    {
+      "name": "cohort-a",
+      "streams": 4,
+      "rep_rates": [
+        130.7947745792449,
+        131.15053304068314
+      ],
+      "median": 130.97265380996402
+    },
+    {
+      "name": "cohort-b",
+      "streams": 4,
+      "rep_rates": [
+        126.65785531517504,
+        126.27228561859214
+      ],
+      "median": 126.46507046688359
+    },
+    {
+      "name": "all-eight",
+      "streams": 8,
+      "rep_rates": [
+        165.9530271214445,
+        166.5309547941996
+      ],
+      "median": 166.24199095782205
+    }
+  ],
+  "no_full_quality_rerun": true
+}

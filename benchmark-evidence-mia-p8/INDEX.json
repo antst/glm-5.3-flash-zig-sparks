@@ -1,0 +1,53 @@
+{
+  "profiles": [
+    {
+      "id": "mia-q8-p8",
+      "label": "Unmodified Mia Zig Q8/BF16, explicit parallel8 and matched context/cache",
+      "native_sha256": "0be8ca673d65ccf60d0472e3edc5f80ba99abc4a9e49c555bf2c9611d6d58e00",
+      "source_commit": "80be4d6882837d8e0840827ae2aab6124fd48da3",
+      "active_lanes": 8,
+      "levels": {
+        "4": {
+          "legacy_sum_mean": 136.0721539304904,
+          "same_requests_common_window_mean": 129.6947928962317
+        },
+        "6": {
+          "legacy_sum_mean": 170.7914152262038,
+          "same_requests_common_window_mean": 162.55864056899807
+        },
+        "8": {
+          "legacy_sum_mean": 186.88541526816735,
+          "same_requests_common_window_mean": 175.6269980407841
+        }
+      },
+      "requests": 41,
+      "C1_tok_s": {
+        "prose": 63.53746190767393,
+        "code": 85.16114955823639
+      }
+    }
+  ],
+  "original_Mia_engine_unmodified": true,
+  "request_count": 41,
+  "context": 196608,
+  "prompt_RAM_cache_gib": 0,
+  "original_default_concurrency": false,
+  "reserve_GiB": 16,
+  "CUDA_memory_limit_GiB": 100,
+  "switch_traffic_class": 104,
+  "NVMe": false,
+  "full_quality959_rerun": false,
+  "small_quality": {
+    "code": 8,
+    "structured": 5
+  },
+  "small_generation_requests": 48,
+  "all24_small_plain_draft_native_outputs_exact": true,
+  "original_clients_unchanged": true,
+  "only_EVIDENCE_raw_path_rebased": true,
+  "original_EVIDENCE_files_preserved": true,
+  "closed_source_receipt_sha256": "1b5f9c6d353cebafc3eea46e126e41d09feb9a3f2d58a0a5d49967362f21ca2e",
+  "original_services_restored": true,
+  "all_private_ranks_exit0": true,
+  "final_driver_deltas_empty": true
+}

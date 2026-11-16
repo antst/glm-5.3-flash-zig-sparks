@@ -1,0 +1,10 @@
+data: {"id": "chatcmpl-60fc26f86d3fe228173f1d48af4835f2", "object": "chat.completion.chunk", "created": 1794866640, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"role": "assistant"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-60fc26f86d3fe228173f1d48af4835f2", "object": "chat.completion.chunk", "created": 1794866640, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": "ready"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-60fc26f86d3fe228173f1d48af4835f2", "object": "chat.completion.chunk", "created": 1794866640, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {}, "finish_reason": "stop"}], "exact_mode": "exact", "tensorfold": {"enable_thinking": false, "reasoning_effort": "none", "engine": "lanes", "tokens_per_second": 31.193082372508414, "seconds": 0.03205839, "prefill_seconds": 0.068606483, "prefill_widths": [], "prefill_raised": [], "time_to_first_token": 0.069046306, "sampling": "greedy", "drafts": true, "token_sha": "46670d94e046", "token_sha256": "46670d94e0461446692c71a1c46c78742daf344a478d23a0a0cb7d7a6eabc2ea", "min_rows": 2}, "speculative": {"rounds": 1, "drafted": 1, "accepted": 1, "acceptance_rate": 1.0, "tokens_per_round": 2.0}}
+
+data: {"id": "chatcmpl-60fc26f86d3fe228173f1d48af4835f2", "object": "chat.completion.chunk", "created": 1794866640, "model": "GLM-5.3-Flash", "choices": [], "usage": {"prompt_tokens": 11, "completion_tokens": 2, "total_tokens": 13, "prompt_tokens_details": {"cached_tokens": 0}, "completion_tokens_details": {"reasoning_tokens": 0}}}
+
+data: [DONE]
+
