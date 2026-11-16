@@ -63,25 +63,29 @@ clients and their licenses are included; the benchmark requests and natural stop
 
 <!-- BEGIN CURRENT MEASUREMENTS -->
 
-### TP4 five-profile results
+### TP4 measured configurations
 
-Primary speed results use the unchanged benchmark from Mia’s Zig recipe: acc.py, acc8.py and bench2.py, on both runtimes. Every row uses EXL3 experts and FP8 KV cache. Projection/head precision is listed separately. NVMe is off for speed. Our RAM prompt cache is off; Mia default retains8GiB, with zero timed hits.
+Every populated speed cell below comes from actual runs of Mia’s unchanged `acc.py`, `acc8.py` and `bench2.py`, with the saved request bodies and SSE arrival clocks. **There are no extrapolated rates.** C1 is the original measured stream rate; C4/C8 use aggregate post-first tokens over the entire wave, not a sum of separately timed stream rates.
 
-| Projections / output head | KV cache | Full /959 | Text /795 | Code /164 | Small code / structured | C1 prose | C1 code | C4 prose | C8 prose |
-|---|---|---:|---:|---:|---:|---:|---:|---:|---:|
-| Ours BF16/BF16 | FP8 | 881 | 725 | 156 | 8/8 / 5/8 | 51.25 | 73.53 | 128.34 | 181.47 |
-| Ours Q4/BF16 | FP8 | 878 | 724 | 154 | 8/8 / 7/8 | 72.60 | 87.12 | 153.97 | 201.50 |
-| Ours Q4/FP8 | FP8 | 882 | 729 | 153 | 8/8 / 7/8 | 75.85 | 91.50 | 154.52 | 214.27 |
-| Ours Q8/BF16 | FP8 | 878 | 724 | 154 | 8/8 / 5/8 | 68.30 | 88.37 | 149.32 | 200.20 |
-| Mia Zig actual default Q8/BF16 | FP8 | 878 | 724 | 154 | 8/8 / 5/8 | 63.29 | 84.67 | 137.03 | 267.30 |
+**Active lanes and client requests are different.** Our tested configuration has eight active lanes; Mia’s untouched default has four. “8 active” therefore has no measured Mia entry and is left blank. A matched four-lane configuration test of ours is pending; do not infer its result from the eight-lane run. Precision is explicit, so Q8/BF16 is the same-precision reference pair.
 
-Rates are tok/s. Original C4/C8 metrics sum separately timed stream rates. Mia default has four active lanes; our recipes have eight. Queued requests can occupy different time intervals, so retain the original metric and show shared-window throughput for the same requests separately. For default Mia, the original C8 sum267.30 corresponds to129.83 tok/s over the full wave. See measurement-notes.md.
+All rows use EXL3 experts and FP8 KV. NVMe is off. Our RAM prompt cache is off; Mia default retains8GiB, with zero timed hits. This is a table of the configurations actually tested, not an isolated-kernel comparison.
+
+| Projections / output head | Active-lane limit | Full /959 | Text /795 | Code /164 | Small code / structured | 1 active: prose | 1 active: code | 4 active: prose | 8 active: prose |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| Ours BF16/BF16 | 8 | 881 | 725 | 156 | 8/8 / 5/8 | 51.25 | 73.53 | 124.15 | 170.43 |
+| Ours Q4/BF16 | 8 | 878 | 724 | 154 | 8/8 / 7/8 | 72.60 | 87.12 | 149.04 | 190.15 |
+| Ours Q4/FP8 | 8 | 882 | 729 | 153 | 8/8 / 7/8 | 75.85 | 91.50 | 148.15 | 200.53 |
+| Ours Q8/BF16 | 8 | 878 | 724 | 154 | 8/8 / 5/8 | 68.30 | 88.37 | 145.11 | 186.18 |
+| Mia Zig default Q8/BF16 | 4 | 878 | 724 | 154 | 8/8 / 5/8 | 63.29 | 84.67 | 131.66 | — |
+
+Rates are tok/s; **— means not measured at that active concurrency**. The original client’s request-rate sum is retained in the raw evidence and described in measurement-notes.md; it is excluded from the headline comparison because queued requests can occupy different time intervals.
 
 Coherent BF16 original-client speed and small panel are closed on the release executable. Its full881/959 quality panel is closed. Q8 full878/959 and all959 native hashes match actual-default Mia. Recovered BF16 similarly matches all959 native hashes of source-unmodified controlled Mia BF16. EXL3 Q4 and Q4/FP8 meet the8/8 code and7/8 structured floor. Mia Q8 and ours both score8/8 code and5/8 structured; all48 small-panel native outputs match.
 
 ## Secondary balanced benchmark
 
-400 completion tokens, two repetitions; eight solo-task geometric mean, two C4 cohorts and one C8 cohort using common-window throughput. These values do not replace Mia’s original benchmark.
+400 completion tokens, two repetitions; eight solo-task geometric mean, two four-request cohorts and one eight-request cohort using common-window throughput. Eight-active results require eight serving lanes. Mia default has four, so its eight-active entry is blank. Its separate queued eight-client result is retained in the evidence. These values do not replace Mia’s original benchmark.
 
 | Profile | C1 tok/s | C4 tok/s | C8 tok/s |
 |---|---:|---:|---:|
@@ -89,7 +93,7 @@ Coherent BF16 original-client speed and small panel are closed on the release ex
 | Ours Q4/BF16 | 88.28 | 134.26 | 169.21 |
 | Ours Q4/FP8 | 91.03 | 138.69 | 175.36 |
 | Ours Q8/BF16 | 84.92 | 135.92 | 176.67 |
-| Mia Zig actual default Q8/BF16 | 80.87 | 129.12 | 132.44 |
+| Mia Zig actual default Q8/BF16 | 80.87 | 129.12 | — |
 
 Previous matched BF16 balanced controls:66.75–66.91 /116.26–116.34 /155.39–155.42. That small secondary speed deficit remains open. Signed byte-verified source snapshot commits and their limits are recorded in SOURCE.json. Retained NVFP4 and controlled BF16 records remain in supplementary data; further NVFP4 optimization is stopped per the user’s direction.
 
@@ -97,15 +101,15 @@ Precision labels are independent: EXL34.0bpw describes expert weights, the first
 
 ## Same original benchmark requests: whole-wave throughput
 
-These are the same acc.py/acc8.py requests as the reported stream-rate sums above, with summed post-first tokens divided by the interval from the first content in the wave to the last. Natural stopping and prompt bodies are unchanged. Mia default has four lanes; ours has eight. This whole-recipe comparison is not an isolated transport or kernel result.
+These rates are reconstructed from the actual acc.py/acc8.py requests and recorded line-arrival clocks: summed post-first tokens divided by the interval from the first content in the wave to the last. Natural stopping and prompt bodies are unchanged. The columns below require capacity for the stated active concurrency; Mia default has four lanes, so its six-active and eight-active entries are blank.
 
-| Profile | C4 tok/s | C6 tok/s | C8 tok/s |
+| Profile | 4 active tok/s | 6 active tok/s | 8 active tok/s |
 |---|---:|---:|---:|
 | Ours BF16/BF16 | 124.15 | 147.69 | 170.43 |
 | Ours Q4/BF16 | 149.04 | 175.30 | 190.15 |
 | Ours Q4/FP8 | 148.15 | 175.80 | 200.53 |
 | Ours Q8/BF16 | 145.11 | 163.80 | 186.18 |
-| Mia Zig actual default Q8/BF16 | 131.66 | 117.64 | 129.83 |
+| Mia Zig actual default Q8/BF16 | 131.66 | — | — |
 
 ## Quality by category
 

@@ -1,6 +1,6 @@
 # Measurement definitions for the release README
 
-This is an unpublished documentation section. It supplements the closed receipts; it does not select a runtime or qualify a pending configuration.
+These definitions accompany the published TP4 results. Every reported rate is derived from actual saved test requests and arrival clocks. No unmeasured concurrency or engine result is extrapolated.
 
 ## Balanced serving benchmark
 
@@ -28,7 +28,7 @@ C1, C4 and C8 name the number of client requests in a wave. They do not state ho
 
 The controlled BF16 comparison configured both engines for eight serving lanes and disabled the prompt RAM cache. The untouched default Mia Q8 recipe uses four serving lanes, paged KV and its default 8 GiB prompt RAM cache. The proposed optimized recipe uses eight serving lanes. All comparisons disable the NVMe tier.
 
-Mia's default Q8 balanced run measured 80.87 / 129.12 / 132.44 tok/s at C1 / C4 / C8. Every timed request reported zero cached prompt tokens. The four-lane versus eight-lane distinction must remain visible in the comparison table: the default-recipe comparison is not an isolated kernel comparison.
+Mia's default Q8 balanced run measured 80.87 / 129.12 tok/s with one/four client requests. An eight-client run with its four-lane limit measured132.44 tok/s, including the queued workload. This is not an eight-active-lane measurement; the README leaves that cell blank. Every timed request reported zero cached prompt tokens. Comparing the same four-lane capacity with our recipe requires a separately measured four-lane configuration; no value is inferred from our eight-lane run.
 
 The closed controlled Mia BF16 reference measured 63.72 / 105.39 / 137.83 tok/s. The recovered optimized BF16 candidate measured 66.54 / 115.92 / 154.89 tok/s. These are separate sequential measurement windows with two repetitions per case. They are descriptive measurements, not a statistical guarantee.
 
@@ -58,7 +58,7 @@ The full quality panel contains 795 diagnostic text tasks and 164 legacy chat Hu
 
 Cross-precision token equality is not assumed. Plain-versus-drafted and concurrent-versus-solo equality are checked within each supported profile. The recovered BF16 candidate additionally matches all 959 native output hashes of the controlled Mia BF16 reference.
 
-The new Q8 model and full-quality run must close and be independently audited before its quality or speed is listed as qualified. Source trees are not commit SHAs; pending source signatures must not be represented as signed release commits.
+The published coherent Q8 run is closed at878/959 and matches all959 native hashes of the actual-default Mia Q8 reference. SOURCE.json records the signed byte-verified source snapshots. Runtime and source identities remain unchanged by the documentation-only throughput-display correction.
 
 ## Long contexts and the tiered cache
 
@@ -68,10 +68,16 @@ The tiered-cache matrix compares a cache-off reference, a fresh disk seed, a fre
 
 The intended storage behavior restores a prefix snapshot into the engine's live state; attention and decode then use that live state. Disk I/O is measured with snapshot and block-read counters. A hot RAM hit must not be described as an NVMe restore, and a declared RAM/index/staging budget must not be presented as measured memory use.
 
-The new coherent runtime's 38-response cache matrix and model-level corruption/fault checks remain required before that runtime's tiered-cache qualification is published. Do not reuse an older executable's namespace or advertise an older constant-answer fixture as this qualification.
+The published coherent runtime's 38-response cache matrix and model-level corruption/fault checks are closed and recorded in the release evidence. Fresh namespaces bind this executable/checkpoint/layout; an older executable's cache namespace is not reused.
 
 ## Recorded thermal samples
 
 The final coherent BF16, Q4/BF16, Q4/FP8 and Q8/BF16 lifetimes were sampled every five seconds on all four ranks. Peak reported GPU temperatures were77,77,79 and83°C respectively. All hardware/software thermal-slowdown flags observed in those samples were inactive, and the reported thermal counter deltas were zero.
 
 These are whole-container lifetimes, including model loading, quality cases and inter-request idle time. They are not an exact join to individual timed benchmark jobs. Memory clocks/DRAM temperatures were unavailable, and sampled flags cannot certify absence of all transient limits. Rates were not normalized by whole-lifetime clock medians, and thermal data do not establish the cause of the small BF16 secondary-benchmark deficit.
+
+## Headline table display policy
+
+The headline columns require capacity for their stated active concurrency. Mia default is limited to four active requests; its eight-active result has not been measured and is blank. Its real eight-client/four-active queued run is retained above as a separate measurement, not substituted into that blank cell. The previously displayed267.30 was a sum of per-request rates across that queued run, not whole-wave throughput. It must not be used to rank eight-active configurations.
+
+No claim that our four-lane configuration is faster than Mia's four-lane configuration follows from our eight-lane result. That matched capacity test is pending. A differing precision or active-lane limit must remain explicit.
