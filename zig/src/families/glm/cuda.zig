@@ -59,6 +59,7 @@ pub const disk_ranks = @import("cuda_disk_ranks.zig");
 pub const nvme_image = @import("cuda_nvme_image.zig");
 pub const nvme_state = @import("cuda_nvme_state.zig");
 pub const nvme_options = @import("cuda_nvme_options.zig");
+pub const nvme_progress = @import("cuda_nvme_progress.zig");
 pub const nvme_wire = @import("cuda_nvme_wire.zig");
 
 test {

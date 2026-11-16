@@ -104,6 +104,15 @@ pub fn steps(b: *std.Build, cuda: *std.Build.Module, glm: *std.Build.Module, mod
     b.step("test-glm-snapshots-host", "Prompt-sized GLM state copies, page budgets and rank ordering without devices").dependOn(&snapshots_run.step);
     const nvme = b.createModule(.{ .root_source_file = b.path("zig/glm_nvme_host.zig"), .target = host, .optimize = .debug, .link_libc = true, .imports = &.{ .{ .name = "glm", .module = glm }, .{ .name = "cuda", .module = cuda }, .{ .name = "core", .module = mods.core } } });
     b.step("test-glm-nvme-host", "Actual GLM image and bounded native NVMe store, without devices").dependOn(&b.addRunArtifact(b.addTest(.{ .root_module = nvme, .filters = &.{"GLM NVMe:"} })).step);
+    const progress = b.createModule(.{
+        .root_source_file = b.path("zig/glm_nvme_progress_host.zig"),
+        .target = host,
+        .optimize = .debug,
+        .link_libc = true,
+        .imports = &.{.{ .name = "glm", .module = glm }},
+    });
+    b.step("test-glm-nvme-progress-host", "Real NVMe work feedback and bounded pressure watchdog")
+        .dependOn(&b.addRunArtifact(b.addTest(.{ .root_module = progress, .filters = &.{"GLM NVMe progress:"} })).step);
     const compact = b.createModule(.{ .root_source_file = b.path("zig/glm_nvme_compact_host.zig"), .target = host, .optimize = .debug, .link_libc = true, .imports = &.{ .{ .name = "glm", .module = glm }, .{ .name = "cuda", .module = cuda }, .{ .name = "core", .module = mods.core } } });
     b.step("test-glm-nvme-compact-host", "Native tier shared ownership, metadata and admission without devices")
         .dependOn(&b.addRunArtifact(b.addTest(.{ .root_module = compact, .filters = &.{"GLM compact:"} })).step);

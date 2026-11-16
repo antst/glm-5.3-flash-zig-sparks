@@ -251,6 +251,13 @@ pub fn stepReads(s: *Store, ids: []const ReadId, turn: *usize, budget_ns: u64, c
     return n;
 }
 
+/// A constant-cost worker snapshot for the pressure watchdog; no index walk or disk operation.
+pub fn writeProgress(s: *Store) u64 {
+    s.lockS();
+    defer s.unlockS();
+    return s.counters.staged_blocks +% s.counters.written_blocks +% s.counters.committed;
+}
+
 pub fn counts(s: *Store) Counters {
     s.lockS();
     defer s.unlockS();

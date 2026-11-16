@@ -1,4 +1,4 @@
-//! Opt-in historical drafter arithmetic with explicit target BF16 or symmetric Q4/head16 precision.
+//! Opt-in historical drafter arithmetic with explicit target BF16, Q8/head16 or Q4/head16 precision.
 const std = @import("std");
 const cuda = @import("cuda");
 const df = @import("dflash.zig");
@@ -107,6 +107,8 @@ test "drafter reference: strict default, fingerprint disagreement and initial sc
     try std.testing.expectError(error.DrafterReferenceScope, scope(s, 4, true, 4));
     s.pages = false;
     s.dense_bits = 4;
+    try scope(s, 4, true, 4);
+    s.dense_bits = 8;
     try scope(s, 4, true, 4);
     s.dense_bits = 6;
     try std.testing.expectError(error.DrafterReferenceScope, scope(s, 4, true, 4));

@@ -4,6 +4,7 @@ const follow = @import("cuda_follow.zig");
 const ranks = @import("cuda_ranks.zig");
 const disk = @import("cuda_disk_ranks.zig");
 const state = @import("cuda_nvme_state.zig");
+const progress = @import("cuda_nvme_progress.zig");
 const nvme = @import("core").nvme1107;
 const Engine = @import("cuda_engine.zig").Engine;
 pub const base: u32 = 0x11070000;
@@ -69,7 +70,8 @@ fn apply(e: *Engine, h: follow.Header, ids: []const u32) !u64 {
         .pump => {
             if (h.seed > 10 * std.time.ns_per_ms or h.depth > 1) return error.NvmeProtocol;
             if (h.depth == 1) s.side.pumpWait(h.seed) else s.side.pump(h.seed);
-            return s.completionMask();
+            comptime std.debug.assert(state.max_pending <= 16);
+            return progress.packet(s.completionMask(), s.side.store.writeProgress());
         },
         .release => {
             if (slot >= s.slots.len or s.slots[slot] != h.a) return error.NvmeProtocol;

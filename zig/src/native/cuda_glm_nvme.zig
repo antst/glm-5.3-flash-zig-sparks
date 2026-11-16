@@ -42,6 +42,7 @@ const Owner = struct {
     store: *pc.Store,
     slots: [rank_state.max_pending]Slot = @splat(.{}),
     replies: [8]u64 = undefined,
+    pump_status: [8]u64 = @splat(0),
     boot: [16]u8,
     serial: u64 = 0,
     stopped: bool = false,
@@ -54,6 +55,8 @@ const Owner = struct {
     room_cancelled: u64 = 0,
     room_commands: u64 = 0,
     room_max_budget_ns: u64 = 0,
+    room_progress_changes: u64 = 0,
+    room_hard_stops: u64 = 0,
 
     fn of(p: *anyopaque) *Owner {
         return @ptrCast(@alignCast(p));
@@ -160,7 +163,10 @@ const Owner = struct {
         if (!pending(o)) return;
         const replies = o.required(.pump, .{ .kind = 0, .seed = @min(budget_ns, 10 * std.time.ns_per_ms), .depth = @intFromBool(wait_slots) }, &.{});
         var complete: u64 = std.math.maxInt(u64);
-        for (replies) |v| complete &= v;
+        for (replies, 0..) |v, rank| {
+            o.pump_status[rank] = v;
+            complete &= glm.nvme_progress.completed(v);
+        }
         for (o.slots, 0..) |s, i| if (s.id != 0 and complete & (@as(u64, 1) << @intCast(i)) != 0) {
             _ = o.required(.release, .{ .kind = 0, .a = s.id, .top_k = @as(u32, @intCast(i)) << 1 }, &.{});
             o.slots[i] = .{};
@@ -187,13 +193,23 @@ const Owner = struct {
         defer o.room_ns += @intCast(@max(0, std.Io.Clock.awake.now(o.e.io).toNanoseconds() - start));
         const budget = glm.nvme_options.progressNs(retired);
         o.room_max_budget_ns = @max(o.room_max_budget_ns, budget);
-        const end = start + budget;
-        while (pending(o) and pool.spare() < bytes and std.Io.Clock.awake.now(o.e.io).toNanoseconds() < end) {
+        var watch = glm.nvme_progress.Watch.init(
+            start,
+            budget,
+            glm.nvme_progress.hard_ns,
+            o.pump_status[0..o.e.share.world],
+        );
+        while (pending(o) and pool.spare() < bytes and
+            watch.reason(std.Io.Clock.awake.now(o.e.io).toNanoseconds()) == .running)
+        {
             pumpMode(o, 10 * std.time.ns_per_ms, true);
             o.room_commands += 1;
+            const now = std.Io.Clock.awake.now(o.e.io).toNanoseconds();
+            if (watch.observe(o.pump_status[0..o.e.share.world], now)) o.room_progress_changes += 1;
             if (pool.spare() < bytes) std.Io.sleep(o.e.io, .fromMicroseconds(100), .awake) catch {};
         }
         if (pool.spare() >= bytes) return;
+        if (watch.reason(std.Io.Clock.awake.now(o.e.io).toNanoseconds()) == .absolute) o.room_hard_stops += 1;
         // Staging copies are synchronous; cancellation returns only all-rank source credit, never live DMA pages.
         for (o.slots, 0..) |s, i| if (s.id != 0) {
             const source = o.e.snaps.get(s.id) orelse continue;
@@ -223,6 +239,9 @@ const Owner = struct {
         std.log.info("GLM_NVME1107_CLOSE queued={d} refused={d} restored={d} failed_reads={d}", .{ o.queued, o.refused, o.restored, o.failed_reads });
         std.log.info("NATIVE_TIERED_PRESSURE waits={d} wait_ns={d} cancelled={d}", .{ o.room_waits, o.room_ns, o.room_cancelled });
         std.log.info("NATIVE_TIERED_PROGRESS commands={d} max_budget_ns={d}", .{ o.room_commands, o.room_max_budget_ns });
+        std.log.info("NATIVE_TIERED_WATCH progress_changes={d} hard_stops={d} hard_ns={d}", .{
+            o.room_progress_changes, o.room_hard_stops, glm.nvme_progress.hard_ns,
+        });
         std.log.info("NATIVE_TIERED_PROMPT_METADATA peak={d} limit={d}", .{ o.store.token_pool.peak, o.store.token_pool.limit });
         _ = o.required(.close, .{ .kind = 0 }, &.{});
         o.e.gpa.destroy(o);

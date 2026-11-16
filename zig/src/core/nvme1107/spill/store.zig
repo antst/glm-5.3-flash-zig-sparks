@@ -240,6 +240,7 @@ pub const Store = struct {
     pub const forget = @import("store_results.zig").forget;
     pub const stepReads = @import("store_results.zig").stepReads;
     pub const counts = @import("store_results.zig").counts;
+    pub const writeProgress = @import("store_results.zig").writeProgress;
     pub const refreshDiskFree = @import("store_results.zig").refreshDiskFree;
     pub const isCrashed = @import("store_results.zig").isCrashed;
     pub const Summary = @import("store_results.zig").Summary;

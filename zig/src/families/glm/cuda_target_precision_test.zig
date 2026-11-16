@@ -14,10 +14,11 @@ fn settings(bits: u8) ranks.Settings {
 test "optional Q4 optimized: corrected drafter admits explicit target Q4 without changing the draft mode" {
     try reference.scope(settings(4), 4, true, 4);
     try reference.scope(settings(16), 4, true, 4);
+    try reference.scope(settings(8), 4, true, 4);
 }
 
 test "optional Q4 optimized: capture warmup and bounded admission remain available with Q4 head16" {
-    for ([_]u8{ 16, 4 }) |bits| {
+    for ([_]u8{ 16, 4, 8 }) |bits| {
         const o: Options = .{ .settings = settings(bits) };
         try warm.require(o, 4);
         try admission.require(o, 4);
@@ -50,7 +51,7 @@ test "optional Q4 optimized: startup defaults and cached precision disagreement 
 }
 
 test "optional Q4 optimized: unsupported quantized combinations refuse the actual startup scopes" {
-    for ([_]u8{ 6, 8 }) |bits| {
+    for ([_]u8{6}) |bits| {
         const s = settings(bits);
         try t.expectError(error.DrafterReferenceScope, reference.scope(s, 4, true, 4));
         try t.expectError(error.FfnWarmScope, warm.require(Options{ .settings = s }, 4));
@@ -65,4 +66,33 @@ test "optional Q4 optimized: unsupported quantized combinations refuse the actua
     s.pages = true;
     try t.expectError(error.FfnWarmScope, warm.require(Options{ .settings = s }, 4));
     try t.expectError(error.AdmissionWaitScope, admission.require(Options{ .settings = s }, 4));
+}
+
+test "optional Q4 optimized: Q8 keeps BF16 head and rejects Q4-only flags before startup" {
+    const precision = @import("cuda_target_precision.zig");
+    const good = settings(8);
+    try t.expect(precision.supported(good));
+    for ([_]u8{ 4, 6, 8 }) |head| {
+        var bad = good;
+        bad.head_bits = head;
+        try t.expect(!precision.supported(bad));
+        try t.expectError(error.DrafterReferenceScope, reference.scope(bad, 4, true, 4));
+        try t.expectError(error.FfnWarmScope, warm.require(Options{ .settings = bad }, 4));
+        try t.expectError(error.AdmissionWaitScope, admission.require(Options{ .settings = bad }, 4));
+    }
+    inline for (.{ "q4_affine_mse", "q4_python_prompt", "q4_head_fp8" }) |field| {
+        var bad = good;
+        @field(bad, field) = true;
+        try t.expect(!precision.supported(bad));
+        try t.expectError(error.DrafterReferenceScope, reference.scope(bad, 4, true, 4));
+        try t.expectError(error.FfnWarmScope, warm.require(Options{ .settings = bad }, 4));
+        try t.expectError(error.AdmissionWaitScope, admission.require(Options{ .settings = bad }, 4));
+    }
+    var untiled = good;
+    untiled.tiled = false;
+    try t.expect(!precision.supported(untiled));
+    const zero: [32]u8 = @splat(0);
+    const a = ranks.Fingerprint.of(4, 0, good, 4096, true, zero, zero, zero);
+    const b = ranks.Fingerprint.of(4, 1, settings(4), 4096, true, zero, zero, zero);
+    try t.expectEqual(ranks.Fingerprint.Field.bits, ranks.mismatch(&.{ a, b }).?.field);
 }

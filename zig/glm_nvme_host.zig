@@ -174,6 +174,12 @@ test "GLM NVMe: unequal TP shares and an external drafter restore all state byte
         try t.expect(f.e.snaps.contains(source));
         try t.expectEqual(@as(u64, f.e.snaps.get(source).?.lease.ids.items.len * glm.snapshots.pages.page), glm.snapshots.retiredBytes(&f.e));
         try waitWrite(&side);
+        const written = side.store.counts();
+        try t.expect(written.staged_blocks > 0 and written.written_blocks > 0 and written.committed > 0);
+        try t.expectEqual(
+            written.staged_blocks +% written.written_blocks +% written.committed,
+            side.store.writeProgress(),
+        );
         try t.expect(!f.e.snaps.contains(source));
         try t.expectEqual(@as(u64, 0), glm.snapshots.retiredBytes(&f.e));
         store.close();
