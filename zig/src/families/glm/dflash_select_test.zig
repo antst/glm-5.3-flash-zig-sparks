@@ -146,5 +146,5 @@ test "DFlash edge: strict defaultOFF startup parse and all-rank disagreement are
     try std.testing.expectEqual(ranks.Mismatch{ .field = .dflash_edge_06, .rank = 1 }, ranks.mismatch(&all).?);
     all[0] = FP.of(4, 0, on, 8192, true, @splat(0), @splat(0), @splat(0));
     try std.testing.expect(ranks.mismatch(&all) == null);
-    try std.testing.expectEqual(@as(u32, 62), all[0].layout);
+    try std.testing.expectEqual(@as(u32, 63), all[0].layout);
 }

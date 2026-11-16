@@ -39,7 +39,7 @@ test "head FP8: strict cached format, precision scopes and complete fingerprint"
     const FP = ranks.Fingerprint;
     const a = FP.of(4, 0, legacy, 4096, true, @splat(0), @splat(0), @splat(0));
     const b = FP.of(4, 1, on, 4096, true, @splat(0), @splat(0), @splat(0));
-    try t.expectEqual(@as(u32, 62), a.layout);
+    try t.expectEqual(@as(u32, 63), a.layout);
     try t.expectEqual(FP.Field.q4_head_fp8, ranks.mismatch(&.{ a, b }).?.field);
     try t.expectEqualStrings("TF_GLM_Q4_HEAD_FP8", @import("cuda_rank_names.zig").explain(FP.Field.q4_head_fp8));
     on.q4_head_fp8 = false;

@@ -140,7 +140,7 @@ test "latent MMA: cached strict setting and rank agreement precede model load" {
     const FP = ranks.Fingerprint;
     const a = FP.of(4, 0, off, 4096, true, @splat(0), @splat(0), @splat(0));
     const b = FP.of(4, 1, on, 4096, true, @splat(0), @splat(0), @splat(0));
-    try std.testing.expectEqual(@as(u32, 62), a.layout);
+    try std.testing.expectEqual(@as(u32, 63), a.layout);
     try std.testing.expectEqual(FP.Field.absorb_mma, ranks.mismatch(&.{ a, b }).?.field);
     try std.testing.expectEqualStrings("TF_GLM_ABSORB_MMA", @import("cuda_rank_names.zig").explain(FP.Field.absorb_mma));
 }

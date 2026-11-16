@@ -121,10 +121,22 @@ fn runShape(r: *Rig, k: *const glm.exl3.Kernels, ek: *const glm.experts.Kernels,
     };
     const sz = glm.exl3.scratchBytes(rows, dims, width, prompt, s.shx);
     const sc: glm.exl3.Scratch = .{ .picks = try r.zeros(sz[0]), .xg = try r.zeros(sz[1]), .xu = try r.zeros(sz[2]), .z = try r.zeros(sz[3]) };
-    const ey = try r.zeros(rows * slots * dims * 4);
+    const nbytes = rows * slots * dims * 4;
+    const guarded = try r.a.alloc(u8, nbytes + 512);
+    @memset(guarded, 0x5a);
+    @memset(guarded[256..][0..nbytes], 0);
+    const guard_base = try r.dev(guarded);
+    const ey = guard_base + 256;
     const xd = try r.zeros(P * width * 2);
-    try glm.exl3.run(k, ek, r.s, s.experts(), sc, plan, try r.dev(std.mem.sliceAsBytes(x)), dims, try r.dev(std.mem.sliceAsBytes(pk)), slots, rows, E, dims, width, limit, prompt, ey, xd);
+    const xp = try r.dev(std.mem.sliceAsBytes(x));
+    const pp = try r.dev(std.mem.sliceAsBytes(pk));
+    try glm.exl3.run(k, ek, r.s, s.experts(), sc, plan, xp, dims, pp, slots, rows, E, dims, width, limit, prompt, ey, xd);
     try r.s.synchronize();
+    try check.sameBytes("EXL3 input unchanged", std.mem.sliceAsBytes(x), try r.back(xp, x.len * 2));
+    try check.sameBytes("EXL3 picks unchanged", std.mem.sliceAsBytes(pk), try r.back(pp, pk.len * 4));
+    const guards = try r.back(guard_base, nbytes + 512);
+    try check.sameBytes("EXL3 leading guard", guarded[0..256], guards[0..256]);
+    try check.sameBytes("EXL3 trailing guard", guarded[0..256], guards[nbytes + 256 ..]);
     return .{ .ey = ey, .rows = rows };
 }
 
@@ -260,8 +272,15 @@ pub fn run_(gpu: Gpu) !void {
 }
 
 pub fn fused(gpu: Gpu, path: []const u8) !void {
+    return fusedWidth(gpu, path, 512);
+}
+
+pub fn fusedTp2(gpu: Gpu, path: []const u8) !void {
+    return fusedWidth(gpu, path, 1024);
+}
+
+fn fusedWidth(gpu: Gpu, path: []const u8, width: usize) !void {
     const dims = 4096;
-    const width = 512;
     var stream = try cuda.Stream.init(gpu.d, false);
     defer stream.deinit();
     var pm = try cuda.Module.load(gpu.d, cuda.kernels.experts);
@@ -284,11 +303,17 @@ pub fn fused(gpu: Gpu, path: []const u8) !void {
             for (rig.bufs.items) |*b| b.free();
             rig.bufs.deinit(gpu.gpa);
         }
-        defer stream.synchronize() catch {};
+        defer cuda.completion.drain(gpu.d, stream, "EXL3 fused fixture did not drain");
         const s = try weightsShape(&rig, one, dims, width, false);
-        for ([_]usize{ 1, 3, 16, 17, 31, 48, 64 }) |rows| {
+        for ([_]usize{ 1, 3, 8, 15, 16, 17, 31, 32, 48, 63, 64, 4 }, 0..) |rows, ci| {
             const mark = rig.bufs.items.len;
             const x = try rig.bfs(rows * dims, 1.0);
+            const nonfinite = ci == 11;
+            if (nonfinite) {
+                x[0] = 0x7fc0;
+                x[dims + 1] = 0x7f80;
+                x[2 * dims + 2] = 0xff80;
+            }
             const pk = try picks(&rig, rows);
             const expected = try runShape(&rig, &baseline, &ek, s, x, pk, rows, false, dims, width);
             const n = rows * slots * dims * 4;
@@ -301,14 +326,15 @@ pub fn fused(gpu: Gpu, path: []const u8) !void {
                 for (0..rows) |r| for (0..(slots - 1) * dims) |col| {
                     const index = (r * slots * dims + col) * 4;
                     const value: f32 = @bitCast(std.mem.readInt(u32, got[index..][0..4], .little));
-                    try check.expect(std.math.isFinite(value), "EXL3 fused decode wrote finite routed slots", .{});
+                    try check.expect(if (nonfinite and r < 3) std.math.isNan(value) else std.math.isFinite(value),
+                        "EXL3 fused decode wrote expected finite/nonfinite routed rows", .{});
                 };
                 freeAfter(&rig, mark);
             }
         }
     }
-    try check.expect(calls == 70, "EXL3 fused decode active for all 70 positive runs", .{});
-    check.pass("glm-exl3-fused-contract 14 cases and 70 exact repeats", .{});
+    try check.expect(calls == 120, "EXL3 fused decode active for all 120 positive runs", .{});
+    check.pass("glm-exl3-fused-contract width={d}: 24 cases and 120 exact repeats", .{width});
 }
 
 fn freeAfter(rig: *Rig, mark: usize) void {

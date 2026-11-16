@@ -41,7 +41,7 @@ test "GLM DFlash head: strict cached flag, fingerprint and scope precede allocat
     const FP = glm.ranks.Fingerprint;
     const a = FP.of(4, 0, off, 196608, true, @splat(0), @splat(0), @splat(0));
     const b = FP.of(4, 1, on, 196608, true, @splat(0), @splat(0), @splat(0));
-    try t.expectEqual(@as(u32, 62), a.layout);
+    try t.expectEqual(@as(u32, 63), a.layout);
     try t.expectEqual(FP.Field.dflash_only_head, glm.ranks.mismatch(&.{ a, b }).?.field);
     var fake: struct { settings: glm.ranks.Settings, mtp: bool = true, drafter: ?*u8 = null } = .{ .settings = on };
     try t.expect(!glm.snapshots.mode.head(&fake));

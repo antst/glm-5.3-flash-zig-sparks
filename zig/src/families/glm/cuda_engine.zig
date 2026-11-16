@@ -181,7 +181,8 @@ pub const Engine = struct {
         try @import("cuda_affine_prompt_owner.zig").selectSplits(&m, o.settings.q4_python_splits);
         try @import("cuda_affine_prompt_owner.zig").install(&m, gpa, io, d, o.settings.q4_python_prompt);
         if (o.settings.exl3_fused_decode) {
-            if (!exl3.isExl3(gpa, text) or c.hidden != 4096 or share.moe.len() != 512 or
+            if (!exl3.isExl3(gpa, text) or c.hidden != 4096 or
+                !((world == 4 and share.moe.len() == 512) or (world == 2 and share.moe.len() == 1024)) or
                 try ctx.attribute(.compute_capability_major) != 12 or try ctx.attribute(.compute_capability_minor) != 1)
                 return error.Exl3DecodeScope;
             try @import("cuda_exl3_decode.zig").configure(gpa, io, d, &m.exl3);

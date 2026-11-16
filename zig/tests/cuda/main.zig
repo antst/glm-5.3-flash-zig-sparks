@@ -441,6 +441,7 @@ fn run(gpu: check.Gpu, cmd: []const u8, rest: []const [:0]const u8) !void {
     if (std.mem.eql(u8, cmd, "glm-exl3")) return @import("glm_exl3_tests.zig").run_(gpu);
     if (std.mem.eql(u8, cmd, "glm-exl3-whole-contract")) return @import("glm_exl3_tests.zig").whole(gpu, try arg(rest, 0));
     if (std.mem.eql(u8, cmd, "glm-exl3-whole-gates")) return @import("contract_exl3_whole.zig").isolated(gpu);
+    if (std.mem.eql(u8, cmd, "glm-exl3-tp2-fused-contract")) return @import("glm_exl3_tests.zig").fusedTp2(gpu, try arg(rest, 0));
     if (std.mem.eql(u8, cmd, "glm-exl3-fused-contract")) return @import("glm_exl3_tests.zig").fused(gpu, try arg(rest, 0));
     if (std.mem.eql(u8, cmd, "glm-kda-pad-split")) return glm_kda_pad_check.run(gpu);
     if (std.mem.eql(u8, cmd, "glm-head-fp8-contract")) return @import("glm_head_fp8_contract.zig").run(gpu, rest);
@@ -593,7 +594,6 @@ fn info(gpu: check.Gpu) !void {
         cuda.kernels.available,
     });
 }
-
 fn hasFlag(flags: []const [:0]const u8, name: []const u8) bool {
     for (flags) |f| if (std.mem.eql(u8, f, name)) return true;
     return false;

@@ -100,3 +100,32 @@ test "TP2 direct: actual optimized startup scopes admit world2 and keep TP4-only
     const full = try @import("dflash_attention.zig").Plan.init(1, 2, false);
     try t.expectEqual(@as(usize, 6144), full.fusedWidth());
 }
+
+test "TP2 direct: dimension-generic EXL3 selectors admit only the two qualified local widths" {
+    const common = @import("cuda").exl3_experts;
+    const t = std.testing;
+    var e: common.Experts = undefined;
+    e.decode = null;
+    var l = std.mem.zeroes(common.Layer);
+    l.dims = 4096;
+    l.codebook = .mcg;
+    l.uniform_k2 = 8;
+    l.width = 1024;
+    try t.expect(!e.hasCompactDecode(l, 1));
+    e.decode = .{ .module = undefined, .gateup_shared = undefined, .down = undefined };
+    for ([_]usize{ 512, 1024 }) |width| {
+        l.width = width;
+        for (1..65) |rows| try t.expect(e.hasCompactDecode(l, rows));
+        try t.expectEqual(@as(u32, 4), try common.plan(4096, width, true));
+        try t.expectEqual(@as(u32, 1), try common.plan(width, 4096, false));
+    }
+    for ([_]usize{ 128, 256, 768, 1536, 2048 }) |width| {
+        l.width = width;
+        try t.expect(!e.hasCompactDecode(l, 1));
+    }
+    l.width = 1024;
+    try t.expect(!e.hasCompactDecode(l, 0));
+    try t.expect(!e.hasCompactDecode(l, 65));
+    l.uniform_k2 = 7;
+    try t.expect(!e.hasCompactDecode(l, 1));
+}

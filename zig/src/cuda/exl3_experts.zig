@@ -191,7 +191,7 @@ pub const Experts = struct {
     }
 
     pub fn hasCompactDecode(e: *const Experts, l: Layer, rows: usize) bool {
-        return e.decode != null and rows > 0 and rows <= 64 and l.dims == 4096 and l.width == 512 and
+        return e.decode != null and rows > 0 and rows <= 64 and l.dims == 4096 and (l.width == 512 or l.width == 1024) and
             l.codebook == .mcg and l.uniform_k2 == 8 and l.act_mode == 0 and l.gu_stride == 0;
     }
 
@@ -210,7 +210,7 @@ pub const Experts = struct {
         const p = rows * slots;
         const maxu = if (compact != null) routes.maxItems(p, l.experts, 16) else @min(p, l.experts);
         const mt = if (compact != null) 1 else (rows + 15) / 16;
-        const decode = if (rows <= 64 and slots == 8 and d == 4096 and w == 512 and
+        const decode = if (rows <= 64 and slots == 8 and d == 4096 and (w == 512 or w == 1024) and
             l.codebook == .mcg and l.uniform_k2 == 8 and l.act_mode == 0 and
             x_dtype == .bf16 and wts == 0 and out == 0 and d_sk == 1) e.decode else null;
         const shared_input = decode != null and l.shared_input;

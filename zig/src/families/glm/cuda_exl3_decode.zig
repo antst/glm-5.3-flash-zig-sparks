@@ -1,4 +1,4 @@
-//! Optional switched-TP4 EXL3 decode kernels.
+//! Optional EXL3 decode module; dimension-generic CUDA, qualified by host shape and device contract.
 const std = @import("std");
 const cuda = @import("cuda");
 const sha = "9d69cdcdd1bb97a7bb7aaf448b8df844227062a0db4ade4f7f6323e35e61f78b";
