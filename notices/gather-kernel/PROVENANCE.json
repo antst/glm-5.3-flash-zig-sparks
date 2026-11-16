@@ -1,0 +1,15 @@
+{
+  "known_related_source": "rdma_gather.cu",
+  "source_sha256": "dfc5febd149af95dc52f93388774d47953e52ba81276e7fbf6265783835131e4",
+  "recorded_project_build_rule": "    .{ .name = \"dsv41_rdma\", .src = \"dsv41/rdma_gather\", .flags = &.{\"-O3\"} }, // ours: the decode gathers' RDMA kernel pair",
+  "measured_external_module_sha256": "23affd2303d7da3077ef6afc97f09e1c607f1325aacbb9a24842388389c3bd80",
+  "measured_symbols": [
+    "dsv41_rdma_stage",
+    "dsv41_rdma_collect",
+    "dsv41_rdma_collect_into"
+  ],
+  "original_source_notice": "TensorFold/Bertholomus Apache2; original source and notices preserved.",
+  "historical_external_module_producer_receipt_located": false,
+  "new_compile_or_load": false,
+  "limits": "Related family source and matching public entry-point names, not a demonstrated exact producer binding or bit-identical rebuild. Qualified runs use the separately hashed original external module unchanged."
+}

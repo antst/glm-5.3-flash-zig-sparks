@@ -1,0 +1,129 @@
+{
+  "created_utc": "2026-11-16T08:29:02.834011+00:00",
+  "source_tree": "d9d2e0f73a874c2f87445bf033efa30055f7eb5d",
+  "source_commit": null,
+  "signed_commit_pending": true,
+  "native_sha256": "9c877e091f0aa4aa8f489576b9640d346c1d1056987a2a16e9d6605823ad5259",
+  "experts": "EXL3-4.0bpw",
+  "projections": "BF16",
+  "head": "BF16",
+  "KV_storage": "FP8",
+  "world": 4,
+  "context": 196608,
+  "parallel": 8,
+  "active_verify_rows": 32,
+  "all38_native_ID_text_completion_joins_equal_independent_cold": true,
+  "all7_corruption_recovery_native_ID_text_completion_checks": true,
+  "actual_CRC_read_failure_observed": 1,
+  "all20_private_lifetimes_healthy": true,
+  "all_saved_driver_deltas_empty": true,
+  "useful_RAM_cache_gib": 1.75,
+  "index_budget_MiB": 64,
+  "index_actual_peak_bytes": 3415426,
+  "staging_ceiling_MiB": 192,
+  "actual_serial_pinned_bytes_per_rank": 144916480,
+  "seed_and_RAM_disk_restores_zero": true,
+  "reopen_completed_requests": 12,
+  "reopen_snapshot_restores_per_rank": 4,
+  "reopen_disk_bytes_per_rank": 4324925444,
+  "metadata_work_qualification": "Finite long-context fixtures: accounted metadata peak is measured; whole process RSS includes weights/live state/useful cached tensors and is not metadata overhead.",
+  "actual_write_failures": 0,
+  "actual_write_cancellations": 0,
+  "index_refusals": 0,
+  "source_credit_waits_are_not_disk_cancellations": true,
+  "pressure_recovery": 9514899902,
+  "rows": [
+    {
+      "role": "baseline",
+      "case": "long160-plain",
+      "prompt_tokens": 163810,
+      "cached_tokens": 0,
+      "request_elapsed_seconds": 80.83656672015786,
+      "native_prefill_seconds": 80.566441144,
+      "native_TTFT_seconds": 80.572364011,
+      "native_output_sha256": "10a1e9319f97111608c193a1985f494d70ff801d535fb2749e50a939a76454e2"
+    },
+    {
+      "role": "baseline",
+      "case": "long192-plain",
+      "prompt_tokens": 192934,
+      "cached_tokens": 0,
+      "request_elapsed_seconds": 96.1498472802341,
+      "native_prefill_seconds": 95.885951584,
+      "native_TTFT_seconds": 95.893441217,
+      "native_output_sha256": "7ccb755b8080ad44c5c73ae12d0658f61f46ec73c0e09ebb3d7a663995e04f5e"
+    },
+    {
+      "role": "seed",
+      "case": "long160-plain",
+      "prompt_tokens": 163810,
+      "cached_tokens": 0,
+      "request_elapsed_seconds": 81.93423191830516,
+      "native_prefill_seconds": 81.629462826,
+      "native_TTFT_seconds": 81.637900649,
+      "native_output_sha256": "10a1e9319f97111608c193a1985f494d70ff801d535fb2749e50a939a76454e2"
+    },
+    {
+      "role": "seed",
+      "case": "long192-plain",
+      "prompt_tokens": 192934,
+      "cached_tokens": 0,
+      "request_elapsed_seconds": 100.96453895047307,
+      "native_prefill_seconds": 96.090186085,
+      "native_TTFT_seconds": 100.688100759,
+      "native_output_sha256": "7ccb755b8080ad44c5c73ae12d0658f61f46ec73c0e09ebb3d7a663995e04f5e"
+    },
+    {
+      "role": "reopen",
+      "case": "long160-plain",
+      "prompt_tokens": 163810,
+      "cached_tokens": 161792,
+      "request_elapsed_seconds": 3.1980487518012524,
+      "native_prefill_seconds": 1.049555659,
+      "native_TTFT_seconds": 2.948118271,
+      "native_output_sha256": "10a1e9319f97111608c193a1985f494d70ff801d535fb2749e50a939a76454e2"
+    },
+    {
+      "role": "reopen",
+      "case": "long192-plain",
+      "prompt_tokens": 192934,
+      "cached_tokens": 192512,
+      "request_elapsed_seconds": 2.73385164514184,
+      "native_prefill_seconds": 0.329785278,
+      "native_TTFT_seconds": 2.480372855,
+      "native_output_sha256": "7ccb755b8080ad44c5c73ae12d0658f61f46ec73c0e09ebb3d7a663995e04f5e"
+    },
+    {
+      "role": "ram",
+      "case": "long160-plain",
+      "prompt_tokens": 163810,
+      "cached_tokens": 0,
+      "request_elapsed_seconds": 80.32936407998204,
+      "native_prefill_seconds": 80.066834679,
+      "native_TTFT_seconds": 80.07468551,
+      "native_output_sha256": "10a1e9319f97111608c193a1985f494d70ff801d535fb2749e50a939a76454e2"
+    },
+    {
+      "role": "ram",
+      "case": "long192-plain",
+      "prompt_tokens": 192934,
+      "cached_tokens": 0,
+      "request_elapsed_seconds": 95.56036795303226,
+      "native_prefill_seconds": 95.300553727,
+      "native_TTFT_seconds": 95.307330031,
+      "native_output_sha256": "7ccb755b8080ad44c5c73ae12d0658f61f46ec73c0e09ebb3d7a663995e04f5e"
+    }
+  ],
+  "limits": [
+    "One sequential cold sample per length/role; no statistical significance claim.",
+    "NativeTTFT is a server clock; elapsed is client full-JSON-response time.",
+    "Cold192K has roughly4.6s post-prefill snapshot-credit delay; not hidden as pure GPU prefill time.",
+    "Fixed current native and fresh namespaces. Other precision profiles are not claimed validated by this BF16-only matrix.",
+    "CPU crash/corruption tests and actual one-bit model recovery cover named paths, not every filesystem or whole-engine failed-stream condition."
+  ],
+  "receipt_SHA256": {
+    "CACHE-MATRIX-CLOSED.json": "f75c56bc2788f85580ee84a001fc80e1fa8d8d42c640909397c851bce4c8d2f2",
+    "CORRUPTION-V3-CLOSED.json": "0bdefda5997d2b9835c5b99a72d4459b2ccada4b7b76daa033667d0e04b94deb"
+  },
+  "artifact_status": "QUALIFIED_TP4_RELEASE_CONTENT"
+}

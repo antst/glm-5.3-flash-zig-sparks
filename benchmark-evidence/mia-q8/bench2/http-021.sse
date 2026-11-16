@@ -1,0 +1,18 @@
+data: {"id": "chatcmpl-6c0ad23319013b17d1c76b79e163ef02", "object": "chat.completion.chunk", "created": 1794809904, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"role": "assistant"}, "finish_reason": null}]}
+
+: keepalive
+
+data: {"id": "chatcmpl-6c0ad23319013b17d1c76b79e163ef02", "object": "chat.completion.chunk", "created": 1794809904, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": "**"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-6c0ad23319013b17d1c76b79e163ef02", "object": "chat.completion.chunk", "created": 1794809904, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": "g"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-6c0ad23319013b17d1c76b79e163ef02", "object": "chat.completion.chunk", "created": 1794809904, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": "ib"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-6c0ad23319013b17d1c76b79e163ef02", "object": "chat.completion.chunk", "created": 1794809904, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": "ber"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-6c0ad23319013b17d1c76b79e163ef02", "object": "chat.completion.chunk", "created": 1794809904, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {}, "finish_reason": "length"}], "exact_mode": "exact", "tensorfold": {"enable_thinking": false, "reasoning_effort": "none", "engine": "lanes", "tokens_per_second": 1.1277942142047084, "seconds": 2.660059754, "prefill_seconds": 16.369467624, "prefill_widths": [], "prefill_raised": [], "time_to_first_token": 16.376916816, "sampling": "greedy", "drafts": true, "token_sha": "748b161c6e71", "token_sha256": "748b161c6e719fe2b9533c7f2dd5c3bcc38be8d135195b8331478f63b3fb67c6", "min_rows": 2}, "speculative": {"rounds": 3, "drafted": 3, "accepted": 1, "acceptance_rate": 0.3333333333333333, "tokens_per_round": 1.3333333333333333}}
+
+data: {"id": "chatcmpl-6c0ad23319013b17d1c76b79e163ef02", "object": "chat.completion.chunk", "created": 1794809904, "model": "GLM-5.3-Flash", "choices": [], "usage": {"prompt_tokens": 30647, "completion_tokens": 4, "total_tokens": 30651, "prompt_tokens_details": {"cached_tokens": 0}, "completion_tokens_details": {"reasoning_tokens": 0}}}
+
+data: [DONE]
+

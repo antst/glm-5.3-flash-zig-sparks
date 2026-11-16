@@ -1,0 +1,14 @@
+data: {"id": "chatcmpl-4cd43d2c2b72e5205687f142ccfddf90", "object": "chat.completion.chunk", "created": 1794828171, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"role": "assistant"}, "finish_reason": null}]}
+
+: keepalive
+
+: keepalive
+
+data: {"id": "chatcmpl-4cd43d2c2b72e5205687f142ccfddf90", "object": "chat.completion.chunk", "created": 1794828171, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": "many"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-4cd43d2c2b72e5205687f142ccfddf90", "object": "chat.completion.chunk", "created": 1794828171, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {}, "finish_reason": "stop"}], "exact_mode": "exact", "tensorfold": {"enable_thinking": false, "reasoning_effort": "none", "engine": "lanes", "tokens_per_second": 15.858699997974844, "seconds": 0.063056871, "prefill_seconds": 37.370544609, "prefill_widths": [2048, 2048, 2048, 2048, 2048, 2048, 2048, 2048, 2048, 2048, 2048, 2048, 2048, 2048, 2048, 2048, 2048, 2048, 2048, 2048, 2048, 2048, 2048, 2048, 1518], "prefill_raised": [], "time_to_first_token": 37.390096261, "sampling": "greedy", "drafts": true, "token_sha": "85c711be98e9", "token_sha256": "85c711be98e9ad3b5da1ccaf3a572b75620b37b5ab3a8f7697e62d4961f315e7", "min_rows": 2, "prompt": 50670, "cached": 0, "ttft_s": 37.3901, "finish": "done", "completion": 2, "prefill_s": 37.3705, "decode_s": 0.0631, "rounds": 1, "drafted": 1, "accepted": 1}, "speculative": {"rounds": 1, "drafted": 1, "accepted": 1, "acceptance_rate": 1.0, "tokens_per_round": 2.0}}
+
+data: {"id": "chatcmpl-4cd43d2c2b72e5205687f142ccfddf90", "object": "chat.completion.chunk", "created": 1794828171, "model": "GLM-5.3-Flash", "choices": [], "usage": {"prompt_tokens": 50670, "completion_tokens": 2, "total_tokens": 50672, "prompt_tokens_details": {"cached_tokens": 0}, "completion_tokens_details": {"reasoning_tokens": 0}}}
+
+data: [DONE]
+

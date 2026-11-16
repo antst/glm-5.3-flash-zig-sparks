@@ -1,0 +1,18 @@
+data: {"id": "chatcmpl-e5d8d96a9d2b0e1abe334cf58da83170", "object": "chat.completion.chunk", "created": 1794821593, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"role": "assistant"}, "finish_reason": null}]}
+
+: keepalive
+
+: keepalive
+
+data: {"id": "chatcmpl-e5d8d96a9d2b0e1abe334cf58da83170", "object": "chat.completion.chunk", "created": 1794821593, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": "**"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-e5d8d96a9d2b0e1abe334cf58da83170", "object": "chat.completion.chunk", "created": 1794821593, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": "w44"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-e5d8d96a9d2b0e1abe334cf58da83170", "object": "chat.completion.chunk", "created": 1794821593, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": "3"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-e5d8d96a9d2b0e1abe334cf58da83170", "object": "chat.completion.chunk", "created": 1794821593, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {}, "finish_reason": "length"}], "exact_mode": "exact", "tensorfold": {"enable_thinking": false, "reasoning_effort": "none", "engine": "lanes", "tokens_per_second": 27.96416645610426, "seconds": 0.107280151, "prefill_seconds": 36.700059167, "prefill_widths": [2048, 2048, 2048, 2048, 2048, 2048, 2048, 2048, 2048, 2048, 2048, 2048, 2048, 2048, 2048, 2048, 2048, 2048, 2048, 2048, 2048, 2048, 2048, 2048, 1538], "prefill_raised": [], "time_to_first_token": 36.757289534, "sampling": "greedy", "drafts": true, "token_sha": "f474e520260e", "token_sha256": "f474e520260e3049963658d24215608d7e8e6b96d4afb5fc23605e1ef58d32f1", "min_rows": 2, "prompt": 50690, "cached": 0, "ttft_s": 36.7573, "finish": "done", "completion": 4, "prefill_s": 36.7001, "decode_s": 0.1073, "rounds": 2, "drafted": 2, "accepted": 2}, "speculative": {"rounds": 2, "drafted": 2, "accepted": 2, "acceptance_rate": 1.0, "tokens_per_round": 2.0}}
+
+data: {"id": "chatcmpl-e5d8d96a9d2b0e1abe334cf58da83170", "object": "chat.completion.chunk", "created": 1794821593, "model": "GLM-5.3-Flash", "choices": [], "usage": {"prompt_tokens": 50690, "completion_tokens": 4, "total_tokens": 50694, "prompt_tokens_details": {"cached_tokens": 0}, "completion_tokens_details": {"reasoning_tokens": 0}}}
+
+data: [DONE]
+

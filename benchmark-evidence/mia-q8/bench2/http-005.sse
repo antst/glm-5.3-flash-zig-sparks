@@ -1,0 +1,14 @@
+data: {"id": "chatcmpl-d471a6cb6bfbb7feb4e8a535933b3d57", "object": "chat.completion.chunk", "created": 1794809628, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"role": "assistant"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-d471a6cb6bfbb7feb4e8a535933b3d57", "object": "chat.completion.chunk", "created": 1794809628, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": "**"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-d471a6cb6bfbb7feb4e8a535933b3d57", "object": "chat.completion.chunk", "created": 1794809628, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": "w8"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-d471a6cb6bfbb7feb4e8a535933b3d57", "object": "chat.completion.chunk", "created": 1794809628, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": "45"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-d471a6cb6bfbb7feb4e8a535933b3d57", "object": "chat.completion.chunk", "created": 1794809628, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {}, "finish_reason": "length"}], "exact_mode": "exact", "tensorfold": {"enable_thinking": false, "reasoning_effort": "none", "engine": "lanes", "tokens_per_second": 40.63096860464017, "seconds": 0.073835306, "prefill_seconds": 8.970798551, "prefill_widths": [], "prefill_raised": [], "time_to_first_token": 8.977325992, "sampling": "greedy", "drafts": true, "token_sha": "b7aa3fed3010", "token_sha256": "b7aa3fed3010c2bbfa2e81bd063f1118f03229f2bbd70cde6ce20cc8f00a604d", "min_rows": 2}, "speculative": {"rounds": 2, "drafted": 2, "accepted": 1, "acceptance_rate": 0.5, "tokens_per_round": 2.0}}
+
+data: {"id": "chatcmpl-d471a6cb6bfbb7feb4e8a535933b3d57", "object": "chat.completion.chunk", "created": 1794809628, "model": "GLM-5.3-Flash", "choices": [], "usage": {"prompt_tokens": 16046, "completion_tokens": 4, "total_tokens": 16050, "prompt_tokens_details": {"cached_tokens": 0}, "completion_tokens_details": {"reasoning_tokens": 0}}}
+
+data: [DONE]
+

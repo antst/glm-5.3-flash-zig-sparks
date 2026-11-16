@@ -1,0 +1,621 @@
+{
+  "schema": "glm53-zig-switch-tp4/v3",
+  "created_utc": "2026-11-16T16:23:10.101437+00:00",
+  "release_status": "QUALIFIED_TP4_RELEASE_CONTENT",
+  "source_commit": "1e3ba2cf32cb1dea035e38ad41adffc7ea402c6d",
+  "native_sha256": "9c877e091f0aa4aa8f489576b9640d346c1d1056987a2a16e9d6605823ad5259",
+  "source_manifest_sha256": "40c907eee2dc870b0744ab1e29e007b816b25c98bb65275f5919b70bc1a2ab0a",
+  "runtime_assets": [
+    {
+      "name": "dflash_reference.fatbin",
+      "bytes": 851472,
+      "sha256": "3ffdb516c366c10dced9e36a7abee27bc5484a2a690d992ff9ce36570c7fa9e0"
+    },
+    {
+      "name": "dflash_reference_attention.cubin",
+      "bytes": 100712,
+      "sha256": "b33690449f594947004f4fd11b2bb08825b56f9a00d779a4d3c8f167cdfc2098"
+    },
+    {
+      "name": "exl3_prompt_whole.fatbin",
+      "bytes": 970896,
+      "sha256": "65c062c3d9f46342c76a29dc844aa57e228dccbc08903c9f877e105b1bc6fc39"
+    },
+    {
+      "name": "glm_dense_segments.fatbin",
+      "bytes": 3583904,
+      "sha256": "8dfd446605497436654d9926153478b93b19959ff79bbe042e2d598f69ae4669"
+    },
+    {
+      "name": "glm_exl3_decode_mcg4.fatbin",
+      "bytes": 448496,
+      "sha256": "9d69cdcdd1bb97a7bb7aaf448b8df844227062a0db4ade4f7f6323e35e61f78b"
+    },
+    {
+      "name": "glm_head_fp8.fatbin",
+      "bytes": 19392,
+      "sha256": "0f15d6c93183a3185680e0cdd8e61f7047c9b5c054ac0d5ba755d65ea6f15ab5"
+    },
+    {
+      "name": "glm_kda_segments.fatbin",
+      "bytes": 539152,
+      "sha256": "1f2ef5524f67639f681e5a1a3334d0bc89bb4a456d067d7889a8e26be9ded07d"
+    },
+    {
+      "name": "glm_q4_mse.fatbin",
+      "bytes": 51256,
+      "sha256": "fe539d130e29dcd6f90b53334cf5a931e51d2d9a3273f577109378ced84a9a8d"
+    },
+    {
+      "name": "glm_q4_python_prompt.fatbin",
+      "bytes": 996576,
+      "sha256": "20972abb31288a7cc4fb4865c7cece11b1d013fcbf82a0b6ecde49b7c93e2d5e"
+    },
+    {
+      "name": "libnccl.so.2",
+      "bytes": 79789200,
+      "sha256": "01d04c83cf666155466c6a00368a40cd3caa50beca5265abb89d9f14ae99da87"
+    },
+    {
+      "name": "libtf_candidate.so",
+      "bytes": 4826440,
+      "sha256": "1bf5042123f471a1c2c90ea67d262c2986e00a7eb34c98724a14f22945eba3b0"
+    },
+    {
+      "name": "libtfgrammar.so",
+      "bytes": 2980008,
+      "sha256": "abad72a824800ec45e07d2c4416bf4249266f70bf86046a0f0770653068eb09e"
+    },
+    {
+      "name": "rdma_gather_deployed.fatbin",
+      "bytes": 51640,
+      "sha256": "23affd2303d7da3077ef6afc97f09e1c607f1325aacbb9a24842388389c3bd80"
+    },
+    {
+      "name": "tensorfold-native",
+      "bytes": 51273480,
+      "sha256": "9c877e091f0aa4aa8f489576b9640d346c1d1056987a2a16e9d6605823ad5259",
+      "profiles": [
+        "exl3-bf16",
+        "exl3-q4",
+        "exl3-q4-fp8",
+        "exl3-q8"
+      ]
+    },
+    {
+      "name": "thinking-off.jinja",
+      "bytes": 8723,
+      "sha256": "693bb47a83abab82c973ed50719929ec88c4695cbb8d84feb1d91897b6837f23"
+    },
+    {
+      "name": "xgrammar-LICENSE",
+      "bytes": 11357,
+      "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+    },
+    {
+      "name": "xgrammar-NOTICE",
+      "bytes": 54,
+      "sha256": "769c6907073c65801bfcfe3ce1c0e80bf0ae4e124e2769d4f026c038ad583c0f"
+    },
+    {
+      "name": "glm_head_fp8_g64.fatbin",
+      "sha256": "0e3d6e28130225f7c7fb633d23b27f20f347e23b017599793d8e6d4e1a08a0ad",
+      "bytes": 80152,
+      "profiles": [
+        "exl3-q4-fp8"
+      ]
+    },
+    {
+      "name": "tensorfold-native-nvfp4",
+      "sha256": "312761ce390edf72d89d72645d6ccfd9a43d151e70f50ecb3f874f17d9a8ebfd",
+      "bytes": 51264264,
+      "profiles": [
+        "nvfp4-bf16"
+      ]
+    },
+    {
+      "name": "glm_latent_mma.fatbin",
+      "sha256": "34e82c3d34080e41408fa4e2de24d229ffcbce55d3ad24bae953ffeeb9608650",
+      "bytes": 207616,
+      "profiles": [
+        "exl3-bf16",
+        "exl3-q8"
+      ]
+    }
+  ],
+  "payload_template": {
+    "Image": "sha256:567d5c7ec9cb19d5b91e8ed8df197d68cb8322f4c569453c00dd5a12a924028a",
+    "Entrypoint": [
+      "/opt/glm/tensorfold-native"
+    ],
+    "Cmd": [
+      "serve",
+      "/model",
+      "--backend",
+      "cuda",
+      "--name",
+      "GLM-5.3-Flash",
+      "--host",
+      "0.0.0.0",
+      "--port",
+      "18888",
+      "--context",
+      "196608",
+      "--parallel",
+      "8",
+      "--kv-cache",
+      "fp8",
+      "--drafter",
+      "/drafter",
+      "--prompt-cache-gib",
+      "0",
+      "--no-update-check",
+      "--chat-template",
+      "/opt/glm/thinking-off.jinja",
+      "--temperature",
+      "0"
+    ],
+    "WorkingDir": "/opt/glm",
+    "Labels": {
+      "recipe": "glm53-zig-switch-tp4"
+    },
+    "HostConfig": {
+      "NetworkMode": "host",
+      "IpcMode": "private",
+      "ShmSize": 268435456,
+      "Memory": 120259084288,
+      "MemorySwap": 120259084288,
+      "CpusetCpus": "0-9",
+      "DeviceRequests": [
+        {
+          "Driver": "nvidia",
+          "Count": -1,
+          "Capabilities": [
+            [
+              "gpu"
+            ]
+          ]
+        }
+      ],
+      "Devices": [
+        {
+          "PathOnHost": "/dev/infiniband/uverbs0",
+          "PathInContainer": "/dev/infiniband/uverbs0",
+          "CgroupPermissions": "rw"
+        },
+        {
+          "PathOnHost": "/dev/infiniband/uverbs1",
+          "PathInContainer": "/dev/infiniband/uverbs1",
+          "CgroupPermissions": "rw"
+        },
+        {
+          "PathOnHost": "/dev/infiniband/uverbs2",
+          "PathInContainer": "/dev/infiniband/uverbs2",
+          "CgroupPermissions": "rw"
+        },
+        {
+          "PathOnHost": "/dev/infiniband/uverbs3",
+          "PathInContainer": "/dev/infiniband/uverbs3",
+          "CgroupPermissions": "rw"
+        },
+        {
+          "PathOnHost": "/dev/infiniband/rdma_cm",
+          "PathInContainer": "/dev/infiniband/rdma_cm",
+          "CgroupPermissions": "rw"
+        }
+      ],
+      "CapAdd": [
+        "IPC_LOCK"
+      ],
+      "Ulimits": [
+        {
+          "Name": "memlock",
+          "Soft": -1,
+          "Hard": -1
+        }
+      ],
+      "Mounts": [
+        {
+          "Type": "bind",
+          "Source": "@RUNTIME@",
+          "Target": "/opt/glm",
+          "ReadOnly": true
+        },
+        {
+          "Type": "bind",
+          "Source": "@MODEL@",
+          "Target": "/model",
+          "ReadOnly": true
+        },
+        {
+          "Type": "bind",
+          "Source": "@DRAFTER@",
+          "Target": "/drafter",
+          "ReadOnly": true
+        },
+        {
+          "Type": "bind",
+          "Source": "@CACHE@",
+          "Target": "/cache",
+          "ReadOnly": false
+        }
+      ]
+    }
+  },
+  "rank_hosts": [
+    "rank-0",
+    "rank-1",
+    "rank-2",
+    "rank-3"
+  ],
+  "common_environment": {
+    "CUDA_DEVICE_MAX_CONNECTIONS": "8",
+    "CUDA_VISIBLE_DEVICES": "0",
+    "LD_LIBRARY_PATH": "/opt/glm:/usr/local/cuda/lib64:/usr/local/nvidia/lib:/usr/local/nvidia/lib64:/usr/lib/aarch64-linux-gnu",
+    "NCCL_ALGO": "Ring",
+    "NCCL_BUFFSIZE": "1048576",
+    "NCCL_CROSS_NIC": "1",
+    "NCCL_CUMEM_ENABLE": "0",
+    "NCCL_DEBUG": "INFO",
+    "NCCL_DEBUG_FILE": "/dev/stderr",
+    "NCCL_DEBUG_SUBSYS": "INIT,NET,GRAPH",
+    "NCCL_IB_ADDR_FAMILY": "AF_INET",
+    "NCCL_IB_ADDR_RANGE": "@ROCE_ADDRESS_RANGE@",
+    "NCCL_IB_DISABLE": "0",
+    "NCCL_IB_EXTENDED_IPV4_GIDS": "1",
+    "NCCL_IB_FIFO_TC": "192",
+    "NCCL_IB_GID_INDEX": "3",
+    "NCCL_IB_HCA": "=rocep1s0f0:1,roceP2p1s0f0:1",
+    "NCCL_IB_MERGE_NICS": "0",
+    "NCCL_IB_PRESERVE_PCI_DOMAIN": "1",
+    "NCCL_IB_QPS_PER_CONNECTION": "1",
+    "NCCL_IB_ROCE_VERSION_NUM": "2",
+    "NCCL_IB_ROUTE_DIAGNOSTICS": "1",
+    "NCCL_IB_SUBNET_AWARE_ROUTING": "1",
+    "NCCL_IB_SUBNET_PREFIX_LEN": "24",
+    "NCCL_IB_TC": "104",
+    "NCCL_LL128_BUFFSIZE": "262144",
+    "NCCL_MAX_NCHANNELS": "4",
+    "NCCL_MIN_NCHANNELS": "4",
+    "NCCL_NET": "IB",
+    "NCCL_NETDEVS_POLICY": "ALL",
+    "NCCL_NET_PLUGIN": "none",
+    "NCCL_PROTO": "^LL128",
+    "NCCL_SOCKET_IFNAME": "=enP7s7",
+    "NCCL_SWITCHLESS_RING_ONLY": "0",
+    "NVIDIA_DRIVER_CAPABILITIES": "compute,utility",
+    "NVIDIA_VISIBLE_DEVICES": "all",
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1",
+    "SC_POSTER_CPUS": "8",
+    "SC_TF_ENABLE": "0",
+    "SPARKCOMM_TF_SLOTS": "4",
+    "TENSORFOLD_CUDA_MEMORY_LIMIT_GB": "112",
+    "TENSORFOLD_LOG_TIME": "1",
+    "TENSORFOLD_MEMORY_RESERVE_GIB": "8",
+    "TENSORFOLD_WIRE": "spark",
+    "TF_COMPARE_NATIVE_CONTROL": "1",
+    "TF_DS_RDMA_PREFIX": "24",
+    "TF_GLM_1107_CPU": "8",
+    "TF_GLM_1107_KERNELS": "/opt/glm/rdma_gather_deployed.fatbin",
+    "TF_GLM_1107_LIBRARY": "/opt/glm/libtf_candidate.so",
+    "TF_GLM_1107_MAX_KB": "1024",
+    "TF_GLM_CHUNK_SOLO": "2048",
+    "TF_GLM_COMM_1107": "1",
+    "TF_GLM_COPIES": "1",
+    "TF_GLM_COPY_POLICY_75C": "1",
+    "TF_GLM_DENSE_LATENT_SEGMENTS": "1",
+    "TF_GLM_DENSE_ROWS16": "0",
+    "TF_GLM_DENSE_SEGMENTS_IMAGE": "/opt/glm/glm_dense_segments.fatbin",
+    "TF_GLM_DFLASH_ATTN_TP4": "1",
+    "TF_GLM_DFLASH_CONFIDENCE_ONLY": "1",
+    "TF_GLM_DFLASH_EDGE_06": "0",
+    "TF_GLM_DFLASH_GRAPHS": "1",
+    "TF_GLM_DFLASH_INGEST_GRAPHS": "1",
+    "TF_GLM_DFLASH_MLP_TP4": "1",
+    "TF_GLM_DFLASH_NATIVE_GRAPH": "0",
+    "TF_GLM_DRAFT_CONFIDENCE": "0.3",
+    "TF_GLM_FFN_GRAPHS": "1",
+    "TF_GLM_FIRST_COPY_TOKENS": "31",
+    "TF_GLM_GREEDY_BATCH": "1",
+    "TF_GLM_GREEDY_SHARED": "1",
+    "TF_GLM_KDA_DECODE_WIDE": "1",
+    "TF_GLM_L2PF": "1",
+    "TF_GLM_NVME_TIER": "0",
+    "TF_GLM_OVERLAP_PIECES": "3",
+    "TF_GLM_PREFILL_REDUCE": "split",
+    "TF_GLM_PROMPT_PAIR": "1",
+    "TF_GLM_RANK": "0",
+    "TF_GLM_RETAIN_SEQUENCE_SLOTS": "1",
+    "TF_GLM_ROCE_MULTI": "0",
+    "TF_GLM_SAMPLE_BATCH": "1",
+    "TF_GLM_VERIFY_GRAPHS": "0",
+    "TF_GLM_VERIFY_ROWS": "32",
+    "TF_GLM_WORLD": "4",
+    "TF_KV_PAGES": "off",
+    "TF_KV_SHARE": "0",
+    "TF_NCCL_LIB": "/opt/glm/libnccl.so.2",
+    "TF_ROCE": "0",
+    "TF_TP_MASTER": "@MASTER@",
+    "TF_TP_PLAN_TIMEOUT": "30",
+    "TF_GLM_DFLASH_REFERENCE": "1",
+    "TF_GLM_PROMPT_K": "one",
+    "TF_GLM_PROF": "0",
+    "TF_GLM_PROMPT_STEPS": "1",
+    "TF_GLM_PREWARM_SEQUENCE_SLOTS": "1",
+    "TF_GLM_EXL3_FUSED_DECODE_IMAGE": "/opt/glm/glm_exl3_decode_mcg4.fatbin",
+    "TF_GLM_EXL3_FUSED_CONTRACT": "0",
+    "TF_GLM_L2PF_MB": "12",
+    "TF_GLM_L2PF_CTAS": "2",
+    "TF_GLM_L2PF_PACE_GBPS": "150",
+    "TF_GLM_KDA_SEGMENTS_IMAGE": "/opt/glm/glm_kda_segments.fatbin",
+    "TF_GLM_KDA_BATCH_CONTRACT": "0",
+    "TF_GLM_KDA_SEGMENTS": "1",
+    "TF_GLM_KDA_MIN_STREAMS": "2",
+    "TF_GLM_FFN_WARM": "1",
+    "TF_GLM_ADMISSION_US": "4000",
+    "TF_GLM_Q4_MSE_IMAGE": "/opt/glm/glm_q4_mse.fatbin",
+    "TF_GLM_HEAD_FP8_IMAGE": "/opt/glm/glm_head_fp8.fatbin",
+    "TF_GLM_Q4_PROMPT_IMAGE": "/opt/glm/glm_q4_python_prompt.fatbin",
+    "TF_GLM_NVME_MODE": "serial",
+    "TF_GLM_NVME_STAGING_MIB": "192",
+    "TF_GLM_NVME_INDEX_MIB": "64",
+    "TF_GLM_NVME_MIN_CACHE_TOKENS": "137216",
+    "TF_GLM_INDEX_CUDA": "1",
+    "TF_GLM_DSEL": "0",
+    "TF_GLM_EXL3_PROMPT_WHOLE_IMAGE": "/opt/glm/exl3_prompt_whole.fatbin",
+    "TENSORFOLD_PREFILL_SHARE": "0.68",
+    "TF_GLM_KV_LIVE_HALF": "1",
+    "TF_GLM_DFLASH_ONLY_HEAD": "1",
+    "TF_GLM_NVFP4_FACT": "0",
+    "TF_GLM_WARM_TURNS": "0",
+    "CUDA_MODULE_LOADING": "LAZY",
+    "CUDA_BINARY_LOADER_THREAD_COUNT": "8",
+    "NCCL_COMM_ID": "@MASTER@:28664",
+    "TF_GLM_ABSORB_MMA": "0",
+    "TF_GLM_MM": "1"
+  },
+  "profiles": {
+    "exl3-bf16": {
+      "expert_checkpoint": "exl3",
+      "precision": "bf16",
+      "projections": "BF16",
+      "head": "BF16",
+      "environment": {
+        "TF_TP_PLAN_PORT": "56351",
+        "TF_GLM_DENSE_BITS": "16",
+        "TF_GLM_HEAD_BITS": "16",
+        "TF_GLM_EXL3_FUSED_DECODE": "1",
+        "TF_GLM_Q4_AFFINE_MSE": "0",
+        "TF_GLM_Q4_HEAD_FP8": "0",
+        "TF_GLM_Q4_PYTHON_PROMPT": "0",
+        "TF_GLM_Q4_PYTHON_SPLITS": "0",
+        "TF_GLM_NVFP4_FFN_GRAPHS": "0",
+        "TF_GLM_EXL3_PROMPT_WHOLE": "1",
+        "TF_GLM_MM": "1",
+        "TF_GLM_ABSORB_MMA": "1",
+        "TF_GLM_LATENT_MMA_IMAGE": "/opt/glm/glm_latent_mma.fatbin"
+      },
+      "qualification": "CLOSED_FULL959_MODEL_SMALL48_ORIGINAL_MIA63_TP4",
+      "KV_cache": "FP8",
+      "quality_score": {
+        "correct": 881,
+        "total": 959,
+        "text": 725,
+        "coding": 156
+      },
+      "small_panel": {
+        "code": 8,
+        "structured": 5
+      }
+    },
+    "exl3-q4": {
+      "expert_checkpoint": "exl3",
+      "precision": "q4",
+      "projections": "affine-Q4-group64",
+      "head": "BF16",
+      "environment": {
+        "TF_TP_PLAN_PORT": "56451",
+        "TF_GLM_DENSE_BITS": "4",
+        "TF_GLM_HEAD_BITS": "16",
+        "TF_GLM_EXL3_FUSED_DECODE": "1",
+        "TF_GLM_Q4_AFFINE_MSE": "1",
+        "TF_GLM_Q4_HEAD_FP8": "0",
+        "TF_GLM_Q4_PYTHON_PROMPT": "1",
+        "TF_GLM_Q4_PYTHON_SPLITS": "1",
+        "TF_GLM_NVFP4_FFN_GRAPHS": "0",
+        "TF_GLM_EXL3_PROMPT_WHOLE": "1",
+        "TF_GLM_MM": "1",
+        "TF_GLM_ABSORB_MMA": "0"
+      },
+      "qualification": "CLOSED_FULL959_MODEL_SMALL48_ORIGINAL_MIA63_TP4",
+      "KV_cache": "FP8",
+      "quality_score": {
+        "correct": 878,
+        "total": 959,
+        "text": 724,
+        "coding": 154
+      },
+      "small_panel": {
+        "code": 8,
+        "structured": 7
+      }
+    },
+    "exl3-q4-fp8": {
+      "expert_checkpoint": "exl3",
+      "precision": "q4-fp8",
+      "projections": "affine-Q4-group64",
+      "head": "FP8-E4M3-group64-FP32-scales",
+      "environment": {
+        "TF_TP_PLAN_PORT": "56551",
+        "TF_GLM_DENSE_BITS": "4",
+        "TF_GLM_HEAD_BITS": "8",
+        "TF_GLM_EXL3_FUSED_DECODE": "1",
+        "TF_GLM_Q4_AFFINE_MSE": "1",
+        "TF_GLM_Q4_HEAD_FP8": "1",
+        "TF_GLM_Q4_PYTHON_PROMPT": "1",
+        "TF_GLM_Q4_PYTHON_SPLITS": "1",
+        "TF_GLM_NVFP4_FFN_GRAPHS": "0",
+        "TF_GLM_EXL3_PROMPT_WHOLE": "1",
+        "TF_GLM_HEAD_FP8_IMAGE": "/opt/glm/glm_head_fp8_g64.fatbin",
+        "TF_GLM_MM": "1",
+        "TF_GLM_ABSORB_MMA": "0"
+      },
+      "qualification": "CLOSED_FULL959_MODEL_SMALL48_ORIGINAL_MIA63_TP4",
+      "KV_cache": "FP8",
+      "quality_score": {
+        "correct": 882,
+        "total": 959,
+        "text": 729,
+        "coding": 153
+      },
+      "small_panel": {
+        "code": 8,
+        "structured": 7
+      }
+    },
+    "nvfp4-bf16": {
+      "expert_checkpoint": "nvfp4",
+      "precision": "bf16",
+      "projections": "BF16",
+      "head": "BF16",
+      "environment": {
+        "TF_TP_PLAN_PORT": "56651",
+        "TF_GLM_DENSE_BITS": "16",
+        "TF_GLM_HEAD_BITS": "16",
+        "TF_GLM_EXL3_FUSED_DECODE": "0",
+        "TF_GLM_Q4_AFFINE_MSE": "0",
+        "TF_GLM_Q4_HEAD_FP8": "0",
+        "TF_GLM_Q4_PYTHON_PROMPT": "0",
+        "TF_GLM_Q4_PYTHON_SPLITS": "0",
+        "TF_GLM_NVFP4_FFN_GRAPHS": "1",
+        "TF_GLM_EXL3_PROMPT_WHOLE": "0"
+      },
+      "qualification": "CLOSED_FULL959_MODEL_BALANCED_MIA_NATIVE_TP4",
+      "quality_score": {
+        "correct": 877,
+        "total": 959,
+        "text": 721,
+        "coding": 156
+      },
+      "runtime": {
+        "source_commit": "bbc3b2dd12bc8f63b58f7709bc855210afc3ba55",
+        "source_manifest_sha256": "5b1e59fc40b3a633224db82b43314b0b8760fc522967be0f73918b919a4dca91",
+        "native_sha256": "312761ce390edf72d89d72645d6ccfd9a43d151e70f50ecb3f874f17d9a8ebfd",
+        "native_binary": "tensorfold-native-nvfp4"
+      },
+      "NVMe_tier_qualification": false,
+      "historical_source_commit": "41ac49d260d30e648cea6792c0ed2fd5f31e1611"
+    },
+    "exl3-q8": {
+      "expert_checkpoint": "exl3",
+      "precision": "q8",
+      "projections": "symmetric-Q8-group64/F16-scales",
+      "head": "BF16",
+      "environment": {
+        "TF_TP_PLAN_PORT": "56351",
+        "TF_GLM_DENSE_BITS": "8",
+        "TF_GLM_HEAD_BITS": "16",
+        "TF_GLM_EXL3_FUSED_DECODE": "1",
+        "TF_GLM_Q4_AFFINE_MSE": "0",
+        "TF_GLM_Q4_HEAD_FP8": "0",
+        "TF_GLM_Q4_PYTHON_PROMPT": "0",
+        "TF_GLM_Q4_PYTHON_SPLITS": "0",
+        "TF_GLM_NVFP4_FFN_GRAPHS": "0",
+        "TF_GLM_EXL3_PROMPT_WHOLE": "1",
+        "TF_GLM_MM": "1",
+        "TF_GLM_ABSORB_MMA": "1",
+        "TF_GLM_LATENT_MMA_IMAGE": "/opt/glm/glm_latent_mma.fatbin"
+      },
+      "qualification": "CLOSED_FULL959_MODEL_SMALL48_ORIGINAL_MIA63_TP4",
+      "KV_cache": "FP8",
+      "quality_score": {
+        "correct": 878,
+        "total": 959,
+        "text": 724,
+        "coding": 154
+      },
+      "small_panel": {
+        "code": 8,
+        "structured": 5
+      }
+    }
+  },
+  "checkpoints": {
+    "exl3": {
+      "repository": "Mia-AiLab/GLM-5.3-Flash-EXL3-4bpw-TensorFold",
+      "revision": "078455ffe6472f9a52fbc1139f58b9db2881b25c",
+      "expert_format": "EXL3 4.0 bpw"
+    },
+    "nvfp4": {
+      "repository": "LibertAIDAI/GLM-5.3-Flash-NVFP4",
+      "revision": "caca4e6a4ebbd66f159d3d2fc256683fd6e27177",
+      "weights_id": "08214250cb2ebdbb564dc8e97a625220e294799f2ca1ecebe741516f67df3d35",
+      "expert_format": "NVFP4"
+    },
+    "drafter": {
+      "repository": "incoai/GLM-5.3-Flash-DFlash2",
+      "revision": "bf582e4eacc1810f76656d1811693ff6c6737d2a"
+    }
+  },
+  "defaults": {
+    "expert_checkpoint": "exl3",
+    "precision": "bf16",
+    "verify_rows": 32,
+    "context": 196608,
+    "parallel": 8,
+    "prompt_cache_gib": 1.75,
+    "tier": "off",
+    "prefill": "stepped",
+    "warm_turns": false,
+    "learn_gib": 32,
+    "http_port": 18888,
+    "nccl_port": 28664,
+    "plan_port": 28651,
+    "temperature": 0
+  },
+  "qualified_context_scope": {
+    "context": 196608,
+    "parallel": 8,
+    "tp": 4,
+    "GPU": "GB10/SM121",
+    "NVMe_disabled_for_speed": true,
+    "selected_main_profiles": [
+      "exl3-bf16",
+      "exl3-q4",
+      "exl3-q4-fp8",
+      "exl3-q8"
+    ],
+    "main_profile_matrix_status": "ALL_FOUR_COHERENT_PROFILES_CLOSED",
+    "supplementary_retained_profile": "nvfp4-bf16"
+  },
+  "removed_benchmark_environment": [
+    "GLM_CACHE_TEST_DISK",
+    "GLM_CACHE_TEST_RAM_GIB",
+    "GLM_HEAD_PHASE_SECONDS",
+    "TF_LANE_TRACE"
+  ],
+  "runtime_dependency_scope": "One coherent main executable for four EXL3 modes, a separate retained NVFP4 executable, and individually hash-pinned external modules/libraries. No benchmark wrappers, model weight copies or test runners in runtime assets.",
+  "reference_recipe": {
+    "repository": "MiaAI-Lab/GLM-5.3-Flash-DGX-Sparks-1104",
+    "revision": "80be4d6882837d8e0840827ae2aab6124fd48da3",
+    "native_sha256": "0be8ca673d65ccf60d0472e3edc5f80ba99abc4a9e49c555bf2c9611d6d58e00",
+    "unmodified": true,
+    "actual_default": true,
+    "checkpoint": "EXL3",
+    "projections": "Q8",
+    "head": "BF16",
+    "KV_cache": "FP8",
+    "tp": 4,
+    "parallel": 4,
+    "pages": true,
+    "RAM_prompt_cache_GiB": 8,
+    "NVMe": false,
+    "traffic_class": 104,
+    "same_NVFP4_checkpoint_reference": false,
+    "scope": "Original Mia Zig source and runtime; only switched-network/traffic-class104 configuration supplied. Separate controlled BF16 run is a quality reference, not the actual-default speed row."
+  },
+  "profile_specific_runtime_supported": true,
+  "source_tree": "d9d2e0f73a874c2f87445bf033efa30055f7eb5d",
+  "default_reference": "Untouched actual-default Mia Zig 80be4d6; EXL3/Q8/BF16,FP8 KV,P4,pagesON,8GiB RAM prompt cache configured; actual timedhits0."
+}

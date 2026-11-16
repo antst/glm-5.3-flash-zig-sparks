@@ -1,0 +1,27 @@
+{
+  "repository": "ashhart/TensorFold",
+  "commit": "4ddc28cfc876a76b261b76f2a85d543b9ae367eb",
+  "protocol": {
+    "single": {
+      "client": "bench_openai.py",
+      "tokens": 512,
+      "repetitions": 5,
+      "temperatures": [
+        0
+      ]
+    },
+    "concurrent": {
+      "client": "bench_concurrent.py",
+      "tokens": 256,
+      "repetitions": 3,
+      "levels": [
+        1,
+        4,
+        8
+      ],
+      "temperatures": [
+        0
+      ]
+    }
+  }
+}

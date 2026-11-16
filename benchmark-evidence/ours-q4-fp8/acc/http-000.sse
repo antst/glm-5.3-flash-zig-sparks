@@ -1,0 +1,10 @@
+data: {"id": "chatcmpl-bdb4a155804ca5e7cbd3dc30ecbd45fd", "object": "chat.completion.chunk", "created": 1794827914, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"role": "assistant"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-bdb4a155804ca5e7cbd3dc30ecbd45fd", "object": "chat.completion.chunk", "created": 1794827914, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": "ready"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-bdb4a155804ca5e7cbd3dc30ecbd45fd", "object": "chat.completion.chunk", "created": 1794827914, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {}, "finish_reason": "stop"}], "exact_mode": "exact", "tensorfold": {"enable_thinking": false, "reasoning_effort": "none", "engine": "lanes", "tokens_per_second": 39.761968949083204, "seconds": 0.02514966, "prefill_seconds": 0.067590944, "prefill_widths": [11], "prefill_raised": [], "time_to_first_token": 0.068425247, "sampling": "greedy", "drafts": true, "token_sha": "46670d94e046", "token_sha256": "46670d94e0461446692c71a1c46c78742daf344a478d23a0a0cb7d7a6eabc2ea", "min_rows": 2, "prompt": 11, "cached": 0, "ttft_s": 0.0684, "finish": "done", "completion": 2, "prefill_s": 0.0676, "decode_s": 0.0251, "rounds": 1, "drafted": 1, "accepted": 1}, "speculative": {"rounds": 1, "drafted": 1, "accepted": 1, "acceptance_rate": 1.0, "tokens_per_round": 2.0}}
+
+data: {"id": "chatcmpl-bdb4a155804ca5e7cbd3dc30ecbd45fd", "object": "chat.completion.chunk", "created": 1794827914, "model": "GLM-5.3-Flash", "choices": [], "usage": {"prompt_tokens": 11, "completion_tokens": 2, "total_tokens": 13, "prompt_tokens_details": {"cached_tokens": 0}, "completion_tokens_details": {"reasoning_tokens": 0}}}
+
+data: [DONE]
+

@@ -1,0 +1,11 @@
+__pycache__/
+*.py[cod]
+.env
+.env.*
+*.tar
+*.tar.gz
+*.tar.xz
+/results/
+/out/
+CONFIGURATION.json
+rank-*.json

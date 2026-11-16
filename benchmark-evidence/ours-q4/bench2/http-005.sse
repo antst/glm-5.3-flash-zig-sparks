@@ -1,0 +1,14 @@
+data: {"id": "chatcmpl-f854a307f7a757f8609485295c2a6099", "object": "chat.completion.chunk", "created": 1794824773, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"role": "assistant"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-f854a307f7a757f8609485295c2a6099", "object": "chat.completion.chunk", "created": 1794824773, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": "**"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-f854a307f7a757f8609485295c2a6099", "object": "chat.completion.chunk", "created": 1794824773, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": "w25"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-f854a307f7a757f8609485295c2a6099", "object": "chat.completion.chunk", "created": 1794824773, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": "1"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-f854a307f7a757f8609485295c2a6099", "object": "chat.completion.chunk", "created": 1794824773, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {}, "finish_reason": "length"}], "exact_mode": "exact", "tensorfold": {"enable_thinking": false, "reasoning_effort": "none", "engine": "lanes", "tokens_per_second": 46.88196197135275, "seconds": 0.063990496, "prefill_seconds": 8.161601641, "prefill_widths": [1827], "prefill_raised": [], "time_to_first_token": 8.168155603, "sampling": "greedy", "drafts": true, "token_sha": "261b48c60d57", "token_sha256": "261b48c60d5787c8f11946694d2c7ed1fcf35d7bd822488a3c308f2466122a6b", "min_rows": 2, "prompt": 16163, "cached": 0, "ttft_s": 8.1682, "finish": "done", "completion": 4, "prefill_s": 8.1616, "decode_s": 0.064, "rounds": 2, "drafted": 2, "accepted": 2}, "speculative": {"rounds": 2, "drafted": 2, "accepted": 2, "acceptance_rate": 1.0, "tokens_per_round": 2.0}}
+
+data: {"id": "chatcmpl-f854a307f7a757f8609485295c2a6099", "object": "chat.completion.chunk", "created": 1794824773, "model": "GLM-5.3-Flash", "choices": [], "usage": {"prompt_tokens": 16163, "completion_tokens": 4, "total_tokens": 16167, "prompt_tokens_details": {"cached_tokens": 0}, "completion_tokens_details": {"reasoning_tokens": 0}}}
+
+data: [DONE]
+

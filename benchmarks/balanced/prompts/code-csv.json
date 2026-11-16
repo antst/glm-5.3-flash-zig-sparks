@@ -1,0 +1,7 @@
+[
+  {
+    "name": "code-csv",
+    "kind": "chat",
+    "prompt": "Write a Python iterator that reads CSV records in bounded memory and validates required columns. Show error handling and tests for quoted fields and a missing value."
+  }
+]

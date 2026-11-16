@@ -1,0 +1,35 @@
+{
+  "primary": {
+    "source_commit": "1e3ba2cf32cb1dea035e38ad41adffc7ea402c6d",
+    "source_tree": "d9d2e0f73a874c2f87445bf033efa30055f7eb5d",
+    "source_manifest_sha256": "40c907eee2dc870b0744ab1e29e007b816b25c98bb65275f5919b70bc1a2ab0a",
+    "files": 11137,
+    "author": "Anton Starikov <2550573+antst@users.noreply.github.com>",
+    "committer": "Anton Starikov <2550573+antst@users.noreply.github.com>",
+    "signature_verified": true,
+    "signer_fingerprint": "SHA256:Cvk54dwEpcJjiuIiqlXrwstNKnXtDMh8tXDKpdD+LD4",
+    "explicit_commit_tree_S": true,
+    "all_git_blob_bytes_match_manifest": true,
+    "posthoc_source_snapshot_not_bit_identical_rebuild_claim": true
+  },
+  "supplementary_NVFP4": {
+    "source_commit": "bbc3b2dd12bc8f63b58f7709bc855210afc3ba55",
+    "source_tree": "2915105a7936764e99063415283eb21ee5d1870b",
+    "source_manifest_sha256": "5b1e59fc40b3a633224db82b43314b0b8760fc522967be0f73918b919a4dca91",
+    "files": 11130,
+    "author": "Anton Starikov <2550573+antst@users.noreply.github.com>",
+    "committer": "Anton Starikov <2550573+antst@users.noreply.github.com>",
+    "signature_verified": true,
+    "signer_fingerprint": "SHA256:Cvk54dwEpcJjiuIiqlXrwstNKnXtDMh8tXDKpdD+LD4",
+    "explicit_commit_tree_S": true,
+    "all_git_blob_bytes_match_manifest": true,
+    "posthoc_source_snapshot_not_bit_identical_rebuild_claim": true
+  },
+  "primary_native_sha256": "9c877e091f0aa4aa8f489576b9640d346c1d1056987a2a16e9d6605823ad5259",
+  "public_signing_key": "SIGNING-KEY.pub",
+  "allowed_signers": "ALLOWED_SIGNERS",
+  "user_authorized_temporary_Ed25519_key": true,
+  "tested_source_byte_attestation": true,
+  "original_historical_version_strings_retained": true,
+  "historical_unsigned_private_refs_not_published": true
+}

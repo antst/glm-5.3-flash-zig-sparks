@@ -1,0 +1,7 @@
+[
+  {
+    "name": "code-sql",
+    "kind": "chat",
+    "prompt": "Given a sales table with account_id, sold_at, and amount, write SQL for a running total per account and its last three transactions. Explain window frames and ties."
+  }
+]

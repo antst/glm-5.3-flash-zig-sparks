@@ -1,0 +1,22 @@
+[
+  {
+    "name": "code-lru",
+    "kind": "chat",
+    "prompt": "Write Python code for an LRU cache with get and put in O(1). Explain its invariants, provide two edge-case tests, and discuss the time and space costs."
+  },
+  {
+    "name": "prose-wetlands",
+    "kind": "chat",
+    "prompt": "Explain how restoring wetlands changes flood risk and water quality. Describe two mechanisms, one tradeoff, and a practical example for a town council."
+  },
+  {
+    "name": "code-csv",
+    "kind": "chat",
+    "prompt": "Write a Python iterator that reads CSV records in bounded memory and validates required columns. Show error handling and tests for quoted fields and a missing value."
+  },
+  {
+    "name": "prose-grid",
+    "kind": "chat",
+    "prompt": "Compare grid batteries with pumped hydro for balancing renewable electricity. Explain their operating constraints and give an example of when each is useful."
+  }
+]

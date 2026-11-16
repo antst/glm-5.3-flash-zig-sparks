@@ -1,0 +1,14 @@
+data: {"id": "chatcmpl-1cdb7546f0ec0c0ae11bfc0aa495dd70", "object": "chat.completion.chunk", "created": 1794813799, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"role": "assistant"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-1cdb7546f0ec0c0ae11bfc0aa495dd70", "object": "chat.completion.chunk", "created": 1794813799, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": "**"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-1cdb7546f0ec0c0ae11bfc0aa495dd70", "object": "chat.completion.chunk", "created": 1794813799, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": "Random"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-1cdb7546f0ec0c0ae11bfc0aa495dd70", "object": "chat.completion.chunk", "created": 1794813799, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": "**"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-1cdb7546f0ec0c0ae11bfc0aa495dd70", "object": "chat.completion.chunk", "created": 1794813799, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {}, "finish_reason": "stop"}], "exact_mode": "exact", "tensorfold": {"enable_thinking": false, "reasoning_effort": "none", "engine": "lanes", "tokens_per_second": 31.59679956017255, "seconds": 0.094946325, "prefill_seconds": 7.9965216, "prefill_widths": [1587], "prefill_raised": [], "time_to_first_token": 8.000682423, "sampling": "greedy", "drafts": true, "token_sha": "8a49c1cd2118", "token_sha256": "8a49c1cd21186eba611b83ba8480a92c20f21380deb51e592dfb6f5a23f51f37", "min_rows": 2, "prompt": 15923, "cached": 0, "ttft_s": 8.0007, "finish": "done", "completion": 4, "prefill_s": 7.9965, "decode_s": 0.0949, "rounds": 3, "drafted": 3, "accepted": 1}, "speculative": {"rounds": 3, "drafted": 3, "accepted": 1, "acceptance_rate": 0.3333333333333333, "tokens_per_round": 1.3333333333333333}}
+
+data: {"id": "chatcmpl-1cdb7546f0ec0c0ae11bfc0aa495dd70", "object": "chat.completion.chunk", "created": 1794813799, "model": "GLM-5.3-Flash", "choices": [], "usage": {"prompt_tokens": 15923, "completion_tokens": 4, "total_tokens": 15927, "prompt_tokens_details": {"cached_tokens": 0}, "completion_tokens_details": {"reasoning_tokens": 0}}}
+
+data: [DONE]
+

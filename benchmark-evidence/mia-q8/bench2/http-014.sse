@@ -1,0 +1,20 @@
+data: {"id": "chatcmpl-252e050873bd77a86701dc699e105fb1", "object": "chat.completion.chunk", "created": 1794809694, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"role": "assistant"}, "finish_reason": null}]}
+
+: keepalive
+
+: keepalive
+
+data: {"id": "chatcmpl-252e050873bd77a86701dc699e105fb1", "object": "chat.completion.chunk", "created": 1794809694, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": "w"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-252e050873bd77a86701dc699e105fb1", "object": "chat.completion.chunk", "created": 1794809694, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": "9"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-252e050873bd77a86701dc699e105fb1", "object": "chat.completion.chunk", "created": 1794809694, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": "10"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-252e050873bd77a86701dc699e105fb1", "object": "chat.completion.chunk", "created": 1794809694, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": "4"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-252e050873bd77a86701dc699e105fb1", "object": "chat.completion.chunk", "created": 1794809694, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {}, "finish_reason": "length"}], "exact_mode": "exact", "tensorfold": {"enable_thinking": false, "reasoning_effort": "none", "engine": "lanes", "tokens_per_second": 19.258223680377885, "seconds": 0.155777607, "prefill_seconds": 44.008967043, "prefill_widths": [], "prefill_raised": [], "time_to_first_token": 44.061703933, "sampling": "greedy", "drafts": true, "token_sha": "27797867a2da", "token_sha256": "27797867a2dae404bfd417a6e0eb095c6b8906fc69e60e54c89766f1116c79bc", "min_rows": 2}, "speculative": {"rounds": 3, "drafted": 3, "accepted": 1, "acceptance_rate": 0.3333333333333333, "tokens_per_round": 1.3333333333333333}}
+
+data: {"id": "chatcmpl-252e050873bd77a86701dc699e105fb1", "object": "chat.completion.chunk", "created": 1794809694, "model": "GLM-5.3-Flash", "choices": [], "usage": {"prompt_tokens": 50987, "completion_tokens": 4, "total_tokens": 50991, "prompt_tokens_details": {"cached_tokens": 0}, "completion_tokens_details": {"reasoning_tokens": 0}}}
+
+data: [DONE]
+

@@ -1,0 +1,14 @@
+{
+  "created_utc": "2026-11-15T16:45:16.429976+00:00",
+  "files": {
+    "Zig-MIT-LICENSE": "5c537d6853e005298a285d508cff9ac7192cea23576c840d485b2b586a7ff177",
+    "LLVM-libcxx-LICENSE": "539dd7aed86e8a4f12cbdd0e6c50c189c7d74847e4fecc64ce2c6ee3a01da38b",
+    "LLVM-libcxxabi-LICENSE": "e2b35be49f7284a45b7baca8fc7b3ab7440e7902392b2528a457816b5bb2a15c",
+    "LLVM-libunwind-LICENSE": "b5efebcaca80879234098e52d1725e6d9eb8fb96a19fce625d39184b705f7b6d",
+    "xgrammar-LICENSE": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+    "xgrammar-NOTICE": "769c6907073c65801bfcfe3ce1c0e80bf0ae4e124e2769d4f026c038ad583c0f",
+    "dlpack-LICENSE": "3e8f6bc39276a586d60c8c5aaece2ff989262181cf2b3d2a128db58f97a9300c",
+    "picojson-LICENSE.txt": "52a7da16781b4b899382c9ddfcf059235cdee73e2f45cfd7402c2ae9a2e9d28d"
+  },
+  "scope": "Original grammar dependency and compiler/runtime library license texts. No library/source/code changes."
+}

@@ -1,0 +1,42 @@
+[
+  {
+    "name": "code-lru",
+    "kind": "chat",
+    "prompt": "Write Python code for an LRU cache with get and put in O(1). Explain its invariants, provide two edge-case tests, and discuss the time and space costs."
+  },
+  {
+    "name": "prose-wetlands",
+    "kind": "chat",
+    "prompt": "Explain how restoring wetlands changes flood risk and water quality. Describe two mechanisms, one tradeoff, and a practical example for a town council."
+  },
+  {
+    "name": "code-csv",
+    "kind": "chat",
+    "prompt": "Write a Python iterator that reads CSV records in bounded memory and validates required columns. Show error handling and tests for quoted fields and a missing value."
+  },
+  {
+    "name": "prose-grid",
+    "kind": "chat",
+    "prompt": "Compare grid batteries with pumped hydro for balancing renewable electricity. Explain their operating constraints and give an example of when each is useful."
+  },
+  {
+    "name": "code-toposort",
+    "kind": "chat",
+    "prompt": "Implement topological sorting in Python for a directed graph, including cycle detection. Explain the algorithm and demonstrate it on a graph with two valid orderings."
+  },
+  {
+    "name": "prose-vaccines",
+    "kind": "chat",
+    "prompt": "Explain immune memory and how vaccination uses it for a general reader. Distinguish antibodies from memory cells and explain why protection can change over time."
+  },
+  {
+    "name": "code-sql",
+    "kind": "chat",
+    "prompt": "Given a sales table with account_id, sold_at, and amount, write SQL for a running total per account and its last three transactions. Explain window frames and ties."
+  },
+  {
+    "name": "prose-heat",
+    "kind": "chat",
+    "prompt": "Compare trees, reflective roofs, and shaded public spaces as ways to reduce urban heat. Explain tradeoffs and propose a balanced plan for a dense neighborhood."
+  }
+]

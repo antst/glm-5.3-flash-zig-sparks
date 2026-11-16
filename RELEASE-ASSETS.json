@@ -1,0 +1,92 @@
+{
+  "passed": true,
+  "published": false,
+  "source_snapshots": {
+    "tensorfold-glm53-coherent-1e3ba2cf32cb-source.tar.gz": {
+      "source_commit": "1e3ba2cf32cb1dea035e38ad41adffc7ea402c6d",
+      "source_tree": "d9d2e0f73a874c2f87445bf033efa30055f7eb5d",
+      "source_manifest_sha256": "40c907eee2dc870b0744ab1e29e007b816b25c98bb65275f5919b70bc1a2ab0a",
+      "all_archive_member_hashes_checked": true,
+      "files": 11137,
+      "explicit_root_directory_checked": true,
+      "Git_PAX_commit_identity_checked": true,
+      "preexisting_complete_archive_adopted": true,
+      "archive_sha256": "74dd2322273658e0e93d1e6c8560cb0ca8c08ae27cc31400482bf13cc35bb3ed"
+    },
+    "tensorfold-glm53-nvfp4-retained-bbc3b2dd12bc-source.tar.gz": {
+      "source_commit": "bbc3b2dd12bc8f63b58f7709bc855210afc3ba55",
+      "source_tree": "2915105a7936764e99063415283eb21ee5d1870b",
+      "source_manifest_sha256": "5b1e59fc40b3a633224db82b43314b0b8760fc522967be0f73918b919a4dca91",
+      "all_archive_member_hashes_checked": true,
+      "files": 11130,
+      "explicit_root_directory_checked": true,
+      "Git_PAX_commit_identity_checked": true,
+      "preexisting_complete_archive_adopted": false,
+      "archive_sha256": "7774eea882eceabe25308d934a173cdb4a86095bbe0095221acf0ff193106d94"
+    }
+  },
+  "resumed_partial_v5_assembly": true,
+  "source_archive_root_directory_validated": true,
+  "runtime_image": "sha256:567d5c7ec9cb19d5b91e8ed8df197d68cb8322f4c569453c00dd5a12a924028a",
+  "assets": [
+    {
+      "name": "borrowed-native-bridge-source.tar",
+      "bytes": 645120,
+      "sha256": "b8f34692ef6f013ade8a3f90b5fe8c444cc96fe92ce03f46c2930a6a9ff924ee"
+    },
+    {
+      "name": "glm53-arm64-runtime-image.tar",
+      "bytes": 49604096,
+      "sha256": "8f79b3e8cf5f5a2ccdae7a1064e8c91aaf77c319b357b83eba78f93c06931fbe"
+    },
+    {
+      "name": "glm53-embedded-images146.tar.gz",
+      "bytes": 19263321,
+      "sha256": "531cbc1e948d92704b6f412b440bd79db510812c0197fe30902664af2057614b"
+    },
+    {
+      "name": "glm53-external-module-sources.tar.gz",
+      "bytes": 96037,
+      "sha256": "66c21ef646de984404d86fb69349cfbe258b69b947fae101bc9b921f44e90b55"
+    },
+    {
+      "name": "glm53-runtime-corresponding-sources.tar",
+      "bytes": 360591360,
+      "sha256": "e0b60e4b77738b65db4c391408f0e0209d52ea20540cf2af16ebdd29e242df99"
+    },
+    {
+      "name": "glm53-tp4-1.2.12-runtime.tar.gz",
+      "bytes": 82492297,
+      "sha256": "10a4c9914fd2e8b0807a67efdb447f5317d615ae1b29906ba04829824195cb7c"
+    },
+    {
+      "name": "nccl-2.32.3-dual-pci-source.tar",
+      "bytes": 19773440,
+      "sha256": "e856678a5f16ff479715761430bfaddae54fec5156cfc1c53852b0b9cc51465f"
+    },
+    {
+      "name": "runtime-overlay.tar",
+      "bytes": 29378560,
+      "sha256": "08f7b7f93f8441fcc4b4f93af9e35b72e8133c14ebeb8c469731c2acba305c48"
+    },
+    {
+      "name": "tensorfold-glm53-coherent-1e3ba2cf32cb-source.tar.gz",
+      "bytes": 36397840,
+      "sha256": "74dd2322273658e0e93d1e6c8560cb0ca8c08ae27cc31400482bf13cc35bb3ed"
+    },
+    {
+      "name": "tensorfold-glm53-nvfp4-retained-bbc3b2dd12bc-source.tar.gz",
+      "bytes": 36389518,
+      "sha256": "7774eea882eceabe25308d934a173cdb4a86095bbe0095221acf0ff193106d94"
+    }
+  ],
+  "all_files_rehashed": true,
+  "all_source_and_image_members_rehashed": true,
+  "native_executable_modes_checked": true,
+  "no_hardlinks": true,
+  "runtime_preassembly_proof_sha256": "8c7ad3f8f0ef07b08a72c57f3b195fbd2d4709271711721f5c3d8017a756dea8",
+  "runtime_preassembled_while_source_signing_pending": true,
+  "no_model_weights_bundled": true,
+  "no_GPU_or_ARM_execution": true,
+  "original_services_restoration_claim": false
+}

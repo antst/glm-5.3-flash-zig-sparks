@@ -1,0 +1,102 @@
+{
+  "passed": true,
+  "profiles": [
+    {
+      "id": "ours-bf16",
+      "requests": 63,
+      "levels": {
+        "4": {
+          "legacy": 128.33600657709354,
+          "common": 124.15191440543634
+        },
+        "6": {
+          "legacy": 157.14060806851654,
+          "common": 147.6938331027813
+        },
+        "8": {
+          "legacy": 181.46607213182216,
+          "common": 170.43147652877357
+        }
+      }
+    },
+    {
+      "id": "ours-q4",
+      "requests": 63,
+      "levels": {
+        "4": {
+          "legacy": 153.96927361815003,
+          "common": 149.04417447908412
+        },
+        "6": {
+          "legacy": 185.36610858863392,
+          "common": 175.30071156482012
+        },
+        "8": {
+          "legacy": 201.50014512885923,
+          "common": 190.1516345026867
+        }
+      }
+    },
+    {
+      "id": "ours-q4-fp8",
+      "requests": 63,
+      "levels": {
+        "4": {
+          "legacy": 154.51864840799487,
+          "common": 148.15412981769748
+        },
+        "6": {
+          "legacy": 187.54420143161678,
+          "common": 175.80039907946923
+        },
+        "8": {
+          "legacy": 214.27083399872066,
+          "common": 200.52783532230762
+        }
+      }
+    },
+    {
+      "id": "ours-q8",
+      "requests": 63,
+      "levels": {
+        "4": {
+          "legacy": 149.3207423218493,
+          "common": 145.10644278553156
+        },
+        "6": {
+          "legacy": 173.35590397501107,
+          "common": 163.80436938523576
+        },
+        "8": {
+          "legacy": 200.20208765321215,
+          "common": 186.18195610781447
+        }
+      }
+    },
+    {
+      "id": "mia-q8",
+      "requests": 63,
+      "levels": {
+        "4": {
+          "legacy": 137.0285016935763,
+          "common": 131.6617778277298
+        },
+        "6": {
+          "legacy": 228.40712113002905,
+          "common": 117.64048549920992
+        },
+        "8": {
+          "legacy": 267.3048520688476,
+          "common": 129.83385096564
+        }
+      }
+    }
+  ],
+  "requests": 315,
+  "original_body_and_SSE_hashes_verified": true,
+  "source_client_hashes_verified": true,
+  "relative_path_translation_only": true,
+  "both_metrics_reconstructed_from_raw_SSE": true,
+  "no_endpoint_build_or_model_operations": true,
+  "all_four_main_rows_current_coherent_build": true
+}

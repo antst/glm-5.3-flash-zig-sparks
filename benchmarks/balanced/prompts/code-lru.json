@@ -1,0 +1,7 @@
+[
+  {
+    "name": "code-lru",
+    "kind": "chat",
+    "prompt": "Write Python code for an LRU cache with get and put in O(1). Explain its invariants, provide two edge-case tests, and discuss the time and space costs."
+  }
+]

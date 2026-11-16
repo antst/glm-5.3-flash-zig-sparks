@@ -1,0 +1,81 @@
+{
+  "scope": "Frozen 795 diagnostic text tasks plus164legacy chatHumanEval tasks. These are complete chosen959 fixtures, not a leaderboard or modernagentcoding benchmark. The inherited selection note in the private fixture is not used to infer the executed task count.",
+  "fixture_sha256": "7e589b839be4065b405c77df782707c6407adf23cc5cd54d6ab7fad0384bb0eb",
+  "tasks": 959,
+  "categories": {
+    "qa": 150,
+    "reason": 40,
+    "arith": 40,
+    "track": 40,
+    "gsm8k": 200,
+    "mmlu": 285,
+    "follow": 40,
+    "legacy_humaneval_chat": 164
+  },
+  "max_tokens_distribution": {
+    "64": 150,
+    "1024": 325,
+    "4096": 164,
+    "8192": 240,
+    "12288": 80
+  },
+  "thinking_requests": {
+    "false": 639,
+    "true": 320
+  },
+  "request": {
+    "temperature": 0,
+    "top_p": 1,
+    "seed": 1234,
+    "stream": true,
+    "include_usage": true,
+    "thinking": "Per-task frozen flag, unchanged across recipes"
+  },
+  "scorer_sources": [
+    {
+      "filename": "qualitySuite.js",
+      "sha256": "b632160c569a78c020cdda1705dbcac5c679134dfbc7357b0968f22402b35e4b"
+    },
+    {
+      "filename": "qualityBench.js",
+      "sha256": "12c931c3d50a4839443c854cf75d347de42ebeed90f6941fa5319c4994a01110"
+    },
+    {
+      "filename": "contextFit.js",
+      "sha256": "e62f92a55abfb8595f4da0fd894c3f824d9ba8765dffc1b8f3597b829e56d652"
+    },
+    {
+      "filename": "score_humaneval.py",
+      "sha256": "ca8be2c84f06660768e314697c6968ee77b51dbfe14d931f87c01ba755e3a9c1"
+    },
+    {
+      "filename": "score_humaneval.py",
+      "sha256": "ca8be2c84f06660768e314697c6968ee77b51dbfe14d931f87c01ba755e3a9c1"
+    },
+    {
+      "filename": "HumanEval.jsonl.gz",
+      "sha256": "b796127e635a67f93fb35c04f4cb03cf06f38c8072ee7cee8833d7bee06979ef"
+    }
+  ],
+  "stored_checkpoint_and_precision_results_reported_separately": true,
+  "cross_precision_output_identity_claim": false,
+  "speed_measurement": false,
+  "independent_validation": "Saved request bodies, native token hashes, text/reasoning/finish/usage from SSE;795textrescore and164codingpass/fail+solutionhash rescore. Timed-out/truncated/wrong answers retained.",
+  "small_panel": {
+    "served_requests": 24,
+    "raw_target_only_requests": 24,
+    "scored_code": 8,
+    "scored_structured": 8,
+    "unscored_prose": 8,
+    "quantized_selection_floor": {
+      "code": 8,
+      "structured": 7
+    },
+    "within_mode_native_ID_text_full_usage_checks": true
+  },
+  "limits": [
+    "One deterministic response per task.",
+    "Prompt-cache speed/reliability and long-context same-engine parity use separate tests.",
+    "Aggregate equal scores do not mean identical answers."
+  ]
+}

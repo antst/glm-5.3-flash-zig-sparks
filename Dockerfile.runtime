@@ -1,0 +1,17 @@
+# The ARM64 manifest is pinned independently of the mutable Ubuntu tag.
+FROM ubuntu:24.04@sha256:c92376659a7f14cc1f51615d73c9f4b7d8e18d59f370e02b4ed683ab4485c66c
+ENV DEBIAN_FRONTEND=noninteractive LC_ALL=C.UTF-8
+# Python is used by finite qualification/launch helpers; inference is the native Zig executable.
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends python3 ca-certificates \
+ && rm -rf /var/lib/apt/lists/*
+# Exact libc/C++/RDMA runtime files and their copyright notices, from the measured image.
+ADD runtime-overlay.tar /
+COPY runtime-overlay-MANIFEST.json check_runtime_overlay.py /opt/glm-runtime/
+RUN python3 /opt/glm-runtime/check_runtime_overlay.py /opt/glm-runtime/runtime-overlay-MANIFEST.json
+ENV NVIDIA_VISIBLE_DEVICES=all NVIDIA_DRIVER_CAPABILITIES=compute,utility
+WORKDIR /opt/glm
+LABEL org.opencontainers.image.title="GLM Zig ARM64 runtime" \
+      glm.runtime.overlay="08f7b7f93f8441fcc4b4f93af9e35b72e8133c14ebeb8c469731c2acba305c48"
+# The recipe supplies hash-checked native binaries and optional modules at this path.
+ENTRYPOINT ["/opt/glm/tensorfold-native"]

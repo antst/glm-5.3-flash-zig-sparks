@@ -1,0 +1,23 @@
+{
+  "acc.py": {
+    "blob_sha": "3b031b029d60ee30bd142baf5eb460ab82f02d2a",
+    "repository": "MiaAI-Lab/GLM-5.3-Flash-DGX-Sparks-1104",
+    "ref": "80be4d6882837d8e0840827ae2aab6124fd48da3",
+    "path": "docs/speed/harness/acc.py",
+    "url": "https://github.com/MiaAI-Lab/GLM-5.3-Flash-DGX-Sparks-1104/blob/80be4d6882837d8e0840827ae2aab6124fd48da3/docs/speed/harness/acc.py"
+  },
+  "acc8.py": {
+    "blob_sha": "f08a903bd31375af47ae38a44f97faec4337b4cd",
+    "repository": "MiaAI-Lab/GLM-5.3-Flash-DGX-Sparks-1104",
+    "ref": "80be4d6882837d8e0840827ae2aab6124fd48da3",
+    "path": "docs/speed/harness/acc8.py",
+    "url": "https://github.com/MiaAI-Lab/GLM-5.3-Flash-DGX-Sparks-1104/blob/80be4d6882837d8e0840827ae2aab6124fd48da3/docs/speed/harness/acc8.py"
+  },
+  "bench2.py": {
+    "blob_sha": "d1c4041bd85a23ac4637eaf8f6f028f130582def",
+    "repository": "MiaAI-Lab/GLM-5.3-Flash-DGX-Sparks-1104",
+    "ref": "80be4d6882837d8e0840827ae2aab6124fd48da3",
+    "path": "docs/speed/harness/bench2.py",
+    "url": "https://github.com/MiaAI-Lab/GLM-5.3-Flash-DGX-Sparks-1104/blob/80be4d6882837d8e0840827ae2aab6124fd48da3/docs/speed/harness/bench2.py"
+  }
+}

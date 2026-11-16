@@ -1,0 +1,7 @@
+[
+  {
+    "name": "code-toposort",
+    "kind": "chat",
+    "prompt": "Implement topological sorting in Python for a directed graph, including cycle detection. Explain the algorithm and demonstrate it on a graph with two valid orderings."
+  }
+]

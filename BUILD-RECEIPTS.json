@@ -1,0 +1,417 @@
+{
+  "source_tree": "d9d2e0f73a874c2f87445bf033efa30055f7eb5d",
+  "source_manifest_sha256": "40c907eee2dc870b0744ab1e29e007b816b25c98bb65275f5919b70bc1a2ab0a",
+  "native": {
+    "status": "passed",
+    "kind": "native",
+    "argv": [
+      "/home/antst/.cache/ds1017-online-update-20261019T085344/optimization-program-20261020-v1/local-toolchain-v1/unpacked/zig-x86_64-linux-0.17.0/zig",
+      "build",
+      "native",
+      "--cache-dir",
+      "/home/antst/glm-53-flash-zig-tp4-20261108/variants/fresh-live-state64/native-cache",
+      "--prefix",
+      "/home/antst/glm-53-flash-zig-tp4-20261108/variants/release-q8-tiered-mma64/local-native-20261116T055127Z/out",
+      "-j1",
+      "--summary",
+      "all",
+      "-Dtarget=aarch64-linux-gnu.2.28",
+      "-Doptimize=fast",
+      "-Dversion=1.2.12",
+      "-Dstrip=true",
+      "-Dfatbins=/home/antst/glm-53-flash-zig-tp4-20261108/variants/fresh-prompt-whole64/image-set",
+      "-Dsm=121"
+    ],
+    "compiler": {
+      "path": "/home/antst/.cache/ds1017-online-update-20261019T085344/optimization-program-20261020-v1/local-toolchain-v1/unpacked/zig-x86_64-linux-0.17.0/zig",
+      "version": "0.17.0",
+      "sha256": "7c61539af19fa4082c94848f1c2b57b89e76dc6cfd5bd4c57764c3caf8f82272"
+    },
+    "CPU_affinity": [
+      2,
+      5
+    ],
+    "GPU_or_ARM_executed": false,
+    "source_manifest_before_sha256": "40c907eee2dc870b0744ab1e29e007b816b25c98bb65275f5919b70bc1a2ab0a",
+    "pid": 4107948,
+    "output": {
+      "path": "/home/antst/glm-53-flash-zig-tp4-20261108/variants/release-q8-tiered-mma64/local-native-20261116T055127Z/out/native/bin/tensorfold-native",
+      "sha256": "9c877e091f0aa4aa8f489576b9640d346c1d1056987a2a16e9d6605823ad5259",
+      "bytes": 51273480,
+      "ELF_machine": "AArch64",
+      "executed_on_management": false
+    },
+    "returncode": 0,
+    "seconds": 268.4003908857703
+  },
+  "runner": {
+    "status": "passed",
+    "kind": "runner",
+    "argv": [
+      "/home/antst/.cache/ds1017-online-update-20261019T085344/optimization-program-20261020-v1/local-toolchain-v1/unpacked/zig-x86_64-linux-0.17.0/zig",
+      "build",
+      "cuda-test-runner",
+      "--cache-dir",
+      "/home/antst/glm-53-flash-zig-tp4-20261108/variants/fresh-live-state64/native-cache",
+      "--prefix",
+      "/home/antst/glm-53-flash-zig-tp4-20261108/variants/release-q8-tiered-mma64/local-runner-20261116T055557Z/out",
+      "-j1",
+      "--summary",
+      "all",
+      "-Dtarget=aarch64-linux-gnu.2.28",
+      "-Doptimize=fast",
+      "-Dversion=1.2.12",
+      "-Dstrip=true",
+      "-Dfatbins=/home/antst/glm-53-flash-zig-tp4-20261108/variants/fresh-prompt-whole64/image-set",
+      "-Dsm=121"
+    ],
+    "compiler": {
+      "path": "/home/antst/.cache/ds1017-online-update-20261019T085344/optimization-program-20261020-v1/local-toolchain-v1/unpacked/zig-x86_64-linux-0.17.0/zig",
+      "version": "0.17.0",
+      "sha256": "7c61539af19fa4082c94848f1c2b57b89e76dc6cfd5bd4c57764c3caf8f82272"
+    },
+    "CPU_affinity": [
+      2,
+      5
+    ],
+    "GPU_or_ARM_executed": false,
+    "source_manifest_before_sha256": "40c907eee2dc870b0744ab1e29e007b816b25c98bb65275f5919b70bc1a2ab0a",
+    "pid": 4117347,
+    "output": {
+      "path": "/home/antst/glm-53-flash-zig-tp4-20261108/variants/release-q8-tiered-mma64/local-runner-20261116T055557Z/out/bin/tf-cuda-test",
+      "sha256": "76abf350f61c2f4a424f97ec4dabc490859da8e2557af892360af6661913a0df",
+      "bytes": 96806816,
+      "ELF_machine": "AArch64",
+      "executed_on_management": false
+    },
+    "returncode": 0,
+    "seconds": 319.25306617841125
+  },
+  "optional_modules": {
+    "FP8 group64 head": {
+      "original_build_receipt_sha256": "6429558545266562849d04264dbc680f40083365968b1c52b67ee28a3a937e92",
+      "portable_argv": [
+        "nvcc",
+        "-ccbin",
+        "/usr/bin/x86_64-linux-gnu-g++-13",
+        "-O3",
+        "-std=c++17",
+        "--fmad=false",
+        "--threads",
+        "1",
+        "--fatbin",
+        "-gencode",
+        "arch=compute_80,code=sm_80",
+        "-gencode",
+        "arch=compute_86,code=sm_86",
+        "-gencode",
+        "arch=compute_89,code=sm_89",
+        "-gencode",
+        "arch=compute_120,code=sm_120",
+        "-gencode",
+        "arch=compute_121,code=sm_121",
+        "-Xptxas=-v",
+        "zig/kernels/cuda/glm_head_fp8.cu",
+        "-o",
+        "../glm_head_fp8_g64.fatbin"
+      ],
+      "source_sha256": "b5f7528ad5b950544249a48d99983345f3c79174131c270dff6f5e968b5db21a",
+      "compiler": {
+        "path": "/home/antst/glm-53-flash-zig-tp4-20261108/variants/bf16-attention/inputs/cuda-local/root/usr/local/cuda-13.0/bin/nvcc",
+        "sha256": "b8e2347d9d7fcadf8812a27324d515de99d033d3e48611811ece7e66d7895f8a",
+        "components": [
+          {
+            "path": "/home/antst/glm-53-flash-zig-tp4-20261108/variants/bf16-attention/inputs/cuda-local/root/usr/local/cuda-13.0/bin/ptxas",
+            "sha256": "daba837a68265cae38c832d13399b61dab811891de9b8914defddef143b849f2"
+          },
+          {
+            "path": "/home/antst/glm-53-flash-zig-tp4-20261108/variants/bf16-attention/inputs/cuda-local/root/usr/local/cuda-13.0/bin/fatbinary",
+            "sha256": "0d2d733d07ae4edbc8ebd3dcf4e25ed4eeffb775c64847f4d1ab9254b31ec7d6"
+          },
+          {
+            "path": "/home/antst/glm-53-flash-zig-tp4-20261108/variants/bf16-attention/inputs/cuda-local/root/usr/local/cuda-13.0/bin/nvlink",
+            "sha256": "b67c653b9b70bce76b55dded170618bea82f58bdac821bca7c6a7829a4d2b125"
+          },
+          {
+            "path": "/home/antst/glm-53-flash-zig-tp4-20261108/variants/bf16-attention/inputs/cuda-local/root/usr/local/cuda-13.0/bin/cuobjdump",
+            "sha256": "1763b5367167e73939c853f6c71bdec7be0ea4a1cfb6625e4c81d7c7a1f801ae"
+          },
+          {
+            "path": "/home/antst/glm-53-flash-zig-tp4-20261108/variants/bf16-attention/inputs/cuda-local/root/usr/local/cuda-13.0/nvvm/bin/cicc",
+            "sha256": "475a9486f1ccc9408323cc75ea2fa11599f08e9dee137bb7ac7150ce5208c425"
+          },
+          {
+            "path": "/usr/bin/x86_64-linux-gnu-g++-13",
+            "sha256": "1353e9bdd29a7295c7226bf6c63abccce056d8cac31f112e5cdbecc3f28c2769"
+          },
+          {
+            "path": "/home/antst/glm-53-flash-zig-tp4-20261108/variants/bf16-attention/inputs/cuda-local/root/usr/local/cuda-13.0/nvvm/libdevice/libdevice.10.bc",
+            "sha256": "91334d6e12748f6cb5bbf0a1cd965a56bcd93dc4f496d2e5c5f8c6e523094356"
+          }
+        ]
+      },
+      "expected_module_sha256": "0e3d6e28130225f7c7fb633d23b27f20f347e23b017599793d8e6d4e1a08a0ad"
+    },
+    "BF16 latent MMA": {
+      "original_build_receipt_sha256": "04eaa31e9f030329a50958ec27196b1ee23505dc951cb846def5e01c9257af4a",
+      "portable_argv": [
+        "nvcc",
+        "-ccbin",
+        "/usr/bin/x86_64-linux-gnu-g++-13",
+        "-O3",
+        "-std=c++17",
+        "--threads",
+        "1",
+        "--fatbin",
+        "-gencode",
+        "arch=compute_80,code=sm_80",
+        "-gencode",
+        "arch=compute_86,code=sm_86",
+        "-gencode",
+        "arch=compute_89,code=sm_89",
+        "-gencode",
+        "arch=compute_120,code=sm_120",
+        "-gencode",
+        "arch=compute_121,code=sm_121",
+        "-Xptxas=-v",
+        "zig/kernels/cuda/glm_latent_mma.cu",
+        "-o",
+        "../glm_latent_mma.fatbin"
+      ],
+      "source_sha256": "b2406e60bd61479fd7191f7f099f2257904b797bc1431ab3c5cd3a76e9592b6a",
+      "compiler": {
+        "path": "/home/antst/glm-53-flash-zig-tp4-20261108/variants/bf16-attention/inputs/cuda-local/root/usr/local/cuda-13.0/bin/nvcc",
+        "sha256": "b8e2347d9d7fcadf8812a27324d515de99d033d3e48611811ece7e66d7895f8a",
+        "components": [
+          {
+            "path": "/home/antst/glm-53-flash-zig-tp4-20261108/variants/bf16-attention/inputs/cuda-local/root/usr/local/cuda-13.0/bin/ptxas",
+            "sha256": "daba837a68265cae38c832d13399b61dab811891de9b8914defddef143b849f2"
+          },
+          {
+            "path": "/home/antst/glm-53-flash-zig-tp4-20261108/variants/bf16-attention/inputs/cuda-local/root/usr/local/cuda-13.0/bin/fatbinary",
+            "sha256": "0d2d733d07ae4edbc8ebd3dcf4e25ed4eeffb775c64847f4d1ab9254b31ec7d6"
+          },
+          {
+            "path": "/home/antst/glm-53-flash-zig-tp4-20261108/variants/bf16-attention/inputs/cuda-local/root/usr/local/cuda-13.0/bin/nvlink",
+            "sha256": "b67c653b9b70bce76b55dded170618bea82f58bdac821bca7c6a7829a4d2b125"
+          },
+          {
+            "path": "/home/antst/glm-53-flash-zig-tp4-20261108/variants/bf16-attention/inputs/cuda-local/root/usr/local/cuda-13.0/bin/cuobjdump",
+            "sha256": "1763b5367167e73939c853f6c71bdec7be0ea4a1cfb6625e4c81d7c7a1f801ae"
+          },
+          {
+            "path": "/home/antst/glm-53-flash-zig-tp4-20261108/variants/bf16-attention/inputs/cuda-local/root/usr/local/cuda-13.0/nvvm/bin/cicc",
+            "sha256": "475a9486f1ccc9408323cc75ea2fa11599f08e9dee137bb7ac7150ce5208c425"
+          },
+          {
+            "path": "/usr/bin/x86_64-linux-gnu-g++-13",
+            "sha256": "1353e9bdd29a7295c7226bf6c63abccce056d8cac31f112e5cdbecc3f28c2769"
+          },
+          {
+            "path": "/home/antst/glm-53-flash-zig-tp4-20261108/variants/bf16-attention/inputs/cuda-local/root/usr/local/cuda-13.0/nvvm/libdevice/libdevice.10.bc",
+            "sha256": "91334d6e12748f6cb5bbf0a1cd965a56bcd93dc4f496d2e5c5f8c6e523094356"
+          }
+        ]
+      },
+      "expected_module_sha256": "34e82c3d34080e41408fa4e2de24d229ffcbce55d3ad24bae953ffeeb9608650"
+    }
+  },
+  "private_build_paths_are_historical_receipts": true,
+  "rebuild_identity_not_claimed": true,
+  "published": false,
+  "live_upstream_audit_at_release_preparation": {
+    "observed_utc": "2026-11-16 11:11:52 UTC",
+    "actual_network_git_ls_remote": true,
+    "actual_network_fetch": true,
+    "Mia_HEAD": "80be4d6882837d8e0840827ae2aab6124fd48da3",
+    "TF_HEAD": "08f1de5941cc5a3abffb076d569db6bb33d5ac7a",
+    "previous_TF_HEAD": "e7e24243d63e232b05d4892df4fa01c9a2d6c70b",
+    "commits_audited": 20,
+    "changed_files_audited": 59,
+    "changed_GLM_family_or_CUDA_kernels_or_fabric_files": 0,
+    "important_other_changes": [
+      {
+        "kind": "RAM cache eviction / long-context agent reuse",
+        "scope": "New experimental TF_CACHE_EVICT=decayed_resume. Bounded2-bit per-entry resume credit and bounded carry metadata; victim order only. Existing main order retained when unset/main; paged stores own policy.",
+        "decision": "Record as explicit follow-up candidate, not an enabled release feature. Upstream evidence is synthetic host agent traces, not actual GLM tier pressure. Requires actual long-context off/seed/reopen/pressure/CRC/cancel parity and memory accounting before selection. Current frozen qualified release retains its tested cache policy."
+      },
+      {
+        "kind": "TP2 graph and single-row gather layout",
+        "scope": "FlashNext family only: head/group/rollback compute graphs no longer suppressed solely by TP; one-row concat layout avoids redundant copies.",
+        "decision": "No blind family substitution: our DFlash already keeps five collective gaps outside compute graphs; GLM FP32 fold cannot be replaced by FlashNext concat shortcut without arithmetic/layout proof."
+      },
+      {
+        "kind": "Shared expert overlap",
+        "scope": "Nemotron Bolt shared expert on side stream with separate activation/output buffers and event join.",
+        "decision": "Record for controlled later overlap experiment. It needs isolated GLM scratch, preserved sum order and graph/lifetime gates; no measuredGLM speed claim or frozen source mutation."
+      },
+      {
+        "kind": "Qwen scratch at load, launch arguments and CI host shards",
+        "scope": "Qwen3.5 engine/host embedding scratch rebasing and tests; no changed GLM/kernel/transport implementation.",
+        "decision": "Not transplanted into a different family. Current GLM preallocates shared buffers and has measured sequence retention; no corresponding fix established in this delta."
+      }
+    ],
+    "source_audit_manifest_sha256": "890c095c6955829f5f54b320e3cd281fbed4d281c5164990e2a6f563da3f665a",
+    "no_change_to_frozen_measured_source_or_runtime": true,
+    "not_all_new_upstream_experiments_are_selected": true
+  },
+  "final_profile_thermal_receipts": {
+    "bf16": {
+      "max_reported_GPU_C": 77.0,
+      "per_rank_samples": {
+        "spark1": 679,
+        "spark4": 679,
+        "spark3": 679,
+        "spark2": 680
+      },
+      "driver_thermal_counter_deltas": {
+        "spark1": {
+          "clocks_event_reasons_counters.hw_thermal_slowdown": 0.0,
+          "clocks_event_reasons_counters.sw_thermal_slowdown": 0.0
+        },
+        "spark4": {
+          "clocks_event_reasons_counters.hw_thermal_slowdown": 0.0,
+          "clocks_event_reasons_counters.sw_thermal_slowdown": 0.0
+        },
+        "spark3": {
+          "clocks_event_reasons_counters.hw_thermal_slowdown": 0.0,
+          "clocks_event_reasons_counters.sw_thermal_slowdown": 0.0
+        },
+        "spark2": {
+          "clocks_event_reasons_counters.hw_thermal_slowdown": 0.0,
+          "clocks_event_reasons_counters.sw_thermal_slowdown": 0.0
+        }
+      },
+      "whole_container_lifetime_only": true,
+      "receipt_sha256": "77a60072652081a1d5e0ed8eaa3338f7d7d2b329fb7de8ce564cb3a4d1e3f42b"
+    },
+    "q4": {
+      "max_reported_GPU_C": 77.0,
+      "per_rank_samples": {
+        "spark1": 582,
+        "spark4": 582,
+        "spark3": 582,
+        "spark2": 583
+      },
+      "driver_thermal_counter_deltas": {
+        "spark1": {
+          "clocks_event_reasons_counters.hw_thermal_slowdown": 0.0,
+          "clocks_event_reasons_counters.sw_thermal_slowdown": 0.0
+        },
+        "spark4": {
+          "clocks_event_reasons_counters.hw_thermal_slowdown": 0.0,
+          "clocks_event_reasons_counters.sw_thermal_slowdown": 0.0
+        },
+        "spark3": {
+          "clocks_event_reasons_counters.hw_thermal_slowdown": 0.0,
+          "clocks_event_reasons_counters.sw_thermal_slowdown": 0.0
+        },
+        "spark2": {
+          "clocks_event_reasons_counters.hw_thermal_slowdown": 0.0,
+          "clocks_event_reasons_counters.sw_thermal_slowdown": 0.0
+        }
+      },
+      "whole_container_lifetime_only": true,
+      "receipt_sha256": "a1c4c41082a34dde27274543194f681e99cf510341ac78f04126fd43b65979f3"
+    },
+    "q4-fp8": {
+      "max_reported_GPU_C": 79.0,
+      "per_rank_samples": {
+        "spark1": 585,
+        "spark4": 585,
+        "spark3": 585,
+        "spark2": 585
+      },
+      "driver_thermal_counter_deltas": {
+        "spark1": {
+          "clocks_event_reasons_counters.hw_thermal_slowdown": 0.0,
+          "clocks_event_reasons_counters.sw_thermal_slowdown": 0.0
+        },
+        "spark4": {
+          "clocks_event_reasons_counters.hw_thermal_slowdown": 0.0,
+          "clocks_event_reasons_counters.sw_thermal_slowdown": 0.0
+        },
+        "spark3": {
+          "clocks_event_reasons_counters.hw_thermal_slowdown": 0.0,
+          "clocks_event_reasons_counters.sw_thermal_slowdown": 0.0
+        },
+        "spark2": {
+          "clocks_event_reasons_counters.hw_thermal_slowdown": 0.0,
+          "clocks_event_reasons_counters.sw_thermal_slowdown": 0.0
+        }
+      },
+      "whole_container_lifetime_only": true,
+      "receipt_sha256": "16adc92b2ea5aa80be9d25a1868099d0e9779bd7aff6cd20fff666c87b134c75"
+    },
+    "q8": {
+      "max_reported_GPU_C": 83.0,
+      "per_rank_samples": {
+        "spark1": 581,
+        "spark4": 581,
+        "spark3": 581,
+        "spark2": 581
+      },
+      "driver_thermal_counter_deltas": {
+        "spark1": {
+          "clocks_event_reasons_counters.hw_thermal_slowdown": 0.0,
+          "clocks_event_reasons_counters.sw_thermal_slowdown": 0.0
+        },
+        "spark4": {
+          "clocks_event_reasons_counters.hw_thermal_slowdown": 0.0,
+          "clocks_event_reasons_counters.sw_thermal_slowdown": 0.0
+        },
+        "spark3": {
+          "clocks_event_reasons_counters.hw_thermal_slowdown": 0.0,
+          "clocks_event_reasons_counters.sw_thermal_slowdown": 0.0
+        },
+        "spark2": {
+          "clocks_event_reasons_counters.hw_thermal_slowdown": 0.0,
+          "clocks_event_reasons_counters.sw_thermal_slowdown": 0.0
+        }
+      },
+      "whole_container_lifetime_only": true,
+      "receipt_sha256": "755f0edb9257c04653c340baa79556bc8df984ef7f0da0dfafb3378dd6f52df6"
+    }
+  },
+  "thermal_scope": "Saved5secondwhole-containerlifetimes; memoryclock/DRAMtemperatureunknown; noexacttimed-jobjoinorclock-basedratenormalization.",
+  "live_upstream_audit_at_release_preparation_latest": {
+    "actual_network": true,
+    "observed_utc": "2026-11-16 16:30:24 UTC",
+    "Mia_HEAD": "80be4d6882837d8e0840827ae2aab6124fd48da3",
+    "TF_HEAD": "077998f7d9b14adebec3a2acc2caa47ff7ae6ec7",
+    "previous_TF_HEAD": "08f1de5941cc5a3abffb076d569db6bb33d5ac7a",
+    "new_commits": 46,
+    "changed_files": 297,
+    "findings": [
+      {
+        "area": "Paged prompt reuse and retirement",
+        "scope": "New prompt_radix full reuse identity/images/frame/namespace/chunk starts, page retirement and window page-table attention. GLM cuda_share carries image identity through the paged adapter.",
+        "current_release": "TF_KV_PAGES=off, TF_KV_SHARE=0, FP8 cache. cuda_native owns layout only if set.pages; cuda_share.of returnsnull with e.pages=null. Snapshot RAM/NVMe worker uses unpaged states; prompt_cache files not changed in this delta.",
+        "decision": "No dormant paged path enabled or blindly ported. Treat as relevant future paged-cache work requiring actual snapshot/CRC/cancel/world agreement gates; current unpaged worker and qualified mode remain unchanged."
+      },
+      {
+        "area": "GLM TP2 copy-policy recipe results",
+        "scope": "Docs881ce659: one XSFP4 checkpoint, four fresh copyOFF/ON/ON/OFF launches at TP2/P4; document/code/repeatedcode/file/prose/31K/56K workloads show mixed wins and losses.",
+        "decision": "Retain as TP2 workload/measurement guidance. Our copy75C and confidence policy differ; no inherited throughput/quality claim or automatic source setting change. Long contexts and TP2 explicitly reviewed."
+      },
+      {
+        "area": "GLM FP8 cache diagnostics",
+        "scope": "Docs37d8/91ce84/c9ecc: FP4-Local TP2 teacher-forced 360418positions, FP8 vsBF16 cache is lossy; diagnosticonly upstream, not qualified. Fixed per-stream state separated from per-token bytes.",
+        "decision": "Our tables intentionally hold KV=FP8 across allmodes/reference; our959+concurrent/plain/draft/cache-resume tests remain their own scope. No FP8/BF16-KV output equivalence claimed, no diagnostic substituted for our quality gates."
+      },
+      {
+        "area": "Automatic drafter selection",
+        "scope": "Known drafter table targets Qwen3.8-27B; explicit --drafter selection takes precedence and retains hard failure rather than automatic fallback.",
+        "current_release": "GLM always provides pinned /drafter explicitly.",
+        "decision": "No change needed to the measured GLM serving configuration. Do not introduce automatic head substitution."
+      },
+      {
+        "area": "Shared drafted first-row and other families",
+        "scope": "Drafted.first_rows defaultsfalse and proxies firstRow only on opt-in; Flint enables for Metal DFlash. Qwen3.5 new rank plan is host-only; Metal embedding/residency and API image batch work are different domains.",
+        "decision": "No new GLM CUDA precision or transport fix established. Comment-only CUDA GDN/Metal GLM edits excluded by actualdiff, not short-prompt relevance filtering."
+      }
+    ],
+    "source_audit_manifest_sha256": "1afd05b8d8af0ede7030b4f86e1cd27552d0d5fa1724922dab248c7b74f67c95",
+    "no_change_to_tested_source_or_runtime": true
+  }
+}

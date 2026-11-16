@@ -1,0 +1,368 @@
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"role": "assistant"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": "#"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " The History"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " of Lighthouses"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " and Their Keepers:"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " Guardians of"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " the Coast"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": "\n\n## Introduction\n\n"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": "For thousands"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " of years, the"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " world"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": "'s coast"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": "lines have been marked by"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " be"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": "acons of light,"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " guiding mar"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": "iners safely through"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " tre"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": "acherous waters and"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " warning them"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " away from dangerous"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " sho"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": "als and"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " rocky"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " shores. The"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " history"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " of l"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": "ighthouses is a"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " story of"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " human ingenuity,"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " technological"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " innovation"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": ", and remarkable"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " dedication."}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " Behind"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " every"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " l"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": "ighthouse stood"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " the"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " keep"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": "ers\u2014individual"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": "s and"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " families who"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " devoted"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " their lives to maintaining"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " these"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " vital"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " aids"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " to"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " navigation,"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " often in conditions"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " of extreme isolation and hardship"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": ". This essay"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " explores"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " the evolution"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " of lighthouses"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " from ancient fire"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " be"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": "acons to modern"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " automated structures"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": ", and pays"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " tribute to"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " the men"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": ","}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " women, and children who served"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " as their"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " keepers.\n\n"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": "## Ancient"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " Origins:"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " The First"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " Bea"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": "cons\n\nThe"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " earliest aids"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " to maritime"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " navigation were not structures"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " at"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " all,"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " but simply"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " fires"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " kind"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": "led on hill"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": "tops and"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " head"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": "lands near harb"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": "ors. As"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " early as the Bronze"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " Age, sailors"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " relied"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " on such"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " fires"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " to find"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " their way"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " home after"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " dark."}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " These"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " primitive"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " beacons evolved"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " over"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " time into more"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " permanent"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " structures"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": "."}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " The ancient"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " Egyptians"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": ","}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " Greeks, and Romans"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " all constructed"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " towers designed"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " specifically"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " to aid"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " navigation.\n\nThe most"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " famous of"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " these ancient structures"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " was the Phar"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": "os of"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " Alexandria, built"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " on"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " the island"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " of Phar"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": "os in the"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " harbor of Alexandria"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": ", Egypt,"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " during the reign"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " of Pto"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": "lemy II Phil"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": "adel"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": "phus,"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " around "}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": "280 BCE"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": ". Construct"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": "ed by the architect"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " Sostr"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": "atus of C"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": "nidus"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": ", this magnificent"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " tower"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " stood approximately"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " 350"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " feet"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " tall"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": "\u2014"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": "making it one of"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " the tallest man"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": "-made structures in the world"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " at the"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " time. At"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " its summit"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " burned"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " a fire"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": ", enhanced"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " by polished"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " bronze mirrors"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " that reflected"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " the light far"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " out"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " to sea."}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " The Pharos served"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " as a wonder"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " of"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " the ancient world"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " and remained"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " operational"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " for some"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " 1,500"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " years before"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " earthquakes"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " gradually"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " reduced"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " it to ruins"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": ","}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " with the final collapse"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " occurring"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " in the four"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": "teenth century.\n\nThe"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " Romans"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " built numerous"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " lighth"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": "ouses throughout"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " their empire, including"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " the"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": " famous"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {}, "finish_reason": "length"}], "exact_mode": "exact", "tensorfold": {"enable_thinking": false, "reasoning_effort": "none", "engine": "lanes", "tokens_per_second": 34.06734462945667, "seconds": 11.712095684, "prefill_seconds": 0.117550138, "prefill_widths": [], "prefill_raised": [], "time_to_first_token": 0.118542568, "sampling": "greedy", "drafts": true, "token_sha": "7d688a158ca7", "token_sha256": "7d688a158ca7c75ac679e7699511e60adc50f68c83c93ad2455f3dfaa78f388f", "min_rows": 1}, "speculative": {"rounds": 179, "drafted": 339, "accepted": 220, "acceptance_rate": 0.6489675516224189, "tokens_per_round": 2.2346368715083798}}
+
+data: {"id": "chatcmpl-15e8788e0eb23c522ccf2feb23f1ae4c", "object": "chat.completion.chunk", "created": 1794809679, "model": "GLM-5.3-Flash", "choices": [], "usage": {"prompt_tokens": 38, "completion_tokens": 400, "total_tokens": 438, "prompt_tokens_details": {"cached_tokens": 0}, "completion_tokens_details": {"reasoning_tokens": 0}}}
+
+data: [DONE]
+

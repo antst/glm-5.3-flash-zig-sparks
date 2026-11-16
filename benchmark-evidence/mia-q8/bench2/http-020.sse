@@ -1,0 +1,18 @@
+data: {"id": "chatcmpl-46ae971b65af9fa26c1769080ad3e039", "object": "chat.completion.chunk", "created": 1794809904, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"role": "assistant"}, "finish_reason": null}]}
+
+: keepalive
+
+: keepalive
+
+data: {"id": "chatcmpl-46ae971b65af9fa26c1769080ad3e039", "object": "chat.completion.chunk", "created": 1794809904, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": "**"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-46ae971b65af9fa26c1769080ad3e039", "object": "chat.completion.chunk", "created": 1794809904, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": "w330"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-46ae971b65af9fa26c1769080ad3e039", "object": "chat.completion.chunk", "created": 1794809904, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {"content": "9"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-46ae971b65af9fa26c1769080ad3e039", "object": "chat.completion.chunk", "created": 1794809904, "model": "GLM-5.3-Flash", "choices": [{"index": 0, "delta": {}, "finish_reason": "length"}], "exact_mode": "exact", "tensorfold": {"enable_thinking": false, "reasoning_effort": "none", "engine": "lanes", "tokens_per_second": 39.75000532650072, "seconds": 0.075471688, "prefill_seconds": 33.548997087, "prefill_widths": [], "prefill_raised": [], "time_to_first_token": 33.556731207, "sampling": "greedy", "drafts": true, "token_sha": "48a9803937a8", "token_sha256": "48a9803937a8cec0e89bfdaa927b2cd79942a80dc5399467a4beef7f3496a89d", "min_rows": 2}, "speculative": {"rounds": 2, "drafted": 2, "accepted": 2, "acceptance_rate": 1.0, "tokens_per_round": 2.0}}
+
+data: {"id": "chatcmpl-46ae971b65af9fa26c1769080ad3e039", "object": "chat.completion.chunk", "created": 1794809904, "model": "GLM-5.3-Flash", "choices": [], "usage": {"prompt_tokens": 30764, "completion_tokens": 4, "total_tokens": 30768, "prompt_tokens_details": {"cached_tokens": 0}, "completion_tokens_details": {"reasoning_tokens": 0}}}
+
+data: [DONE]
+

@@ -1,0 +1,75 @@
+{
+  "tokens": 400,
+  "reps": 2,
+  "temperatures": [
+    0
+  ],
+  "cases": [
+    {
+      "name": "code-lru",
+      "concurrency": 1,
+      "prompts": "prompts/code-lru.json",
+      "sha256": "b74c63dde57c2570d8372bf77a2ad349b8bee849386ca97674eaebcd4e00f7c3"
+    },
+    {
+      "name": "prose-wetlands",
+      "concurrency": 1,
+      "prompts": "prompts/prose-wetlands.json",
+      "sha256": "535bbfecb894145fa58480b334bea87e2e16ceeb8c5342793e039ea2caed12fd"
+    },
+    {
+      "name": "code-csv",
+      "concurrency": 1,
+      "prompts": "prompts/code-csv.json",
+      "sha256": "eea956967362bb92f47d3c2c218eef5486db34d5c8a59491958187d6b04bc0e4"
+    },
+    {
+      "name": "prose-grid",
+      "concurrency": 1,
+      "prompts": "prompts/prose-grid.json",
+      "sha256": "bc179df22063a0144aa97bab876a8ebcc9b699491bb46440574cedb62b72e652"
+    },
+    {
+      "name": "code-toposort",
+      "concurrency": 1,
+      "prompts": "prompts/code-toposort.json",
+      "sha256": "592d145fdb44b3133bf3be82540cffa3625a4b3c2300a9433cbd545ba068bec2"
+    },
+    {
+      "name": "prose-vaccines",
+      "concurrency": 1,
+      "prompts": "prompts/prose-vaccines.json",
+      "sha256": "ddd716b8364abc255ffdbc15257a0595b2829b082ee4326c4c4e4573ceaa5105"
+    },
+    {
+      "name": "code-sql",
+      "concurrency": 1,
+      "prompts": "prompts/code-sql.json",
+      "sha256": "6d1d328155e00410b32dfe0621223656031b6ad42febf1168dd2c0d407351cb4"
+    },
+    {
+      "name": "prose-heat",
+      "concurrency": 1,
+      "prompts": "prompts/prose-heat.json",
+      "sha256": "793f23512b696d0394cf81cc0eb175933e9d3e52882c3652960a499434029515"
+    },
+    {
+      "name": "cohort-a",
+      "concurrency": 4,
+      "prompts": "prompts/cohort-a.json",
+      "sha256": "72b13c8461ce826251b812892da15160d401b01898c6b297d801bb839ddfbe71"
+    },
+    {
+      "name": "cohort-b",
+      "concurrency": 4,
+      "prompts": "prompts/cohort-b.json",
+      "sha256": "0d317bcdbc2614ff1745a9ff4da4646be39c7e95f124ef936da258f23397a9a0"
+    },
+    {
+      "name": "all-eight",
+      "concurrency": 8,
+      "prompts": "prompts/all-eight.json",
+      "sha256": "a11dfa0e592c0c4acaf4f25113beba7d9b74ffe580f6146a2a8eac39a943a933"
+    }
+  ]
+}
