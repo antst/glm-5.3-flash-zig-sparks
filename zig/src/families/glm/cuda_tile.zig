@@ -141,6 +141,10 @@ fn compact(w: *Weights, d: *const cuda.Driver, s: cuda.Stream, field: *u64, byte
 
 /// Eligible linears tiled in place; uneven KDA inputs and their views stay bf16 for the row-major kernels.
 pub fn tileLinears(gpa: std.mem.Allocator, w: *Weights, mk: *const mm_mod.Kernels, s: cuda.Stream, d: *const cuda.Driver, dense_bits: u8, head_bits: u8) !mm_mod.Packed {
+    return tileLinearsMode(gpa, w, mk, s, d, dense_bits, head_bits, false);
+}
+
+pub fn tileLinearsMode(gpa: std.mem.Allocator, w: *Weights, mk: *const mm_mod.Kernels, s: cuda.Stream, d: *const cuda.Driver, dense_bits: u8, head_bits: u8, q8_mse: bool) !mm_mod.Packed {
     try padKdaInputs(w, d, s); // pad_to was set at load (Engine.open), so a stack pads only with TF_GLM_KDA_PAD=1
     var list: std.ArrayList(Lin) = .empty;
     defer list.deinit(w.gpa);
@@ -161,6 +165,7 @@ pub fn tileLinears(gpa: std.mem.Allocator, w: *Weights, mk: *const mm_mod.Kernel
     var packed_bits: std.ArrayList(u8) = .empty;
     errdefer packed_bits.deinit(gpa);
     var freed: usize = 0;
+    var quality: @import("cuda_q8_mse.zig").Stats = .{};
     for (list.items, 0..) |e, i| {
         const n = e.n;
         const k = e.k;
@@ -176,7 +181,13 @@ pub fn tileLinears(gpa: std.mem.Allocator, w: *Weights, mk: *const mm_mod.Kernel
         try cuda.memory.download(d, ptr, std.mem.sliceAsBytes(host.items)[0 .. n * k * 2]);
         try words.resize(gpa, n * k * bits / 32);
         try scales.resize(gpa, n * (k / 64));
-        qpack.quantize(bits, host.items, n, k, words.items, scales.items);
+        if (q8_mse and bits == 8) {
+            const q = try @import("cuda_q8_mse.zig").quantize(host.items, n, k, words.items, scales.items);
+            quality.groups += q.groups;
+            quality.improved += q.improved;
+            quality.baseline_error += q.baseline_error;
+            quality.selected_error += q.selected_error;
+        } else qpack.quantize(bits, host.items, n, k, words.items, scales.items);
         const sizes = mm_mod.packedBytes(n, k, bits); // codes then scales, inside the bf16 tiles' bytes
         try tmp.upload(0, std.mem.sliceAsBytes(words.items));
         try tmp.upload(sizes[0], std.mem.sliceAsBytes(scales.items));
@@ -188,6 +199,10 @@ pub fn tileLinears(gpa: std.mem.Allocator, w: *Weights, mk: *const mm_mod.Kernel
     }
     try s.synchronize();
     if (packed_ptrs.items.len > 0) std.log.info("glm: {d} linears packed ({d}/{d} bits), {d:.2} GiB freed", .{ packed_ptrs.items.len, dense_bits, head_bits, @as(f64, @floatFromInt(freed)) / (1 << 30) });
+    if (q8_mse) {
+        std.log.info("GLM_Q8_MSE rank={d} active=true groups={d} improved={d} error_before={d} error_after={d}",
+            .{ w.share.rank, quality.groups, quality.improved, quality.baseline_error, quality.selected_error });
+    }
     // sorted by pointer, the bits beside them (Packed.tiled searches)
     const ptrs = try packed_ptrs.toOwnedSlice(gpa);
     errdefer gpa.free(ptrs);
@@ -230,3 +245,5 @@ test "GLM TP3: the tiler keeps unsupported KDA input and view weights in row-maj
         }
     };
 }
+
+test { _ = @import("cuda_q8_mse_test.zig"); }

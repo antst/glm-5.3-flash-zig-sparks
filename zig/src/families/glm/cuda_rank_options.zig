@@ -34,3 +34,9 @@ pub fn promptK(get: *const fn ([:0]const u8) ?[]const u8, problem: *[]const u8) 
     problem.* = "TF_GLM_PROMPT_K: one or shape";
     return error.BadSetting;
 }
+
+pub fn hashBytes(bytes: []const u8) [32]u8 {
+    var out: [32]u8 = undefined;
+    std.crypto.hash.sha2.Sha256.hash(bytes, &out, .{});
+    return out;
+}

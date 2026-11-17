@@ -20,6 +20,8 @@ pub fn steps(b: *std.Build, cuda: *std.Build.Module, glm: *std.Build.Module, mod
         .dependOn(&b.addRunArtifact(b.addTest(.{ .root_module = glm, .filters = &.{"head FP8:"} })).step);
     b.step("test-glm-decode-select-host", "Multi-CTA decode selection bounds and startup scope")
         .dependOn(&b.addRunArtifact(b.addTest(.{ .root_module = glm, .filters = &.{"decode select:"} })).step);
+    b.step("test-glm-q8-mse-host", "Startup Q8 scale refinement, packed error and agreement without devices")
+        .dependOn(&b.addRunArtifact(b.addTest(.{ .root_module = glm, .filters = &.{"Q8 MSE:"} })).step);
     const host = b.graph.host;
     const target_q4 = b.createModule(.{ .root_source_file = b.path("zig/glm_target_q4_host.zig"), .target = host, .optimize = .debug, .link_libc = true, .imports = &.{ .{ .name = "cuda", .module = cuda }, .{ .name = "core", .module = mods.core }, .{ .name = "glm_cuda", .module = glm } } });
     b.step("test-glm-target-q4-host", "Target Q4 references, graph entrypoint and live-resource declarations")

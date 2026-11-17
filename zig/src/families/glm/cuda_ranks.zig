@@ -30,6 +30,7 @@ pub const Settings = struct {
     index_split: u32 = 2048, // TF_GLM_INDEX_SPLIT: from this position on, rank 0 splits a prompt chunk's indexer rows (0: never)
     heat: ?heat.Bands = null, // TF_HEAT_HIGH and TF_HEAT_LOW (upstream's names): a prompt chunk waits on every rank's hottest zone
     layers: u32 = 0, // TF_GLM_LAYERS: the first this many layers only, a thin model for one-GPU checks (0: all)
+    q8_mse: bool = false,
     q4_affine_mse: bool = false,
     q4_head_fp8: bool = false,
     q4_python_prompt: bool = false,
@@ -69,6 +70,7 @@ pub const Settings = struct {
     l2pf: l2pf.Options = .{}, // TF_GLM_L2PF and its knobs: a decode window's next weights read into L2 beside it
     pub fn read(get: *const fn ([:0]const u8) ?[]const u8, problem: *[]const u8) !Settings {
         var s: Settings = .{};
+        s.q8_mse = try @import("cuda_dense16.zig").flag(get("TF_GLM_Q8_MSE"), problem, "TF_GLM_Q8_MSE: 0 or 1");
         s.absorb_mma = try @import("cuda_dense16.zig").flag(get("TF_GLM_ABSORB_MMA"), problem, "TF_GLM_ABSORB_MMA: 0 or 1");
         s.warm_turns = try @import("cuda_dense16.zig").flag(get("TF_GLM_WARM_TURNS"), problem, "TF_GLM_WARM_TURNS: 0 or 1");
         s.kv_live_half = try @import("cuda_dense16.zig").flag(get("TF_GLM_KV_LIVE_HALF"), problem, "TF_GLM_KV_LIVE_HALF: 0 or 1");
@@ -287,7 +289,7 @@ pub fn environment(name: [:0]const u8) ?[]const u8 { return @import("profile").l
 /// Whether the group brings up its own RoCE path: not where TF_GLM_ROCE_MULTI=1 lends fabric/tp's wire (3+ ranks).
 pub fn ownRoce(s: Settings, world: usize) bool { return !(s.roce_multi and world >= 3); }
 pub const Fingerprint = extern struct {
-    layout: u32 = 65,
+    layout: u32 = 69,
     world: u32,
     rank: u32,
     kv8: u32 = 0,
@@ -344,6 +346,7 @@ pub const Fingerprint = extern struct {
     kv_host: u32 = 0, // TF_GLM_KV_HOST(_SHARED): every rank sizes the pool alike and maps the shared file, or none does
     solo: u32 = 0, // TF_GLM_CHUNK_SOLO: rank 0's solo passes need the wider prompt buffers on every rank
     l2pf: [4]u32 = @splat(0), // TF_GLM_L2PF's words: every rank prefetches alike, so none waits on a slower one's windows
+    q8_mse: u32 = 0,
     q4_affine_mse: u32 = 0,
     q4_head_fp8: u32 = 0,
     q4_python_prompt: u32 = 0,
@@ -415,6 +418,7 @@ pub const Fingerprint = extern struct {
         kv_host,
         solo,
         l2pf,
+        q8_mse,
         q4_affine_mse,
         q4_head_fp8,
         q4_python_prompt,
@@ -496,6 +500,7 @@ pub const Fingerprint = extern struct {
             .absorb_mma = @intFromBool(s.absorb_mma),
             .q4_python_prompt = @intFromBool(s.q4_python_prompt),
             .q4_python_splits = @intFromBool(s.q4_python_splits),
+            .q8_mse = @intFromBool(s.q8_mse),
             .q4_affine_mse = @intFromBool(s.q4_affine_mse),
             .bits = @as(u32, s.dense_bits) << 8 | s.head_bits,
             .capacity = capacity,
@@ -527,11 +532,7 @@ pub fn hashFile(gpa: std.mem.Allocator, io: std.Io, path: []const u8) ![32]u8 {
     defer gpa.free(bytes);
     return hashBytes(bytes);
 }
-pub fn hashBytes(bytes: []const u8) [32]u8 {
-    var out: [32]u8 = undefined;
-    std.crypto.hash.sha2.Sha256.hash(bytes, &out, .{});
-    return out;
-}
+pub const hashBytes = @import("cuda_rank_options.zig").hashBytes;
 pub fn gather(
     comptime T: type,
     d: *const cuda.Driver,

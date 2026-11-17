@@ -84,6 +84,7 @@ pub const Context = struct {
     gpa: std.mem.Allocator,
     io: std.Io,
     affine: bool,
+    q8_mse: bool = false,
     head_fp8: bool = false,
     lane: ?*const cuda.qmmf.Lane = null,
     qs: *const @import("cuda_q4.zig").Kernels,
@@ -97,6 +98,6 @@ pub const Context = struct {
     pub fn apply(t: @This(), w: *weights.Weights) !void {
         if (!t.enabled) return;
         if (t.head_fp8) try @import("cuda_head_fp8.zig").pack(t.gpa, t.io, w, t.lane orelse return error.HeadFp8Scope, t.s, t.d);
-        t.packs.* = if (t.affine) try pack(t.gpa, t.io, w, t.mk, t.qs, t.s, t.d) else try tile.tileLinears(t.gpa, w, t.mk, t.s, t.d, t.dense, t.head);
+        t.packs.* = if (t.affine) try pack(t.gpa, t.io, w, t.mk, t.qs, t.s, t.d) else try tile.tileLinearsMode(t.gpa, w, t.mk, t.s, t.d, t.dense, t.head, t.q8_mse);
     }
 };

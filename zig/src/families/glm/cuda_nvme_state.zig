@@ -32,6 +32,7 @@ pub const State = struct {
     token_at: u32 = 0,
 
     pub fn open(e: *Engine, root: []const u8, compat: spill.Digest, cfg: Config) !*State {
+        if (e.settings.q8_mse) return error.Q8MseNvmeScope;
         if (local != null or e.share_pages or root.len == 0 or root.len > 4096 or cfg.cap == 0 or cfg.index < 16 << 20 or cfg.staging > 2 << 30) return error.NvmeSettings;
         const max_at = (e.capacity -| @as(usize, @import("cuda_state.zig").window_rows)) / @import("cuda_native.zig").snap_grid * @import("cuda_native.zig").snap_grid;
         if (max_at == 0 or max_at > std.math.maxInt(u32) - 1) return error.NvmeSettings;

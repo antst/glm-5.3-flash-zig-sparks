@@ -110,6 +110,7 @@ pub const Engine = struct {
     pub fn init(gpa: std.mem.Allocator, io: std.Io, d: *const cuda.Driver, ctx: *const cuda.Context, checkpoint: []const u8, lib: *const cuda.nccl.Library, comm: cuda.nccl.Comm, rank: usize, world: usize, o: Options) !*Engine {
         if (world > ranks.max_world) return error.TooManyRanks;
         try @import("cuda_tile_affine.zig").require(o.settings, world, o.vision != null);
+        try @import("cuda_q8_mse.zig").require(o.settings, world, o.vision != null);
         try @import("cuda_admission_options.zig").require(o, world);
         try @import("cuda_nvfp4_graph.zig").require(o, world);
         try @import("cuda_decode_select.zig").require(o.settings);
@@ -198,7 +199,13 @@ pub const Engine = struct {
         if (o.settings.exl3_fused_decode) e.m.exl3.decode_calls = &e.expert_fused_calls;
         const has_packs = o.settings.dense_bits != 16 or o.settings.head_bits != 16;
         if (has_packs and !o.settings.tiled) return error.PackedNeedsGlmMm;
-        const tiler: @import("cuda_tile_affine.zig").Context = .{ .gpa = gpa, .io = io, .affine = o.settings.q4_affine_mse, .head_fp8 = o.settings.q4_head_fp8, .lane = &e.m.lane, .qs = &e.m.q4, .mk = &e.m.mm, .s = stream, .d = d, .enabled = o.settings.tiled, .dense = o.settings.dense_bits, .head = o.settings.head_bits, .packs = &e.packs };
+        var tiler: @import("cuda_tile_affine.zig").Context = .{
+            .gpa = gpa, .io = io, .affine = o.settings.q4_affine_mse, .head_fp8 = o.settings.q4_head_fp8,
+            .lane = &e.m.lane, .qs = &e.m.q4, .mk = &e.m.mm, .s = stream, .d = d,
+            .enabled = o.settings.tiled, .dense = o.settings.dense_bits, .head = o.settings.head_bits,
+            .packs = &e.packs,
+        };
+        tiler.q8_mse = o.settings.q8_mse;
         e.w = try @import("cuda_load_owner.zig").finish(try weights.load(gpa, io, d, stream, e.m.tools(), checkpoint, c, share, layers, @import("cuda_dflash_head_mode.zig").selection(o.settings, o.mtp, o.drafter)), tiler, @import("cuda_tile_affine.zig").Context.apply);
         errdefer e.w.deinit();
         std.log.info("rank {d}: GLM_DFLASH_ONLY_HEAD enabled={any} target_mtp={any} borrowed_head={any}", .{ rank, o.settings.dflash_only_head, e.w.mtp != null, e.w.draftHead(o.settings.dflash_only_head) != null });
