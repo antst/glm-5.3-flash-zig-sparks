@@ -25,7 +25,7 @@ test "dense segment startup mode is strict default-off and agreed before allocat
     try std.testing.expectEqual(FP.Field.dense_segments, ranks.mismatch(&all).?.field);
     all[0] = FP.of(4, 0, on, 4096, true, @splat(0), @splat(0), @splat(0));
     try std.testing.expect(ranks.mismatch(&all) == null);
-    try std.testing.expectEqual(@as(u32, 64), all[0].layout);
+    try std.testing.expectEqual(@as(u32, 65), all[0].layout);
     for ([_][]const u8{ "yes", "", "2", "false" }) |v| {
         Env.value = v;
         try std.testing.expectError(error.BadSetting, ranks.Settings.read(Env.get, &problem));

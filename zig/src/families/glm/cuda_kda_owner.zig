@@ -22,14 +22,19 @@ pub const Owner = struct {
     plans: []?seg.Plan,
     rows: usize,
     min_segments: usize = 8,
+    heads: usize = 16,
     calls: u64 = 0,
     fallbacks: u64 = 0,
 
-    pub fn init(gpa: std.mem.Allocator, io: std.Io, d: *const cuda.Driver, stream: cuda.Stream, w: *const weights.Weights, rows: usize) !Owner {
+    pub fn init(gpa: std.mem.Allocator, io: std.Io, d: *const cuda.Driver, stream: cuda.Stream, w: *const
+        weights.Weights, rows: usize) !Owner {
         if (rows == 0 or rows > 64) return error.KdaSegmentScope;
         var count: usize = 0;
+        var h: usize = 0;
         for (w.layers) |l| if (l.mixer == .kda) {
-            if (l.mixer.kda.heads != 16) return error.KdaSegmentScope;
+            const n = l.mixer.kda.heads;
+            if ((n != 16 and n != 32) or (h != 0 and h != n)) return error.KdaSegmentScope;
+            h = n;
             count += 1;
         };
         if (count == 0) return error.KdaSegmentScope;
@@ -45,8 +50,9 @@ pub const Owner = struct {
         errdefer uploaded.deinit();
         const plans = try gpa.alloc(?seg.Plan, count);
         @memset(plans, null);
-        std.log.info("GLM_KDA_SEGMENTS_MODULE sha256={s} layers={d}", .{ image_sha, count });
-        return .{ .gpa = gpa, .module = module, .kernels = kernels, .stream = stream, .tables = tables, .staging = staging, .uploaded = uploaded, .plans = plans, .rows = rows };
+        std.log.info("GLM_KDA_SEGMENTS_MODULE sha256={s} layers={d} heads={d}", .{ image_sha, count, h });
+        return .{ .gpa = gpa, .module = module, .kernels = kernels, .stream = stream, .tables = tables, .staging =
+            staging, .uploaded = uploaded, .plans = plans, .rows = rows, .heads = h };
     }
 
     pub fn bytes(o: *const Owner) usize {
@@ -80,7 +86,8 @@ pub const Owner = struct {
                     .k = .{ .ptr = st.save_k + kv * 4, .len = state.window_rows * st.heads * 128 * 4 },
                     .v = .{ .ptr = st.save_v + kv * 2, .len = state.window_rows * st.heads * 128 * 2 },
                     .g = .{ .ptr = st.save_g + kv * 4, .len = state.window_rows * st.heads * 128 * 4 },
-                    .b = .{ .ptr = st.save_b + li * state.window_rows * st.heads * 4, .len = state.window_rows * st.heads * 4 },
+                    .b = .{ .ptr = st.save_b + li * state.window_rows * st.heads * 4, .len = state.window_rows *
+                        st.heads * 4 },
                 };
             }
             const plan = seg.Plan.make(list[0..r.segs.len], parameters(k), .{}) catch continue;
@@ -92,7 +99,8 @@ pub const Owner = struct {
         };
         if (!any) return;
         o.unusable = true;
-        try o.stream.d.check(o.stream.d.api.cuMemcpyHtoDAsync_v2(o.tables.ptr, o.staging.bytes.ptr, o.staging.bytes.len, o.stream.handle), "cuMemcpyHtoDAsync");
+        try o.stream.d.check(o.stream.d.api.cuMemcpyHtoDAsync_v2(o.tables.ptr, o.staging.bytes.ptr,
+            o.staging.bytes.len, o.stream.handle), "cuMemcpyHtoDAsync");
         try o.uploaded.record(o.stream);
         o.pending = true;
         o.unusable = false;
@@ -118,7 +126,8 @@ pub const Owner = struct {
         try seg.validate(p, s);
         for (r.segs) |g| {
             const dst = g.st.proj + li * g.st.proj_layer * 2;
-            try f.d.check(f.d.api.cuMemcpyDtoDAsync_v2(dst, r.b.kproj + g.row0 * k.matWidth() * 2, g.rows * k.matWidth() * 2, f.stream.handle), "cuMemcpyDtoDAsync");
+            try f.d.check(f.d.api.cuMemcpyDtoDAsync_v2(dst, r.b.kproj + g.row0 * k.matWidth() * 2, g.rows *
+                k.matWidth() * 2, f.stream.handle), "cuMemcpyDtoDAsync");
         }
         try o.kernels.launch(f.stream, p, s);
         o.calls += 1;
@@ -130,7 +139,8 @@ pub const Owner = struct {
             std.log.err("GLM_KDA_SEGMENTS_RETAINED stream not quiescent", .{});
             return;
         };
-        std.log.info("GLM_KDA_SEGMENTS_CLOSE batched_layers={d} fallback_layers={d} min_streams={d}", .{ o.calls, o.fallbacks, o.min_segments });
+        std.log.info("GLM_KDA_SEGMENTS_CLOSE batched_layers={d} fallback_layers={d} min_streams={d} heads={d}", .{
+            o.calls, o.fallbacks, o.min_segments, o.heads });
         o.uploaded.deinit();
         o.staging.free();
         o.tables.free();
@@ -142,7 +152,10 @@ pub const Owner = struct {
 
 fn parameters(k: block.Layer) seg.Parameters {
     const n = k.heads * 128;
-    return .{ .heads = k.heads, .p_stride = k.matWidth(), .b_off = 3 * n + 256, .a_stride = n, .g_stride = n, .conv_w = .{ .ptr = k.conv_w, .len = 3 * n * 4 * 4 }, .a_log = .{ .ptr = k.a_log, .len = k.heads * 4 }, .dt_bias = .{ .ptr = k.dt_bias, .len = n * 4 }, .norm_w = .{ .ptr = k.norm_w, .len = 128 * 2 }, .lower = k.lower, .eps = k.eps };
+    return .{ .heads = k.heads, .p_stride = k.matWidth(), .b_off = 3 * n + 256, .a_stride = n, .g_stride = n,
+        .conv_w = .{ .ptr = k.conv_w, .len = 3 * n * 4 * 4 }, .a_log = .{ .ptr = k.a_log, .len = k.heads * 4 },
+        .dt_bias = .{ .ptr = k.dt_bias, .len = n * 4 }, .norm_w = .{ .ptr = k.norm_w, .len = 128 * 2 }, .lower =
+        k.lower, .eps = k.eps };
 }
 
 fn loadImage(gpa: std.mem.Allocator, io: std.Io, d: *const cuda.Driver) !cuda.Module {

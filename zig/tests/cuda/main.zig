@@ -276,7 +276,7 @@ const usage =
     \\  glm-ref                   GLM projections (matmuls, router, attention, indexer, hc) against float64 (synthetic)
     \\  glm-q4-f32-contract       explicit rebuilt Q4 fp32 output contract; old assets refuse
     \\  glm-dflash-tp4-contract   explicit new-asset own-head QKV/attention comparison and controls
-    \\  glm-dense-segmented[-tp2]-contract [new.fatbin]  H16/H32 BF16/FP8 byte checks
+    \\  glm-dense-segmented[-tp2]-contract, glm-kda-segmented-tp2-contract [new.fatbin]
     \\  glm-latent-mma-contract new.fatbin       prompt projections vs FP64 and original SIMT
     \\  glm-lanes-cover <ckpt> <dc.json> <rank> <world> <idfile>  copy drafts, cancels, discards, eos and max_new on one lanes.Engine across requests
     \\  glm-lanes-concurrent <ckpt> <dc.json> <rank> <world> <idfile>  concurrent streams on one lanes.Engine, each against its solo run
@@ -432,7 +432,7 @@ fn run(gpu: check.Gpu, cmd: []const u8, rest: []const [:0]const u8) !void {
     if (std.mem.eql(u8, cmd, "glm-q4-f32-contract")) return @import("contract_glm_q4_f32.zig").run(gpu);
     if (std.mem.eql(u8, cmd, "glm-draft-pair")) return @import("glm_draft_pair.zig").run(gpu, rest);
     if (std.mem.eql(u8, cmd, "glm-dflash-tp4-contract")) return dflash_tp4_contract.run(gpu);
-    if (@import("glm_dense_segmented_contract.zig").matches(cmd)) return @import("glm_dense_segmented_contract.zig").dispatch(cmd, gpu, rest);
+    if (try @import("glm_segment_contracts.zig").run(cmd, gpu, rest)) return;
     if (std.mem.eql(u8, cmd, "glm-latent-mma-contract")) return @import("glm_latent_mma_contract.zig").run(gpu, rest);
     if (std.mem.eql(u8, cmd, "affine8")) return affine8_tests.run(gpu);
     if (std.mem.eql(u8, cmd, "native-fp")) return native_fp_tests.run(gpu);

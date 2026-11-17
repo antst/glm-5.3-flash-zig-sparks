@@ -115,7 +115,7 @@ test "affine target: prompt setting is strict cached scope checked and agreed be
     const FP = ranks.Fingerprint;
     const a = FP.of(4, 0, legacy, 4096, true, @splat(0), @splat(0), @splat(0));
     const b = FP.of(4, 1, on, 4096, true, @splat(0), @splat(0), @splat(0));
-    try std.testing.expectEqual(@as(u32, 64), a.layout);
+    try std.testing.expectEqual(@as(u32, 65), a.layout);
     try std.testing.expectEqual(FP.Field.q4_python_prompt, ranks.mismatch(&.{ a, b }).?.field);
     try std.testing.expectEqualStrings("TF_GLM_Q4_PYTHON_PROMPT", @import("cuda_rank_names.zig").explain(FP.Field.q4_python_prompt));
 }
@@ -170,7 +170,7 @@ test "affine target: split setting strict cached scope and rank agreement" {
     const FP = ranks.Fingerprint;
     const a = FP.of(4, 0, legacy, 4096, true, @splat(0), @splat(0), @splat(0));
     const b = FP.of(4, 1, on, 4096, true, @splat(0), @splat(0), @splat(0));
-    try std.testing.expectEqual(@as(u32, 64), a.layout);
+    try std.testing.expectEqual(@as(u32, 65), a.layout);
     try std.testing.expectEqual(FP.Field.q4_python_splits, ranks.mismatch(&.{ a, b }).?.field);
     try std.testing.expectEqualStrings("TF_GLM_Q4_PYTHON_SPLITS", @import("cuda_rank_names.zig").explain(FP.Field.q4_python_splits));
 }

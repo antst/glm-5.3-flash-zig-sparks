@@ -26,6 +26,19 @@ pub fn steps(b: *std.Build, cuda: *std.Build.Module, glm: *std.Build.Module, mod
         .dependOn(&b.addRunArtifact(b.addTest(.{ .root_module = target_q4, .filters = &.{"target Q4"} })).step);
     b.step("test-glm-q4-optimized-host", "Optional target Q4 scopes with corrected drafting and optimized startup")
         .dependOn(&b.addRunArtifact(b.addTest(.{ .root_module = glm, .filters = &.{"optional Q4 optimized:"} })).step);
+    const kda_tp2 = b.createModule(.{
+        .root_source_file = b.path("zig/tests/cuda/glm_kda_tp2_contract.zig"),
+        .target = host,
+        .optimize = .debug,
+        .link_libc = true,
+        .imports = &.{
+            .{ .name = "cuda", .module = cuda },
+            .{ .name = "core", .module = mods.core },
+            .{ .name = "glm_cuda", .module = glm },
+        },
+    });
+    b.step("test-glm-kda-tp2-contract-host", "H32 KDA comparator and original launch ABI without devices")
+        .dependOn(&b.addRunArtifact(b.addTest(.{ .root_module = kda_tp2, .filters = &.{"KDA TP2"} })).step);
     b.step("test-glm-kda-adaptive-host", "KDA threshold, physical16 owner and original launch records without devices")
         .dependOn(&b.addRunArtifact(b.addTest(.{ .root_module = glm, .filters = &.{"KDA "} })).step);
     b.step("test-glm-admission-wait-host", "Strict GLM idle admission settings and rank agreement")

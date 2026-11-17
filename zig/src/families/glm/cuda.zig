@@ -161,6 +161,8 @@ pub const dflash_attention = @import("dflash_attention.zig");
 test {
     _ = @import("cuda_kda_segments.zig");
     _ = @import("cuda_kda_owner_test.zig");
+    _ = @import("cuda_kda_h32_test.zig");
+    _ = @import("cuda_kda_h32_launch_test.zig");
     _ = @import("cuda_kda_options.zig");
 }
 

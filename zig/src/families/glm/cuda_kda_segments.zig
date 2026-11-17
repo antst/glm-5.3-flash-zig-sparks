@@ -4,7 +4,7 @@ const cuda = @import("cuda");
 
 pub const max_rows = 64;
 pub const max_segments = 8;
-pub const heads = 16; // current TP4 geometry; other head counts need a separate admission
+pub const heads = 16; // canonical TP4 fixture; runtime plans admit16 or32 heads
 pub const width = 128;
 pub const View = struct { ptr: u64, len: usize };
 pub const Row = extern struct {
@@ -67,27 +67,29 @@ pub const Plan = struct {
     pub fn make(segs: []const Segment, p: Parameters, scope: Scope) !Plan {
         if (scope.prefill or scope.paged or !scope.wide) return error.KdaScope;
         if (segs.len == 0 or segs.len > max_segments) return error.KdaSegments;
-        const n = heads * width;
-        if (p.heads != heads or p.b_off != 3 * n + 2 * width or p.p_stride < p.b_off + heads or
+        if (p.heads != 16 and p.heads != 32) return error.KdaShape;
+        const h = p.heads;
+        const n = h * width;
+        if (p.b_off != 3 * n + 2 * width or p.p_stride < p.b_off + h or
             p.a_stride < n or p.g_stride < n) return error.KdaShape;
         for ([_]usize{ p.p_stride, p.b_off, p.a_stride, p.g_stride }) |v|
             if (v > std.math.maxInt(i32)) return error.KdaShape;
         var plan: Plan = .{ .params = p };
         try plan.read(p.conv_w, 3 * n * 4 * 4);
-        try plan.read(p.a_log, heads * 4);
+        try plan.read(p.a_log, h * 4);
         try plan.read(p.dt_bias, n * 4);
         try plan.read(p.norm_w, width * 2);
         for (segs) |s| {
             if (s.row0 != plan.rows or s.rows == 0 or s.rows > 8 or s.rows > max_rows - plan.rows)
                 return error.KdaRows;
-            try plan.read(s.p, try matrixBytes(s.rows, p.p_stride, p.b_off + heads, 2));
+            try plan.read(s.p, try matrixBytes(s.rows, p.p_stride, p.b_off + h, 2));
             try plan.read(s.conv, 3 * 3 * n * 2); // 3 saved conv rows, each q|k|v
-            try plan.read(s.state_in, heads * width * width * 4);
-            try plan.write(s.state_out, heads * width * width * 4);
+            try plan.read(s.state_in, h * width * width * 4);
+            try plan.write(s.state_out, h * width * width * 4);
             try plan.write(s.k, s.rows * n * 4);
             try plan.write(s.v, s.rows * n * 2);
             try plan.write(s.g, s.rows * n * 4);
-            try plan.write(s.b, s.rows * heads * 4);
+            try plan.write(s.b, s.rows * h * 4);
             plan.table[plan.count] = .{
                 .p = s.p.ptr,
                 .conv = s.conv.ptr,
@@ -143,23 +145,27 @@ pub const Kernels = struct {
         try validate(p, s); // all shape/storage/alias checks before the first new enqueue
         const t = p.params;
         var a: cuda.Args = .{};
-        inline for (.{ s.table.ptr, @as(c_int, @intCast(p.count)), @as(c_int, heads), @as(c_int, @intCast(t.p_stride)), @as(c_int, @intCast(t.b_off)), s.a.ptr, @as(c_int, @intCast(t.a_stride)), t.conv_w.ptr, t.a_log.ptr, t.dt_bias.ptr, t.lower, s.q.ptr }) |v|
+        inline for (.{ s.table.ptr, @as(c_int, @intCast(p.count)), @as(c_int, @intCast(t.heads)), @as(c_int,
+            @intCast(t.p_stride)), @as(c_int, @intCast(t.b_off)), s.a.ptr, @as(c_int, @intCast(t.a_stride)),
+            t.conv_w.ptr, t.a_log.ptr, t.dt_bias.ptr, t.lower, s.q.ptr }) |v|
             a.add(v);
         const grid: cuda.launch.Dim3 = .{
             .x = @intCast(p.most),
-            .y = heads,
+            .y = @intCast(t.heads),
             .z = @intCast(p.count),
         };
         try cuda.launch.launch(k.prep, .{ .grid = grid, .block = .{ .x = 512 } }, stream, &a);
         var b: cuda.Args = .{};
-        inline for (.{ s.table.ptr, @as(c_int, @intCast(p.count)), @as(c_int, heads), s.q.ptr, s.y.ptr }) |v|
+        inline for (.{ s.table.ptr, @as(c_int, @intCast(p.count)), @as(c_int, @intCast(t.heads)), s.q.ptr, s.y.ptr
+            }) |v|
             b.add(v);
         try cuda.launch.launch(k.step, .{
-            .grid = .{ .x = heads, .y = width / 4 / 4, .z = @intCast(p.count) },
+            .grid = .{ .x = @intCast(t.heads), .y = width / 4 / 4, .z = @intCast(p.count) },
             .block = .{ .x = 4 * 32 },
         }, stream, &b);
         var o: cuda.Args = .{};
-        inline for (.{ s.table.ptr, @as(c_int, @intCast(p.count)), @as(c_int, heads), s.y.ptr, s.gate.ptr, @as(c_int, @intCast(t.g_stride)), t.norm_w.ptr, t.eps, s.out.ptr }) |v| o.add(v);
+        inline for (.{ s.table.ptr, @as(c_int, @intCast(p.count)), @as(c_int, @intCast(t.heads)), s.y.ptr,
+            s.gate.ptr, @as(c_int, @intCast(t.g_stride)), t.norm_w.ptr, t.eps, s.out.ptr }) |v| o.add(v);
         try cuda.launch.launch(k.out, .{ .grid = grid, .block = .{ .x = width } }, stream, &o);
     }
 };
@@ -168,13 +174,15 @@ pub fn validate(p: *const Plan, s: Storage) !void {
     if (p.count == 0 or p.count > max_segments or p.rows == 0 or p.rows > max_rows or
         p.most == 0 or p.most > 8 or p.read_count > p.reads.len or p.write_count > p.writes.len)
         return error.KdaShape;
-    const n = heads * width;
+    if (p.params.heads != 16 and p.params.heads != 32) return error.KdaShape;
+    const n = p.params.heads * width;
     const reads = [_]View{
         try need(s.table, p.count * @sizeOf(Row)),
         try need(s.a, try matrixBytes(p.rows, p.params.a_stride, n, 2)),
         try need(s.gate, try matrixBytes(p.rows, p.params.g_stride, n, 2)),
     };
-    const writes = [_]View{ try need(s.q, p.rows * n * 4), try need(s.y, p.rows * n * 2), try need(s.out, p.rows * n * 2) };
+    const writes = [_]View{ try need(s.q, p.rows * n * 4), try need(s.y, p.rows * n * 2), try need(s.out, p.rows * n
+        * 2) };
     for (reads[1..]) |b| if (overlap(reads[0], b)) return error.KdaAlias;
     for (p.reads[0..p.read_count]) |b| if (overlap(reads[0], b)) return error.KdaAlias;
     for (writes, 0..) |a, i| {
@@ -200,14 +208,24 @@ fn overlap(a: View, b: View) bool {
 }
 
 fn fakeParameters() Parameters {
-    return .{ .heads = heads, .p_stride = 6416, .b_off = 6400, .a_stride = 2048, .g_stride = 2048, .conv_w = .{ .ptr = 0x70000000, .len = 3 * 2048 * 4 * 4 }, .a_log = .{ .ptr = 0x71000000, .len = heads * 4 }, .dt_bias = .{ .ptr = 0x72000000, .len = 2048 * 4 }, .norm_w = .{ .ptr = 0x73000000, .len = width * 2 }, .lower = -3.0, .eps = 1e-6 };
+    return .{ .heads = heads, .p_stride = 6416, .b_off = 6400, .a_stride = 2048, .g_stride = 2048, .conv_w = .{ .ptr
+        = 0x70000000, .len = 3 * 2048 * 4 * 4 }, .a_log = .{ .ptr = 0x71000000, .len = heads * 4 }, .dt_bias = .{
+        .ptr = 0x72000000, .len = 2048 * 4 }, .norm_w = .{ .ptr = 0x73000000, .len = width * 2 }, .lower = -3.0,
+        .eps = 1e-6 };
 }
 fn fakeSegment(i: usize, row0: usize, rows: usize) Segment {
     const b: u64 = 0x10000000 + i * 0x1000000;
-    return .{ .row0 = row0, .rows = rows, .p = .{ .ptr = b, .len = 8 * 6416 * 2 }, .conv = .{ .ptr = b + 0x40000, .len = 3 * 3 * 2048 * 2 }, .state_in = .{ .ptr = b + 0x100000, .len = heads * width * width * 4 }, .state_out = .{ .ptr = b + 0x200000, .len = heads * width * width * 4 }, .k = .{ .ptr = b + 0x300000, .len = 8 * 2048 * 4 }, .v = .{ .ptr = b + 0x400000, .len = 8 * 2048 * 2 }, .g = .{ .ptr = b + 0x500000, .len = 8 * 2048 * 4 }, .b = .{ .ptr = b + 0x600000, .len = 8 * heads * 4 } };
+    return .{ .row0 = row0, .rows = rows, .p = .{ .ptr = b, .len = 8 * 6416 * 2 }, .conv = .{ .ptr = b + 0x40000,
+        .len = 3 * 3 * 2048 * 2 }, .state_in = .{ .ptr = b + 0x100000, .len = heads * width * width * 4 },
+        .state_out = .{ .ptr = b + 0x200000, .len = heads * width * width * 4 }, .k = .{ .ptr = b + 0x300000, .len =
+        8 * 2048 * 4 }, .v = .{ .ptr = b + 0x400000, .len = 8 * 2048 * 2 }, .g = .{ .ptr = b + 0x500000, .len = 8 *
+        2048 * 4 }, .b = .{ .ptr = b + 0x600000, .len = 8 * heads * 4 } };
 }
 fn fakeStorage() Storage {
-    return .{ .table = .{ .ptr = 0x80000000, .len = max_segments * @sizeOf(Row) }, .a = .{ .ptr = 0x81000000, .len = max_rows * 2048 * 2 }, .gate = .{ .ptr = 0x82000000, .len = max_rows * 2048 * 2 }, .q = .{ .ptr = 0x83000000, .len = max_rows * 2048 * 4 }, .y = .{ .ptr = 0x84000000, .len = max_rows * 2048 * 2 }, .out = .{ .ptr = 0x85000000, .len = max_rows * 2048 * 2 } };
+    return .{ .table = .{ .ptr = 0x80000000, .len = max_segments * @sizeOf(Row) }, .a = .{ .ptr = 0x81000000, .len =
+        max_rows * 2048 * 2 }, .gate = .{ .ptr = 0x82000000, .len = max_rows * 2048 * 2 }, .q = .{ .ptr =
+        0x83000000, .len = max_rows * 2048 * 4 }, .y = .{ .ptr = 0x84000000, .len = max_rows * 2048 * 2 }, .out = .{
+        .ptr = 0x85000000, .len = max_rows * 2048 * 2 } };
 }
 
 test "KDA shared plan preserves unequal segments and refuses unsupported scope before enqueue" {
@@ -247,7 +265,8 @@ test "KDA shared launcher uses four-warp geometry with the original recurrence o
         fn i(p: ?[*]?*anyopaque, n: usize) i32 {
             return @as(*align(1) const i32, @ptrCast(p.?[n].?)).*;
         }
-        fn launch(f: cuda.abi.Function, x: u32, y: u32, z: u32, bx: u32, by: u32, bz: u32, shared: u32, stream: cuda.abi.Stream, p: ?[*]?*anyopaque, _: ?[*]?*anyopaque) callconv(.c) cuda.abi.Result {
+        fn launch(f: cuda.abi.Function, x: u32, y: u32, z: u32, bx: u32, by: u32, bz: u32, shared: u32, stream:
+            cuda.abi.Stream, p: ?[*]?*anyopaque, _: ?[*]?*anyopaque) callconv(.c) cuda.abi.Result {
             std.debug.assert(by == 1 and bz == 1 and z == 2 and shared == 0 and stream == null);
             std.debug.assert(u(p, 0) == 0x80000000 and i(p, 1) == 2 and i(p, 2) == heads);
             const which = @intFromPtr(f);
@@ -270,7 +289,8 @@ test "KDA shared launcher uses four-warp geometry with the original recurrence o
     };
     var d: cuda.Driver = undefined;
     d.api.cuLaunchKernel = Fake.launch;
-    const k: Kernels = .{ .prep = .{ .d = &d, .handle = @ptrFromInt(1) }, .step = .{ .d = &d, .handle = @ptrFromInt(2) }, .out = .{ .d = &d, .handle = @ptrFromInt(3) } };
+    const k: Kernels = .{ .prep = .{ .d = &d, .handle = @ptrFromInt(1) }, .step = .{ .d = &d, .handle = @ptrFromInt(
+        2) }, .out = .{ .d = &d, .handle = @ptrFromInt(3) } };
     const p = try Plan.make(&.{ fakeSegment(0, 0, 3), fakeSegment(1, 3, 6) }, fakeParameters(), .{});
     const stream: cuda.Stream = .{ .d = &d, .handle = null };
     Fake.calls = 0;
