@@ -38,6 +38,7 @@ pub const Scope = struct {
 };
 
 pub const Plan = struct {
+    heads: usize = 16,
     table: [max_rows]Row = undefined,
     rows: usize = 0,
     chunks: usize = 0,
@@ -49,9 +50,9 @@ pub const Plan = struct {
     pub fn make(segs: []const Segment, scope: Scope) !Plan {
         if (scope.prefill or scope.paged or scope.host_kv) return error.DenseScope;
         if (scope.max_part_rows != 8 and scope.max_part_rows != 16) return error.DenseRows;
-        if (scope.heads != 16 or scope.width != 512) return error.DenseShape;
+        if ((scope.heads != 16 and scope.heads != 32) or scope.width != 512) return error.DenseShape;
         if (segs.len == 0 or segs.len > max_segments) return error.DenseSegments;
-        var p: Plan = .{ .fp8 = segs[0].scales != 0 };
+        var p: Plan = .{ .fp8 = segs[0].scales != 0, .heads = scope.heads };
         for (segs) |s| {
             if (s.rows == 0 or s.rows > scope.max_part_rows or s.rows > max_rows - p.rows) return error.DenseRows;
             if ((s.scales != 0) != p.fp8) return error.DenseMixedKV;
@@ -116,26 +117,26 @@ pub const Kernels = struct {
     pub fn launch(k: *const Kernels, stream: cuda.Stream, p: *const Plan, s: Storage, scale: f32) !void {
         try validate(p, s);
         var a: cuda.Args = .{};
-        inline for (.{ s.table.ptr, s.qa.ptr, s.po.ptr, s.pm.ptr, s.pl.ptr, @as(i64, @intCast(p.rows)), @as(i64, 16), scale }) |v| a.add(v);
+        inline for (.{ s.table.ptr, s.qa.ptr, s.po.ptr, s.pm.ptr, s.pl.ptr, @as(i64, @intCast(p.rows)), @as(i64, @intCast(p.heads)), scale }) |v| a.add(v);
         try cuda.launch.launch(if (p.fp8) k.chunks_fp8 else k.chunks, .{
-            .grid = .{ .x = @intCast(p.rows), .y = 1, .z = @intCast(p.chunks) },
+            .grid = .{ .x = @intCast(p.rows), .y = @intCast((p.heads + 15) / 16), .z = @intCast(p.chunks) },
             .block = .{ .x = 256 },
             .shared = glue.chunksSmem(16),
         }, stream, &a);
         var b: cuda.Args = .{};
-        inline for (.{ s.table.ptr, s.po.ptr, s.pm.ptr, s.pl.ptr, s.out.ptr, @as(i64, @intCast(p.rows)), @as(i64, 16) }) |v| b.add(v);
+        inline for (.{ s.table.ptr, s.po.ptr, s.pm.ptr, s.pl.ptr, s.out.ptr, @as(i64, @intCast(p.rows)), @as(i64, @intCast(p.heads)) }) |v| b.add(v);
         try cuda.launch.launch(k.merge, .{
-            .grid = .{ .x = @intCast(p.rows), .y = 16 },
+            .grid = .{ .x = @intCast(p.rows), .y = @intCast(p.heads) },
             .block = .{ .x = 128 },
         }, stream, &b);
     }
 };
 
 pub fn validate(p: *const Plan, s: Storage) !void {
-    if (p.rows == 0 or p.rows > max_rows or p.chunks == 0 or p.input_count > p.inputs.len)
+    if ((p.heads != 16 and p.heads != 32) or p.rows == 0 or p.rows > max_rows or p.chunks == 0 or p.input_count > p.inputs.len)
         return error.DenseShape;
-    const values = try std.math.mul(usize, p.rows, 16 * 512 * 2);
-    const stats = try std.math.mul(usize, try std.math.mul(usize, p.rows, p.chunks), 16 * 4);
+    const values = try std.math.mul(usize, p.rows, p.heads * 512 * 2);
+    const stats = try std.math.mul(usize, try std.math.mul(usize, p.rows, p.chunks), p.heads * 4);
     const outputs = [_]View{ try need(s.po, try std.math.mul(usize, stats, 512)), try need(s.pm, stats), try need(s.pl, stats), try need(s.out, values) };
     const inputs = [_]View{ try need(s.table, p.rows * @sizeOf(Row)), try need(s.qa, values) };
     for (outputs, 0..) |a, i| {

@@ -123,6 +123,7 @@ test {
     _ = @import("cuda_greedy_batch_test.zig");
     _ = @import("cuda_dense_segments.zig");
     _ = @import("cuda_dense_owner_test.zig");
+    _ = @import("cuda_dense_h32_test.zig");
     _ = @import("cuda_dense16_test.zig");
     _ = @import("cuda_ffn_graph_test.zig");
     _ = @import("cuda_first_copy_test.zig");

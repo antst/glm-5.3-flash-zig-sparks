@@ -175,5 +175,5 @@ test "DFlash policy: strict optin immutable floor and all-rank fingerprint ignor
     const floor_mismatch = ranks.mismatch(&.{ make(0, on), make(1, lower) }).?;
     try std.testing.expectEqual(FP.Field.dflash_confidence_floor, floor_mismatch.field);
     try std.testing.expect(ranks.mismatch(&.{ make(0, lower), make(1, lower) }) == null);
-    try std.testing.expectEqual(@as(u32, 63), make(0, on).layout);
+    try std.testing.expectEqual(@as(u32, 64), make(0, on).layout);
 }

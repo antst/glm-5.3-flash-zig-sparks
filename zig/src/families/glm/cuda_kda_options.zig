@@ -63,7 +63,7 @@ test "KDA adaptive strict cached mode, scope and rank agreement" {
     }
     const FP = ranks.Fingerprint;
     const original = FP.of(4, 0, legacy, 4096, true, @splat(0), @splat(0), @splat(0));
-    try std.testing.expectEqual(@as(u32, 63), original.layout);
+    try std.testing.expectEqual(@as(u32, 64), original.layout);
     for ([_][]const u8{ "2", "4", "8" }, [_]u32{ 2, 4, 8 }) |text, least| {
         Env.least = text;
         const settings = try ranks.Settings.read(Env.get, &problem);

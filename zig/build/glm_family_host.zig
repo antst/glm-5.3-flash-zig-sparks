@@ -136,13 +136,13 @@ pub fn steps(b: *std.Build, cuda: *std.Build.Module, glm: *std.Build.Module, mod
     b.step("test-glm-prompt-settings-host", "Actual opt-in settings and rank agreement on the CPU").dependOn(&b.addRunArtifact(b.addTest(.{ .root_module = glm, .filters = &.{"prompt K experiment"} })).step);
     b.step("test-glm-greedy-batch-host", "Greedy verification record batching without a GPU").dependOn(&b.addRunArtifact(b.addTest(.{ .root_module = glm, .filters = &.{"greedy batching:"} })).step);
     b.step("test-glm-dense-segments-host", "Dense shared MLA table and scratch checks without a GPU")
-        .dependOn(&b.addRunArtifact(b.addTest(.{ .root_module = glm, .filters = &.{"dense segment"} })).step);
+        .dependOn(&b.addRunArtifact(b.addTest(.{ .root_module = glm, .filters = &.{ "dense segment", "dense H32:", "FFN warm wide" } })).step);
     const latent_contract = b.createModule(.{ .root_source_file = b.path("zig/tests/cuda/glm_latent_mma_contract.zig"), .target = host, .optimize = .debug, .link_libc = true, .imports = &.{ .{ .name = "cuda", .module = cuda }, .{ .name = "core", .module = mods.core }, .{ .name = "glm_cuda", .module = glm } } });
     b.step("test-glm-latent-mma-contract-host", "Independent periodic FP64 oracle and reduced-precision controls")
         .dependOn(&b.addRunArtifact(b.addTest(.{ .root_module = latent_contract, .filters = &.{"latent MMA"} })).step);
     const dense_contract = b.createModule(.{ .root_source_file = b.path("zig/tests/cuda/glm_dense_segmented_contract.zig"), .target = host, .optimize = .debug, .link_libc = true, .imports = &.{ .{ .name = "cuda", .module = cuda }, .{ .name = "core", .module = mods.core }, .{ .name = "glm_cuda", .module = glm } } });
     b.step("test-glm-dense-contract-host", "Dense latent replacement scatter and actual launch records on CPU")
-        .dependOn(&b.addRunArtifact(b.addTest(.{ .root_module = dense_contract, .filters = &.{"dense segmented"} })).step);
+        .dependOn(&b.addRunArtifact(b.addTest(.{ .root_module = dense_contract, .filters = &.{ "dense segmented", "dense comparator" } })).step);
     b.step("test-glm-copy-75c-host", "GLM copy selection against frozen Python fixtures and request ownership")
         .dependOn(&b.addRunArtifact(b.addTest(.{ .root_module = glm, .filters = &.{"GLM 75c copy:"} })).step);
     b.step("test-glm-dflash-policy-host", "Actual GLM facts, greedy budgets and confidence allocation on CPU")

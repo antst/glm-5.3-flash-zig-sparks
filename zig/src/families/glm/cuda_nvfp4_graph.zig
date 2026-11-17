@@ -4,7 +4,8 @@ const core = @import("core");
 const exl3 = @import("cuda_exl3.zig");
 
 pub fn wide(s: anytype) bool {
-    return s.exl3_fused_decode or s.nvfp4_ffn_graphs;
+    const warm = if (@hasField(@TypeOf(s), "ffn_warm")) s.ffn_warm else false;
+    return s.exl3_fused_decode or s.nvfp4_ffn_graphs or warm;
 }
 
 pub fn require(o: anytype, world: usize) !void {

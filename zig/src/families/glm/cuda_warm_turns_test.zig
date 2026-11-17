@@ -25,7 +25,7 @@ test "GLM warm turns: strict default off and immutable rank agreement" {
     try t.expect(on.warm_turns and !(try ranks.Settings.read(Env.get, &problem)).warm_turns);
     const a = ranks.Fingerprint.of(4, 0, off, 196608, true, @splat(0), @splat(0), @splat(0));
     const b = ranks.Fingerprint.of(4, 1, on, 196608, true, @splat(0), @splat(0), @splat(0));
-    try t.expectEqual(@as(u32, 63), a.layout);
+    try t.expectEqual(@as(u32, 64), a.layout);
     try t.expectEqual(ranks.Fingerprint.Field.warm_turns, ranks.mismatch(&.{ a, b }).?.field);
     try t.expectEqualStrings("TF_GLM_WARM_TURNS", @import("cuda_rank_names.zig").explain(ranks.Fingerprint.Field.warm_turns));
 }

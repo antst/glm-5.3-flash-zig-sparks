@@ -126,7 +126,7 @@ pub const Engine = struct {
         try @import("cuda_kda_options.zig").require(o.settings, world, o.vision != null, o.mtp);
         if (o.settings.retain_sequence_slots and (o.settings.pages or o.settings.verify_graphs))
             return error.RetainSequenceScope;
-        if (o.settings.dense_segments and (world != 4 or o.settings.pages or
+        if (o.settings.dense_segments and ((world != 2 and world != 4) or o.settings.pages or
             o.settings.kv_host != 0 or o.settings.verify_graphs or o.vision != null)) return error.DenseScope;
         if (o.settings.verify_graphs and (o.settings.pages or o.settings.kv_host != 0 or
             o.settings.l2pf.on or o.vision != null or prof_mod.Prof.wanted())) return error.VerifyGraphScope; // before anything is allocated

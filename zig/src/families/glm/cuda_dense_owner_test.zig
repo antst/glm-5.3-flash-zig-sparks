@@ -107,6 +107,12 @@ test "dense segment owner refreshes actual row tables once and drains pinned sta
             try std.testing.expectEqual(@as(i32, if (r < 3) 0 else 3), table[r].row0);
         }
     }
+    a.pos = 508;
+    b.pos = 510;
+    try owner.prepare(rank, 9);
+    try std.testing.expectEqual(@as(usize, 1), Fake.uploads);
+    try std.testing.expectEqual(@as(u64, 1), owner.table_reuses);
+    try std.testing.expectEqual(@as(usize, 1), Fake.waits);
     a.pos = 1021;
     b.pos = 1023;
     b.pos_dev = 0x32000000;

@@ -19,6 +19,9 @@ pub const Owner = struct {
     unusable: bool = false,
     plans: []?dense.Plan,
     rows: usize,
+    heads: usize = 16,
+    table_uploads: u64 = 0,
+    table_reuses: u64 = 0,
     chunks: usize,
     stat_bytes: usize,
     max_part_rows: usize = 8,
@@ -29,15 +32,19 @@ pub const Owner = struct {
     pub fn init(gpa: std.mem.Allocator, io: std.Io, d: *const cuda.Driver, stream: cuda.Stream, w: *const weights.Weights, rows: usize, chunks: usize) !Owner {
         if (rows > dense.max_rows or rows == 0 or chunks == 0) return error.DenseShape;
         var layers: usize = 0;
+        var heads: usize = 0;
         for (w.layers) |l| if (l.mixer == .mla) {
-            if (l.mixer.mla.heads != 16 or l.mixer.mla.lw != 512) return error.DenseShape;
+            const h = l.mixer.mla.heads;
+            if ((h != 16 and h != 32) or l.mixer.mla.lw != 512) return error.DenseShape;
+            if (heads != 0 and heads != h) return error.DenseShape;
+            heads = h;
             layers += 1;
         };
         if (layers == 0) return error.DenseShape;
         var module = try loadImage(gpa, io, d);
         errdefer module.unload();
         const kernels = (try dense.Kernels.load(module, true)).?;
-        const stat_bytes = try std.math.mul(usize, try std.math.mul(usize, rows, chunks), 16 * 4);
+        const stat_bytes = try std.math.mul(usize, try std.math.mul(usize, rows, chunks), heads * 4);
         var partials = try cuda.DeviceBuffer.alloc(d, try std.math.mul(usize, stat_bytes, 514));
         errdefer partials.free();
         var tables = try cuda.DeviceBuffer.alloc(d, layers * dense.max_rows * @sizeOf(dense.Row));
@@ -49,8 +56,8 @@ pub const Owner = struct {
         errdefer uploaded.deinit();
         const plans = try gpa.alloc(?dense.Plan, layers);
         @memset(plans, null);
-        std.log.info("GLM_DENSE_SEGMENTS_MODULE sha256={s} layers={d} chunks={d}", .{ image_sha, layers, chunks });
-        return .{ .gpa = gpa, .kernels = kernels, .module = module, .stream = stream, .tables = tables, .partials = partials, .staging = staging, .uploaded = uploaded, .plans = plans, .rows = rows, .chunks = chunks, .stat_bytes = stat_bytes };
+        std.log.info("GLM_DENSE_SEGMENTS_MODULE sha256={s} layers={d} chunks={d} heads={d}", .{ image_sha, layers, chunks, heads });
+        return .{ .gpa = gpa, .kernels = kernels, .module = module, .stream = stream, .tables = tables, .partials = partials, .staging = staging, .uploaded = uploaded, .plans = plans, .rows = rows, .heads = heads, .chunks = chunks, .stat_bytes = stat_bytes };
     }
 
     pub fn bytes(o: *const Owner) usize {
@@ -65,6 +72,7 @@ pub const Owner = struct {
         @memset(o.plans, null);
         if (r.b.prefill or r.segs.len == 0 or r.segs.len > dense.max_segments or rows > o.rows) return;
         var any = false;
+        var changed = false;
         var di: usize = 0;
         for (r.w.layers) |l| if (l.mixer == .mla) {
             defer di += 1;
@@ -82,20 +90,28 @@ pub const Owner = struct {
             if (!supported) continue;
             const p = dense.Plan.make(segs[0..r.segs.len], .{
                 .max_part_rows = o.max_part_rows,
+                .heads = o.heads,
                 .dense_limit = l.mixer.mla.dense_limit,
                 .scratch_rows = o.rows,
                 .scratch_chunks = o.chunks,
             }) catch continue; // entire original attend loop remains the fallback, before new enqueues
             o.plans[di] = p;
             const offset = di * dense.max_rows * @sizeOf(dense.Row);
-            @memcpy(o.staging.bytes[offset..][0..p.bytes().len], p.bytes());
+            const dst = o.staging.bytes[offset..][0..p.bytes().len];
+            changed = changed or !std.mem.eql(u8, dst, p.bytes());
+            @memcpy(dst, p.bytes());
             any = true;
         };
         if (!any) return;
+        if (!changed and o.table_uploads != 0) {
+            o.table_reuses += 1;
+            return;
+        }
         o.unusable = true; // An uncertain copy/event failure refuses reuse until teardown drains the stream.
         try o.stream.d.check(o.stream.d.api.cuMemcpyHtoDAsync_v2(o.tables.ptr, o.staging.bytes.ptr, o.staging.bytes.len, o.stream.handle), "cuMemcpyHtoDAsync");
         try o.uploaded.record(o.stream);
         o.previous_upload = true;
+        o.table_uploads += 1;
         o.unusable = false;
     }
 
@@ -106,14 +122,14 @@ pub const Owner = struct {
             o.fallbacks += 1;
             return false;
         };
-        if (rows != p.rows) return error.DenseShape;
+        if (rows != p.rows or p.heads != o.heads or l.heads != o.heads) return error.DenseShape;
         const s: dense.Storage = .{
             .table = .{ .ptr = o.tables.ptr + di * dense.max_rows * @sizeOf(dense.Row), .len = dense.max_rows * @sizeOf(dense.Row) },
-            .qa = .{ .ptr = r.b.dsa.qa, .len = r.b.rows * 16 * 512 * 2 },
+            .qa = .{ .ptr = r.b.dsa.qa, .len = r.b.rows * o.heads * 512 * 2 },
             .po = .{ .ptr = o.partials.ptr, .len = o.stat_bytes * 512 },
             .pm = .{ .ptr = o.partials.ptr + o.stat_bytes * 512, .len = o.stat_bytes },
             .pl = .{ .ptr = o.partials.ptr + o.stat_bytes * 513, .len = o.stat_bytes },
-            .out = .{ .ptr = r.b.dsa.ol, .len = r.b.rows * 16 * 512 * 2 },
+            .out = .{ .ptr = r.b.dsa.ol, .len = r.b.rows * o.heads * 512 * 2 },
         };
         try dense.validate(p, s);
         for (r.segs) |g| try dsa.writeSharedKeys(.{ .set = f.set(), .ops = f.m.ops() }, f.stream, l, g.st.caches[di], r.b.dsa, g.row0, g.rows, g.st.pos_dev);
@@ -129,7 +145,7 @@ pub const Owner = struct {
             std.log.err("GLM_DENSE_SEGMENTS_RETAINED stream not quiescent", .{});
             return;
         };
-        std.log.info("GLM_DENSE_SEGMENTS_CLOSE batched_layers={d} fallback_layers={d} wide_layers={d}", .{ o.calls, o.fallbacks, o.wide_calls });
+        std.log.info("GLM_DENSE_SEGMENTS_CLOSE batched_layers={d} fallback_layers={d} wide_layers={d} heads={d} table_uploads={d} table_reuses={d}", .{ o.calls, o.fallbacks, o.wide_calls, o.heads, o.table_uploads, o.table_reuses });
         o.uploaded.deinit();
         o.staging.free();
         o.tables.free();

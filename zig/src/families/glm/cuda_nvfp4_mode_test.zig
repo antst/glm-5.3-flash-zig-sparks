@@ -28,7 +28,7 @@ test "GLM NVFP4 fact: strict default-off setting and all-rank agreement" {
     try t.expect(on.nvfp4_fact);
     const a = ranks.Fingerprint.of(4, 0, off, 4096, true, @splat(0), @splat(0), @splat(0));
     const b = ranks.Fingerprint.of(4, 1, on, 4096, true, @splat(0), @splat(0), @splat(0));
-    try t.expectEqual(@as(u32, 63), a.layout);
+    try t.expectEqual(@as(u32, 64), a.layout);
     try t.expectEqual(ranks.Fingerprint.Field.nvfp4_fact, ranks.mismatch(&.{ a, b }).?.field);
     try t.expectEqualStrings("TF_GLM_NVFP4_FACT", @import("cuda_rank_names.zig").explain(ranks.Fingerprint.Field.nvfp4_fact));
     for ([_]usize{ 1, 2, 4, 8 }) |world| {
