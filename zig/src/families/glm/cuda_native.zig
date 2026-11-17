@@ -177,6 +177,7 @@ pub fn open(gpa: std.mem.Allocator, io: std.Io, ctx: *const cuda.Context, dir: [
         std.log.err("{s}", .{problem});
         return err;
     };
+    try @import("dflash_native_graph.zig").require(p.world, set, o.drafter != null and o.drafts);
     try policy.require(policy.from(set), o.drafter != null, o.drafts);
     set.kv8 = o.kv8;
     if (share_mod.moved(if (std.c.getenv("TF_GLM_KV_SHARE")) |v| std.mem.span(v) else "")) return error.GlmKvShareMoved; // before any rank opens

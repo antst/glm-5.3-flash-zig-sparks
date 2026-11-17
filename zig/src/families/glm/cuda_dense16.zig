@@ -17,10 +17,10 @@ pub fn check(s: anytype, problem: *[]const u8) !void {
 
 pub fn graph(s: anytype, cache: ?[]const u8, problem: *[]const u8) !void {
     const cuda = @import("cuda");
-    if (s.dflash_native_graph and (!s.dflash_graphs or !s.dflash_attn_tp4 or !s.dflash_mlp_wide or
+    if (s.dflash_native_graph and (!s.dflash_graphs or !s.dflash_mlp_wide or
         !(cuda.graph_cache.Settings{}).operator(cache).on))
     {
-        problem.* = "TF_GLM_DFLASH_NATIVE_GRAPH requires graphs, TP4 attention and MLP, cache on";
+        problem.* = "TF_GLM_DFLASH_NATIVE_GRAPH requires graphs, MLP split and cache on";
         return error.BadSetting;
     }
 }

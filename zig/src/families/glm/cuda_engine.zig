@@ -65,6 +65,7 @@ pub const Engine = struct {
     prompt_batch_calls: u64 = 0,
     drafter: ?*dflash.Drafter = null, // --drafter: DFlash2 (every rank runs its passes; rank 0 selects the drafts)
     profs: [fw.window_rows]?*prof_mod.Prof = @splat(null), // TF_GLM_PROF=1: verify sections' GPU time, by rows
+    shared_prof: ?*@import("cuda_engine_prof.zig").Shared = null,
     profiling_prompt: ?*prof_mod.Prof = null,
     prompt_profs: [4]?*prof_mod.Prof = @splat(null), // and prompt chunks': to 64, 256, 1024, 2048 rows
     checkpoint_digest: [32]u8,
@@ -260,6 +261,7 @@ pub const Engine = struct {
             p.* = try prof_mod.Prof.init(d, io);
             p.*.?.every = 4;
         };
+        e.shared_prof = try @import("cuda_engine_prof.zig").Shared.init(gpa, d, io, prof_mod.Prof.wanted());
         e.prompt_out = try prompt_lp.Output.init(d);
         errdefer e.prompt_out.free();
         e.shared_buf = try cuda.DeviceBuffer.alloc(d, 8);
@@ -522,10 +524,13 @@ pub const Engine = struct {
             rows += p.ids.len;
         }
         var one: [1]fw.Rank = undefined;
-        const f = e.sharedView(b, segs[0..parts.len], &one);
+        var f = e.sharedView(b, segs[0..parts.len], &one);
+        const shared_prof = try @import("cuda_engine_prof.zig").beginShared(e, &f, rows, parts.len);
+        errdefer if (shared_prof) |v| v.cancel();
         try @import("cuda_verify_forward.zig").run(e, &f, @ptrCast(ids[0..rows]));
         if (e.drafter) |dr| for (parts, segs[0..parts.len], 0..) |p, g, i| try dr.noteVerify(p.slot, g.row0, g.rows, g.st.pos, i == 0);
         try @import("cuda_shared_pick.zig").draw(e, b, parts, segs[0..parts.len], rows);
+        if (shared_prof) |v| v.finish(e.stream);
         @import("cuda_verify_rows.zig").shared(e, parts);
     }
     /// DFlash2's round (every rank, the same `reqs`): each stream's kept rows into its context, then the block pass.

@@ -18,6 +18,14 @@ pub fn scope(world: usize, split: bool, attention: bool, graphs: bool) !void {
     if (!((world == 4 and attention) or (world == 2 and !attention)) or !split or !graphs) return error.DFlashNativeGraphScope;
 }
 
+/// Family startup checks the actual world before opening rank links or allocating the model.
+pub fn require(world: usize, settings: anytype, active_drafter: bool) !void {
+    if (!settings.dflash_native_graph) return;
+    if (!active_drafter or (world != 2 and world != 4)) return error.DFlashNativeGraphScope;
+    const split = @import("dflash.zig").mlpSplit(world, settings.dflash_mlp_wide).split;
+    try scope(world, split, settings.dflash_attn_tp4, settings.dflash_graphs);
+}
+
 pub fn payload(streams: usize) !usize {
     if (streams == 0 or streams > 8) return error.DFlashNativeGraphStreams;
     return streams * 8 * 4096 * 4;

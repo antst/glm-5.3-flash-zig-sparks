@@ -130,6 +130,8 @@ test {
     _ = @import("cuda_sample_batch_test.zig");
     _ = @import("dflash_graph_test.zig");
     _ = @import("dflash_native_graph_test.zig");
+    _ = @import("cuda_tp2_graph_settings_test.zig");
+    _ = @import("cuda_shared_prof_test.zig");
     _ = @import("dflash_ingest_graph_test.zig");
     _ = @import("dflash_split_graph_test.zig");
     _ = @import("dflash_attention.zig");
