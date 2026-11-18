@@ -145,10 +145,18 @@ pub fn tileLinears(gpa: std.mem.Allocator, w: *Weights, mk: *const mm_mod.Kernel
 }
 
 pub fn tileLinearsMode(gpa: std.mem.Allocator, w: *Weights, mk: *const mm_mod.Kernels, s: cuda.Stream, d: *const cuda.Driver, dense_bits: u8, head_bits: u8, q8_mse: bool) !mm_mod.Packed {
+    return tileLinearsFit(gpa, w, mk, s, d, dense_bits, head_bits, q8_mse, null);
+}
+
+pub fn tileLinearsFit(gpa: std.mem.Allocator, w: *Weights, mk: *const mm_mod.Kernels, s: cuda.Stream, d: *const cuda.Driver, dense_bits: u8, head_bits: u8, q8_mse: bool, calibrated: ?*const @import("cuda_q8_moments.zig").Data) !mm_mod.Packed {
     try padKdaInputs(w, d, s); // pad_to was set at load (Engine.open), so a stack pads only with TF_GLM_KDA_PAD=1
     var list: std.ArrayList(Lin) = .empty;
     defer list.deinit(w.gpa);
     try linears(w, &list);
+    if (calibrated) |data| {
+        if (data.entries.len != list.items.len or data.target_count + 1 != list.items.len or !q8_mse or dense_bits != 8 or head_bits != 16) return error.Q8CalibrationShape;
+        for (list.items, 0..) |l, i| _ = try data.linear(i, l.n, l.k);
+    }
     var most: usize = 0;
     for (list.items) |e| most = @max(most, e.n * e.k * 2);
     var tmp = try cuda.DeviceBuffer.alloc(d, most);
@@ -166,6 +174,7 @@ pub fn tileLinearsMode(gpa: std.mem.Allocator, w: *Weights, mk: *const mm_mod.Ke
     errdefer packed_bits.deinit(gpa);
     var freed: usize = 0;
     var quality: @import("cuda_q8_mse.zig").Stats = .{};
+    var weighted: @import("cuda_q8_activation.zig").Stats = .{};
     for (list.items, 0..) |e, i| {
         const n = e.n;
         const k = e.k;
@@ -181,7 +190,13 @@ pub fn tileLinearsMode(gpa: std.mem.Allocator, w: *Weights, mk: *const mm_mod.Ke
         try cuda.memory.download(d, ptr, std.mem.sliceAsBytes(host.items)[0 .. n * k * 2]);
         try words.resize(gpa, n * k * bits / 32);
         try scales.resize(gpa, n * (k / 64));
-        if (q8_mse and bits == 8) {
+        if (calibrated) |data| {
+            const q = try @import("cuda_q8_activation.zig").quantize(host.items, n, k, try data.linear(i, n, k), words.items, scales.items);
+            weighted.groups += q.groups;
+            weighted.improved += q.improved;
+            weighted.baseline_error += q.baseline_error;
+            weighted.selected_error += q.selected_error;
+        } else if (q8_mse and bits == 8) {
             const q = try @import("cuda_q8_mse.zig").quantize(host.items, n, k, words.items, scales.items);
             quality.groups += q.groups;
             quality.improved += q.improved;
@@ -199,7 +214,10 @@ pub fn tileLinearsMode(gpa: std.mem.Allocator, w: *Weights, mk: *const mm_mod.Ke
     }
     try s.synchronize();
     if (packed_ptrs.items.len > 0) std.log.info("glm: {d} linears packed ({d}/{d} bits), {d:.2} GiB freed", .{ packed_ptrs.items.len, dense_bits, head_bits, @as(f64, @floatFromInt(freed)) / (1 << 30) });
-    if (q8_mse) {
+    if (calibrated != null) {
+        std.log.info("GLM_Q8_ACTIVATION rank={d} active=true groups={d} improved={d} weighted_before={d} weighted_after={d}",
+            .{ w.share.rank, weighted.groups, weighted.improved, weighted.baseline_error, weighted.selected_error });
+    } else if (q8_mse) {
         std.log.info("GLM_Q8_MSE rank={d} active=true groups={d} improved={d} error_before={d} error_after={d}",
             .{ w.share.rank, quality.groups, quality.improved, quality.baseline_error, quality.selected_error });
     }

@@ -15,11 +15,11 @@ fn overlap(a: []const u8, b: []const u8) bool {
     return if (x <= y) y - x < a.len else x - y < b.len;
 }
 
-fn value(h: u16) f32 {
+pub fn value(h: u16) f32 {
     return @bitCast(@as(u32, h) << 16);
 }
 
-fn code(v: f32, scale: f32) i32 {
+pub fn code(v: f32, scale: f32) i32 {
     if (scale == 0) return 0;
     const x = @max(-127, @min(127, v / scale));
     const f = @floor(x);

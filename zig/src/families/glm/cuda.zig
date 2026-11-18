@@ -4,6 +4,10 @@ pub const experts = @import("cuda_experts.zig");
 pub const exl3 = @import("cuda_exl3.zig");
 pub const vision = @import("cuda_vision.zig");
 pub const mm = @import("cuda_mm.zig");
+pub const q8_activation = @import("cuda_q8_activation.zig");
+pub const q8_mse = @import("cuda_q8_mse.zig");
+pub const q8_moments = @import("cuda_q8_moments.zig");
+pub const q8_activation_options = @import("cuda_q8_activation_options.zig");
 pub const vision_config = @import("vision_config.zig");
 pub const image_core = @import("image_core.zig");
 /// An image's bytes to the tower's patches, as the Metal family prepares them (core's decoder).

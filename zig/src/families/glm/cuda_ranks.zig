@@ -8,6 +8,8 @@ const heat = @import("heat");
 const l2pf = @import("cuda_l2pf.zig");
 const wireOpens = @import("cuda_rank_options.zig").wireOpens;
 pub const Settings = struct {
+    q8_activation: bool = false,
+    calibration_sha: [32]u8 = @splat(0),
     absorb_mma: bool = false,
     kv8: bool = false, // --kv-cache fp8, supplied by the native options rather than an environment override
     pages: bool = false, // TF_KV_PAGES as `open` resolves it (with the world and --kv-cache): every sequence on pages
@@ -70,6 +72,9 @@ pub const Settings = struct {
     l2pf: l2pf.Options = .{}, // TF_GLM_L2PF and its knobs: a decode window's next weights read into L2 beside it
     pub fn read(get: *const fn ([:0]const u8) ?[]const u8, problem: *[]const u8) !Settings {
         var s: Settings = .{};
+        const act = try @import("cuda_q8_activation_options.zig").read(get, problem);
+        s.q8_activation = act.on;
+        s.calibration_sha = act.sha;
         s.q8_mse = try @import("cuda_dense16.zig").flag(get("TF_GLM_Q8_MSE"), problem, "TF_GLM_Q8_MSE: 0 or 1");
         s.absorb_mma = try @import("cuda_dense16.zig").flag(get("TF_GLM_ABSORB_MMA"), problem, "TF_GLM_ABSORB_MMA: 0 or 1");
         s.warm_turns = try @import("cuda_dense16.zig").flag(get("TF_GLM_WARM_TURNS"), problem, "TF_GLM_WARM_TURNS: 0 or 1");
@@ -289,7 +294,9 @@ pub fn environment(name: [:0]const u8) ?[]const u8 { return @import("profile").l
 /// Whether the group brings up its own RoCE path: not where TF_GLM_ROCE_MULTI=1 lends fabric/tp's wire (3+ ranks).
 pub fn ownRoce(s: Settings, world: usize) bool { return !(s.roce_multi and world >= 3); }
 pub const Fingerprint = extern struct {
-    layout: u32 = 69,
+    layout: u32 = 72,
+    q8_activation: u32 = 0,
+    calibration_sha: [32]u8 = @splat(0),
     world: u32,
     rank: u32,
     kv8: u32 = 0,
@@ -362,6 +369,8 @@ pub const Fingerprint = extern struct {
     absorb_mma: u32 = 0,
     pub const Field = enum {
         layout,
+        q8_activation,
+        calibration_sha,
         rank,
         world,
         kv8,
@@ -444,6 +453,8 @@ pub const Fingerprint = extern struct {
         checkpoint_digest: [32]u8,
     ) Fingerprint {
         const f: Fingerprint = .{
+            .q8_activation = @intFromBool(s.q8_activation),
+            .calibration_sha = if (s.q8_activation) s.calibration_sha else @splat(0),
             .kv8 = @intFromBool(s.kv8),
             .pages = @intFromBool(s.pages),
             .world = @intCast(world),
@@ -527,31 +538,9 @@ pub fn mismatch(all: []const Fingerprint) ?Mismatch {
     }
     return null;
 }
-pub fn hashFile(gpa: std.mem.Allocator, io: std.Io, path: []const u8) ![32]u8 {
-    const bytes = try std.Io.Dir.cwd().readFileAlloc(io, path, gpa, .limited(1 << 30));
-    defer gpa.free(bytes);
-    return hashBytes(bytes);
-}
+pub const hashFile = @import("cuda_rank_identity.zig").hashFile;
 pub const hashBytes = @import("cuda_rank_options.zig").hashBytes;
-pub fn gather(
-    comptime T: type,
-    d: *const cuda.Driver,
-    lib: *const cuda.nccl.Library,
-    comm: cuda.nccl.Comm,
-    stream: cuda.Stream,
-    rank: usize,
-    mine: T,
-    out: []T,
-) !void {
-    const size = @sizeOf(T);
-    var dev = try cuda.DeviceBuffer.alloc(d, size * out.len);
-    defer dev.free();
-    try dev.uploadAsync(rank * size, std.mem.asBytes(&mine), stream.handle);
-    const gathered = lib.api.ncclAllGather(dev.ptr + rank * size, dev.ptr, size, .u8, comm, stream.handle);
-    try lib.check(gathered, "ncclAllGather");
-    try stream.synchronize();
-    try dev.download(0, std.mem.sliceAsBytes(out));
-}
+pub const gather = @import("cuda_rank_gather.zig").gather;
 /// All-gathers `mine` over `comm`; any disagreement is error.RankMismatch on every rank, printing what differs.
 pub fn agree(
     d: *const cuda.Driver,
@@ -595,6 +584,4 @@ fn unreachablePeer(rank: usize, peer: usize) error{SplitUnreachable} {
 const explain = @import("cuda_rank_names.zig").explain;
 pub const mediaFingerprint = @import("cuda_rank_names.zig").mediaFingerprint;
 /// The checkpoint digest a rank sends: its metadata and every shard byte, read again only for a file that changed.
-pub fn artifact(gpa: std.mem.Allocator, io: std.Io, dir: []const u8) ![32]u8 {
-    return @import("core").checkpoint_identity.fullIdentity(gpa, io, dir);
-}
+pub const artifact = @import("cuda_rank_identity.zig").artifact;

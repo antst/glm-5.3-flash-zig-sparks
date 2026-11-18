@@ -1,6 +1,8 @@
 //! Human-readable names for the startup settings agreement.
 pub fn explain(f: anytype) []const u8 {
     return switch (f) {
+        .q8_activation => "TF_GLM_Q8_ACTIVATION",
+        .calibration_sha => "TF_GLM_CALIBRATION_SHA256",
         .layout => "a different build of this check",
         .rank => "a rank number given twice or out of order",
         .world => "the ranks were started with different world sizes",
@@ -77,6 +79,8 @@ pub fn explain(f: anytype) []const u8 {
 
 /// Fields compared in order after layout and rank identity.
 pub const compared = .{
+    "q8_activation",
+    "calibration_sha",
     "kv8",
     "pages",
     "prompt_fixed_k",

@@ -23,6 +23,9 @@ pub fn steps(b: *std.Build, cuda: *std.Build.Module, glm: *std.Build.Module, mod
     b.step("test-glm-q8-mse-host", "Startup Q8 scale refinement, packed error and agreement without devices")
         .dependOn(&b.addRunArtifact(b.addTest(.{ .root_module = glm, .filters = &.{"Q8 MSE:"} })).step);
     const host = b.graph.host;
+    const activation = b.createModule(.{ .root_source_file = b.path("zig/glm_q8_activation_host.zig"), .target = host, .optimize = .debug, .link_libc = true, .imports = &.{ .{ .name = "glm", .module = glm } } });
+    b.step("test-glm-q8-activation-host", "Independent weighted Q8 pack error and calibration identity controls")
+        .dependOn(&b.addRunArtifact(b.addTest(.{ .root_module = activation })).step);
     const target_q4 = b.createModule(.{ .root_source_file = b.path("zig/glm_target_q4_host.zig"), .target = host, .optimize = .debug, .link_libc = true, .imports = &.{ .{ .name = "cuda", .module = cuda }, .{ .name = "core", .module = mods.core }, .{ .name = "glm_cuda", .module = glm } } });
     b.step("test-glm-target-q4-host", "Target Q4 references, graph entrypoint and live-resource declarations")
         .dependOn(&b.addRunArtifact(b.addTest(.{ .root_module = target_q4, .filters = &.{"target Q4"} })).step);

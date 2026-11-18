@@ -85,6 +85,7 @@ pub const Context = struct {
     io: std.Io,
     affine: bool,
     q8_mse: bool = false,
+    calibration: ?@import("cuda_q8_moments.zig").Identity = null,
     head_fp8: bool = false,
     lane: ?*const cuda.qmmf.Lane = null,
     qs: *const @import("cuda_q4.zig").Kernels,
@@ -97,7 +98,14 @@ pub const Context = struct {
     packs: *mm.Packed,
     pub fn apply(t: @This(), w: *weights.Weights) !void {
         if (!t.enabled) return;
+        var calibrated: ?*@import("cuda_q8_moments.zig").Data = null;
+        defer if (calibrated) |data| data.destroy();
+        if (t.calibration) |id| {
+            if (t.affine or !t.q8_mse or w.share.world != 2 or w.mtp != null or w.head != .bf16) return error.Q8ActivationScope;
+            const root = @import("cuda_ranks.zig").environment("TF_GLM_CALIBRATION_ROOT") orelse return error.Q8CalibrationIdentity;
+            calibrated = try @import("cuda_q8_moments.zig").Data.open(t.gpa, t.io, root, id, w.share.rank);
+        }
         if (t.head_fp8) try @import("cuda_head_fp8.zig").pack(t.gpa, t.io, w, t.lane orelse return error.HeadFp8Scope, t.s, t.d);
-        t.packs.* = if (t.affine) try pack(t.gpa, t.io, w, t.mk, t.qs, t.s, t.d) else try tile.tileLinearsMode(t.gpa, w, t.mk, t.s, t.d, t.dense, t.head, t.q8_mse);
+        t.packs.* = if (t.affine) try pack(t.gpa, t.io, w, t.mk, t.qs, t.s, t.d) else try tile.tileLinearsFit(t.gpa, w, t.mk, t.s, t.d, t.dense, t.head, t.q8_mse, calibrated);
     }
 };
