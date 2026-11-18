@@ -8,6 +8,9 @@ pub const q8_activation = @import("cuda_q8_activation.zig");
 pub const q8_mse = @import("cuda_q8_mse.zig");
 pub const q8_moments = @import("cuda_q8_moments.zig");
 pub const q8_activation_options = @import("cuda_q8_activation_options.zig");
+pub const q4_activation_options = @import("cuda_q4_activation_options.zig");
+pub const affine_activation = @import("cuda_affine_activation.zig");
+pub const q4_activation_reference = @import("cuda_q4_activation_reference.zig");
 pub const vision_config = @import("vision_config.zig");
 pub const image_core = @import("image_core.zig");
 /// An image's bytes to the tower's patches, as the Metal family prepares them (core's decoder).

@@ -120,6 +120,10 @@ pub fn targets(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.bu
     const runner_install = b.addInstallArtifact(runner_exe, .{});
     b.getInstallStep().dependOn(&runner_install.step);
     b.step("cuda-test-runner", "Install the actual CUDA device-test runner without executing it").dependOn(&runner_install.step);
+    const activation_runner = b.createModule(.{ .root_source_file = b.path("zig/tests/cuda/glm_affine_activation_main.zig"), .target = target, .optimize = optimize, .link_libc = true, .strip = strip, .imports = &.{ .{ .name = "cuda", .module = cuda }, .{ .name = "core", .module = mods.core }, .{ .name = "glm_cuda", .module = runner.import_table.get("glm_cuda").? } } });
+    const activation_exe = b.addExecutable(.{ .name = "tf-glm-affine-activation-test", .root_module = activation_runner });
+    b.step("glm-affine-activation-runner", "Build only the calibrated affine startup comparator")
+        .dependOn(&b.addInstallArtifact(activation_exe, .{}).step);
     // tf-tp-watch-check: the ranks' lines with no GPU or NCCL; a failing or dying rank stops every rank
     b.installArtifact(b.addExecutable(.{ .name = "tf-tp-watch-check", .root_module = b.createModule(.{ .root_source_file = b.path("zig/tests/cuda/tp_watch_check.zig"), .target = target, .optimize = optimize, .link_libc = true, .strip = strip, .imports = &.{.{ .name = "cuda", .module = cuda }} }) }));
     @import("living_dense.zig").target(b, target, optimize, cuda, mods.qwen35);

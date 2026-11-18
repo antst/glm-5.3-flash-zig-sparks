@@ -9,6 +9,7 @@ const l2pf = @import("cuda_l2pf.zig");
 const wireOpens = @import("cuda_rank_options.zig").wireOpens;
 pub const Settings = struct {
     q8_activation: bool = false,
+    q4_activation: bool = false,
     calibration_sha: [32]u8 = @splat(0),
     absorb_mma: bool = false,
     kv8: bool = false, // --kv-cache fp8, supplied by the native options rather than an environment override
@@ -72,7 +73,8 @@ pub const Settings = struct {
     l2pf: l2pf.Options = .{}, // TF_GLM_L2PF and its knobs: a decode window's next weights read into L2 beside it
     pub fn read(get: *const fn ([:0]const u8) ?[]const u8, problem: *[]const u8) !Settings {
         var s: Settings = .{};
-        const act = try @import("cuda_q8_activation_options.zig").read(get, problem);
+        s.q4_activation = try @import("cuda_q4_activation_options.zig").read(get, problem);
+        const act = try @import("cuda_q8_activation_options.zig").readFor(get, problem, s.q4_activation);
         s.q8_activation = act.on;
         s.calibration_sha = act.sha;
         s.q8_mse = try @import("cuda_dense16.zig").flag(get("TF_GLM_Q8_MSE"), problem, "TF_GLM_Q8_MSE: 0 or 1");
@@ -294,8 +296,9 @@ pub fn environment(name: [:0]const u8) ?[]const u8 { return @import("profile").l
 /// Whether the group brings up its own RoCE path: not where TF_GLM_ROCE_MULTI=1 lends fabric/tp's wire (3+ ranks).
 pub fn ownRoce(s: Settings, world: usize) bool { return !(s.roce_multi and world >= 3); }
 pub const Fingerprint = extern struct {
-    layout: u32 = 72,
+    layout: u32 = 73,
     q8_activation: u32 = 0,
+    q4_activation: u32 = 0,
     calibration_sha: [32]u8 = @splat(0),
     world: u32,
     rank: u32,
@@ -370,6 +373,7 @@ pub const Fingerprint = extern struct {
     pub const Field = enum {
         layout,
         q8_activation,
+        q4_activation,
         calibration_sha,
         rank,
         world,
@@ -454,7 +458,8 @@ pub const Fingerprint = extern struct {
     ) Fingerprint {
         const f: Fingerprint = .{
             .q8_activation = @intFromBool(s.q8_activation),
-            .calibration_sha = if (s.q8_activation) s.calibration_sha else @splat(0),
+            .q4_activation = @intFromBool(s.q4_activation),
+            .calibration_sha = if (s.q8_activation or s.q4_activation) s.calibration_sha else @splat(0),
             .kv8 = @intFromBool(s.kv8),
             .pages = @intFromBool(s.pages),
             .world = @intCast(world),

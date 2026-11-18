@@ -110,6 +110,7 @@ pub const Engine = struct {
     pub fn init(gpa: std.mem.Allocator, io: std.Io, d: *const cuda.Driver, ctx: *const cuda.Context, checkpoint: []const u8, lib: *const cuda.nccl.Library, comm: cuda.nccl.Comm, rank: usize, world: usize, o: Options) !*Engine {
         if (world > ranks.max_world) return error.TooManyRanks;
         try @import("cuda_q8_activation_options.zig").require(o, world);
+        try @import("cuda_q4_activation_options.zig").require(o, world);
         try @import("cuda_tile_affine.zig").require(o.settings, world, o.vision != null);
         try @import("cuda_q8_mse.zig").require(o.settings, world, o.vision != null);
         try @import("cuda_admission_options.zig").require(o, world);
@@ -207,7 +208,8 @@ pub const Engine = struct {
             .packs = &e.packs,
         };
         tiler.q8_mse = o.settings.q8_mse;
-        tiler.calibration = if (o.settings.q8_activation) .{ .manifest = o.settings.calibration_sha, .checkpoint = checkpoint_digest } else null;
+        tiler.q4_activation = o.settings.q4_activation;
+        tiler.calibration = if (o.settings.q8_activation or o.settings.q4_activation) .{ .manifest = o.settings.calibration_sha, .checkpoint = checkpoint_digest } else null;
         e.w = try @import("cuda_load_owner.zig").finish(try weights.load(gpa, io, d, stream, e.m.tools(), checkpoint, c, share, layers, @import("cuda_dflash_head_mode.zig").selection(o.settings, o.mtp, o.drafter)), tiler, @import("cuda_tile_affine.zig").Context.apply);
         errdefer e.w.deinit();
         std.log.info("rank {d}: GLM_DFLASH_ONLY_HEAD enabled={any} target_mtp={any} borrowed_head={any}", .{ rank, o.settings.dflash_only_head, e.w.mtp != null, e.w.draftHead(o.settings.dflash_only_head) != null });

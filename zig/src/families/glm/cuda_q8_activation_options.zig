@@ -3,17 +3,21 @@ const moments = @import("cuda_q8_moments.zig");
 pub const Choice = struct { on: bool = false, sha: [32]u8 = @splat(0) };
 
 pub fn read(get: *const fn ([:0]const u8) ?[]const u8, problem: *[]const u8) !Choice {
+    return readFor(get, problem, false);
+}
+
+pub fn readFor(get: *const fn ([:0]const u8) ?[]const u8, problem: *[]const u8, q4_on: bool) !Choice {
     const on = try @import("cuda_dense16.zig").flag(get("TF_GLM_Q8_ACTIVATION"), problem, "TF_GLM_Q8_ACTIVATION: 0 or 1");
-    if (!on) return .{};
+    if (!on and !q4_on) return .{};
     const text = get("TF_GLM_CALIBRATION_SHA256") orelse {
-        problem.* = "TF_GLM_Q8_ACTIVATION requires TF_GLM_CALIBRATION_SHA256";
+        problem.* = "Calibrated Q4/Q8 requires TF_GLM_CALIBRATION_SHA256";
         return error.BadSetting;
     };
     const sha = moments.digest(text) catch {
         problem.* = "TF_GLM_CALIBRATION_SHA256: exactly64 hexadecimal digits";
         return error.BadSetting;
     };
-    return .{ .on = true, .sha = sha };
+    return .{ .on = on, .sha = sha };
 }
 
 pub fn require(o: anytype, world: usize) !void {

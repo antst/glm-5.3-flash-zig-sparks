@@ -2,6 +2,7 @@
 pub fn explain(f: anytype) []const u8 {
     return switch (f) {
         .q8_activation => "TF_GLM_Q8_ACTIVATION",
+        .q4_activation => "TF_GLM_Q4_ACTIVATION",
         .calibration_sha => "TF_GLM_CALIBRATION_SHA256",
         .layout => "a different build of this check",
         .rank => "a rank number given twice or out of order",
@@ -80,6 +81,7 @@ pub fn explain(f: anytype) []const u8 {
 /// Fields compared in order after layout and rank identity.
 pub const compared = .{
     "q8_activation",
+    "q4_activation",
     "calibration_sha",
     "kv8",
     "pages",
