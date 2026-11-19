@@ -1,4 +1,4 @@
-"""Render four TP4 serving payloads and commands locally. No deployment, registration or endpoint calls."""
+"""Render TP4 switch or TP2 direct-link serving payloads and commands locally."""
 import argparse
 import copy
 import hashlib
@@ -199,6 +199,19 @@ def construct(args, recipe):
 
 
 def main(args):
+    require(args.output.is_absolute() and not args.output.exists(), 'Use a fresh absolute output directory')
+    for root in (args.runtime_root, args.model_root, args.drafter_root, args.cache_root):
+        require(args.output.resolve() != root.resolve() and root.resolve() not in args.output.resolve().parents,
+            'Do not write rendered files inside runtime, weights or cache roots')
+    if args.tp == 2:
+        from tp2 import config
+        path = P / 'tp2/recipe.json'
+        source = json.loads((P / 'tp2/SOURCE.json').read_text())
+        nodes, report = config.construct(args, json.loads(path.read_text()), source, create_command)
+        report['recipe_sha256'] = sha(path)
+        report['release_status'] = 'TP2_PROFILE_ASSEMBLY'
+        write_configuration(args, nodes, report)
+        return
     path = P / 'recipe.json'
     recipe = json.loads(path.read_text())
     assets = required_assets(recipe, args.expert_checkpoint + '-' + args.precision)
@@ -211,23 +224,24 @@ def main(args):
             if item['name'] in executables:
                 require((args.runtime_root / item['name']).stat().st_mode & 0o111,
                     'Native executable has no execute permission; restore the release archive modes')
-    require(args.output.is_absolute() and not args.output.exists(), 'Use a fresh absolute output directory')
-    for root in (args.runtime_root, args.model_root, args.drafter_root, args.cache_root):
-        require(args.output.resolve() != root.resolve() and root.resolve() not in args.output.resolve().parents,
-            'Do not write rendered files inside runtime, weights or cache roots')
     nodes, report = construct(args, recipe)
     report.update(recipe_sha256=sha(path), runtime_file_hashes_checked=args.verify_runtime,
         runtime_assets_required=[item['name'] for item in assets])
+    write_configuration(args, nodes, report)
+
+
+def write_configuration(args, nodes, report):
     args.output.mkdir(parents=True, exist_ok=False)
     for node in nodes:
         (args.output / ('rank-' + str(node['rank']) + '.json')).write_text(json.dumps(node, indent=2) + '\n')
     (args.output / 'CONFIGURATION.json').write_text(json.dumps(report, indent=2) + '\n')
-    print(json.dumps(dict(rendered=True, nodes=4, output=str(args.output), deployed=False,
-        release_status=recipe['release_status'], runtime_verified=args.verify_runtime)))
+    print(json.dumps(dict(rendered=True, nodes=len(nodes), output=str(args.output), deployed=False,
+        release_status=report['release_status'], runtime_verified=args.verify_runtime)))
 
 
 def parser():
     p = argparse.ArgumentParser(description=__doc__)
+    p.add_argument('--tp', type=int, choices=[2, 4], default=4)
     p.add_argument('--expert-checkpoint', choices=['exl3', 'nvfp4'], default='exl3')
     p.add_argument('--precision', choices=['bf16', 'q4', 'q4-fp8', 'q8'], default='bf16')
     p.add_argument('--verify-rows', type=int, choices=[16, 32], default=32)
@@ -241,8 +255,8 @@ def parser():
     p.add_argument('--instance', default='glm53')
     p.add_argument('--master', required=True, help='IPv4 bootstrap address on rank0')
     p.add_argument('--roce-address-range', required=True, help='IPv4 network containing the RoCE data addresses')
-    p.add_argument('--hosts', nargs=4, metavar=('RANK0', 'RANK1', 'RANK2', 'RANK3'),
-        help='Four display/placement host labels in tensor-parallel rank order')
+    p.add_argument('--hosts', nargs='+', metavar='HOST',
+        help='Two or four host labels in tensor-parallel rank order')
     p.add_argument('--port', type=int, default=18888)
     p.add_argument('--nccl-port', type=int, default=28664)
     p.add_argument('--plan-port', type=int, default=28651)

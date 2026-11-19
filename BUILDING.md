@@ -149,3 +149,24 @@ redistributed in these archives. The supplied Dockerfile documents the portable
 runtime construction. The exact qualified image archive has its own checksum;
 a fresh package-manager rebuild may have a different image identity.
 
+
+## TP2 engine builds
+
+The recipe repo also carries the signed `engine/tp2-bf16`, `engine/tp2-q4` and `engine/tp2-q8`
+branches. [TP2 source identities](tp2/SOURCE.json) bind each branch to its source tree,
+file manifest, native build version and measured executable. For each branch, use the same
+ARM64 target, Zig toolchain and pinned 146-image input as above, with the version listed
+for that branch.
+
+The [TP2 recipe](tp2/recipe.json) declares the required external modules, libraries and
+calibration files. The measured archives preserve their directory layout and executable mode.
+To package a verified runtime directory from those exact files, run:
+
+```sh
+python3 -m tp2.package_runtime q4 --root /srv/glm/tp2-q4 \
+  --output /tmp/glm53-tp2-q4-runtime.tar.gz
+```
+
+The TP2 and TP4 runtimes use the same ARM64 container image. Loading a published runtime
+archive preserves its executable identity. Locally compiled engines have their own identity
+and are measured separately.

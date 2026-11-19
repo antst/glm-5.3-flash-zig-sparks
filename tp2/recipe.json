@@ -1,0 +1,724 @@
+{
+  "bundles": {
+    "bf16": {
+      "archive": "glm53-tp2-bf16-runtime.tar.gz",
+      "files": [
+        {
+          "bytes": 851472,
+          "path": "dflash_reference.fatbin",
+          "sha256": "3ffdb516c366c10dced9e36a7abee27bc5484a2a690d992ff9ce36570c7fa9e0"
+        },
+        {
+          "bytes": 100712,
+          "path": "dflash_reference_attention.cubin",
+          "sha256": "b33690449f594947004f4fd11b2bb08825b56f9a00d779a4d3c8f167cdfc2098"
+        },
+        {
+          "bytes": 970896,
+          "path": "exl3_prompt_whole.fatbin",
+          "sha256": "65c062c3d9f46342c76a29dc844aa57e228dccbc08903c9f877e105b1bc6fc39"
+        },
+        {
+          "bytes": 3583904,
+          "path": "glm_dense_segments.fatbin",
+          "sha256": "8dfd446605497436654d9926153478b93b19959ff79bbe042e2d598f69ae4669"
+        },
+        {
+          "bytes": 448496,
+          "path": "glm_exl3_decode_mcg4.fatbin",
+          "sha256": "9d69cdcdd1bb97a7bb7aaf448b8df844227062a0db4ade4f7f6323e35e61f78b"
+        },
+        {
+          "bytes": 19392,
+          "path": "glm_head_fp8.fatbin",
+          "sha256": "0f15d6c93183a3185680e0cdd8e61f7047c9b5c054ac0d5ba755d65ea6f15ab5"
+        },
+        {
+          "bytes": 80152,
+          "path": "glm_head_fp8_g64.fatbin",
+          "sha256": "0e3d6e28130225f7c7fb633d23b27f20f347e23b017599793d8e6d4e1a08a0ad"
+        },
+        {
+          "bytes": 539152,
+          "path": "glm_kda_segments.fatbin",
+          "sha256": "1f2ef5524f67639f681e5a1a3334d0bc89bb4a456d067d7889a8e26be9ded07d"
+        },
+        {
+          "bytes": 207616,
+          "path": "glm_latent_mma.fatbin",
+          "sha256": "34e82c3d34080e41408fa4e2de24d229ffcbce55d3ad24bae953ffeeb9608650"
+        },
+        {
+          "bytes": 51256,
+          "path": "glm_q4_mse.fatbin",
+          "sha256": "fe539d130e29dcd6f90b53334cf5a931e51d2d9a3273f577109378ced84a9a8d"
+        },
+        {
+          "bytes": 996576,
+          "path": "glm_q4_python_prompt.fatbin",
+          "sha256": "20972abb31288a7cc4fb4865c7cece11b1d013fcbf82a0b6ecde49b7c93e2d5e"
+        },
+        {
+          "bytes": 79789200,
+          "path": "libnccl.so.2",
+          "sha256": "01d04c83cf666155466c6a00368a40cd3caa50beca5265abb89d9f14ae99da87"
+        },
+        {
+          "bytes": 4826440,
+          "path": "libtf_candidate.so",
+          "sha256": "1bf5042123f471a1c2c90ea67d262c2986e00a7eb34c98724a14f22945eba3b0"
+        },
+        {
+          "bytes": 2980008,
+          "path": "libtfgrammar.so",
+          "sha256": "abad72a824800ec45e07d2c4416bf4249266f70bf86046a0f0770653068eb09e"
+        },
+        {
+          "bytes": 51640,
+          "path": "rdma_gather_deployed.fatbin",
+          "sha256": "23affd2303d7da3077ef6afc97f09e1c607f1325aacbb9a24842388389c3bd80"
+        },
+        {
+          "bytes": 51281800,
+          "path": "tensorfold-native",
+          "sha256": "b87140a3224ce706aa6624c971ec6665c61ef89dcbdcf63c821fe6ef8ce1d91b"
+        },
+        {
+          "bytes": 8723,
+          "path": "thinking-off.jinja",
+          "sha256": "693bb47a83abab82c973ed50719929ec88c4695cbb8d84feb1d91897b6837f23"
+        },
+        {
+          "bytes": 11357,
+          "path": "xgrammar-LICENSE",
+          "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+        },
+        {
+          "bytes": 54,
+          "path": "xgrammar-NOTICE",
+          "sha256": "769c6907073c65801bfcfe3ce1c0e80bf0ae4e124e2769d4f026c038ad583c0f"
+        }
+      ],
+      "mounts": []
+    },
+    "q4": {
+      "archive": "glm53-tp2-q4-runtime.tar.gz",
+      "files": [
+        {
+          "bytes": 992,
+          "path": "calibration/manifest.json",
+          "sha256": "10ba40b675840f9a7d5c88f1fb2ca254ce740d7b595dfe0fa5b4d0099aa1d55b"
+        },
+        {
+          "bytes": 6020208,
+          "path": "calibration/rank-0.bin",
+          "sha256": "b03d18a7d29c1e44297e97578fcea7390513475719df5732d679a2e5943593f1"
+        },
+        {
+          "bytes": 6020208,
+          "path": "calibration/rank-1.bin",
+          "sha256": "ee54510b2b49b148c532808326bd0e5c731096f2a12b02c67027978b6601aaf2"
+        },
+        {
+          "bytes": 851472,
+          "path": "dflash_reference.fatbin",
+          "sha256": "3ffdb516c366c10dced9e36a7abee27bc5484a2a690d992ff9ce36570c7fa9e0"
+        },
+        {
+          "bytes": 100712,
+          "path": "dflash_reference_attention.cubin",
+          "sha256": "b33690449f594947004f4fd11b2bb08825b56f9a00d779a4d3c8f167cdfc2098"
+        },
+        {
+          "bytes": 970896,
+          "path": "exl3_prompt_whole.fatbin",
+          "sha256": "65c062c3d9f46342c76a29dc844aa57e228dccbc08903c9f877e105b1bc6fc39"
+        },
+        {
+          "bytes": 3583904,
+          "path": "glm_dense_segments.fatbin",
+          "sha256": "8dfd446605497436654d9926153478b93b19959ff79bbe042e2d598f69ae4669"
+        },
+        {
+          "bytes": 448496,
+          "path": "glm_exl3_decode_mcg4.fatbin",
+          "sha256": "9d69cdcdd1bb97a7bb7aaf448b8df844227062a0db4ade4f7f6323e35e61f78b"
+        },
+        {
+          "bytes": 19392,
+          "path": "glm_head_fp8.fatbin",
+          "sha256": "0f15d6c93183a3185680e0cdd8e61f7047c9b5c054ac0d5ba755d65ea6f15ab5"
+        },
+        {
+          "bytes": 80152,
+          "path": "glm_head_fp8_g64.fatbin",
+          "sha256": "0e3d6e28130225f7c7fb633d23b27f20f347e23b017599793d8e6d4e1a08a0ad"
+        },
+        {
+          "bytes": 539152,
+          "path": "glm_kda_segments.fatbin",
+          "sha256": "1f2ef5524f67639f681e5a1a3334d0bc89bb4a456d067d7889a8e26be9ded07d"
+        },
+        {
+          "bytes": 207616,
+          "path": "glm_latent_mma.fatbin",
+          "sha256": "34e82c3d34080e41408fa4e2de24d229ffcbce55d3ad24bae953ffeeb9608650"
+        },
+        {
+          "bytes": 1016056,
+          "path": "glm_q4_activation_refine.fatbin",
+          "sha256": "c746268104167d9ec12d422a8f5f71d9c3ab9f81c7a5e583cc06e629ec22de86"
+        },
+        {
+          "bytes": 51256,
+          "path": "glm_q4_mse.fatbin",
+          "sha256": "fe539d130e29dcd6f90b53334cf5a931e51d2d9a3273f577109378ced84a9a8d"
+        },
+        {
+          "bytes": 996576,
+          "path": "glm_q4_python_prompt.fatbin",
+          "sha256": "20972abb31288a7cc4fb4865c7cece11b1d013fcbf82a0b6ecde49b7c93e2d5e"
+        },
+        {
+          "bytes": 79789200,
+          "path": "libnccl.so.2",
+          "sha256": "01d04c83cf666155466c6a00368a40cd3caa50beca5265abb89d9f14ae99da87"
+        },
+        {
+          "bytes": 4826440,
+          "path": "libtf_candidate.so",
+          "sha256": "1bf5042123f471a1c2c90ea67d262c2986e00a7eb34c98724a14f22945eba3b0"
+        },
+        {
+          "bytes": 2980008,
+          "path": "libtfgrammar.so",
+          "sha256": "abad72a824800ec45e07d2c4416bf4249266f70bf86046a0f0770653068eb09e"
+        },
+        {
+          "bytes": 51640,
+          "path": "rdma_gather_deployed.fatbin",
+          "sha256": "23affd2303d7da3077ef6afc97f09e1c607f1325aacbb9a24842388389c3bd80"
+        },
+        {
+          "bytes": 51314824,
+          "path": "tensorfold-native",
+          "sha256": "6b9c9a6f2206f878feb6d21b2bbd4c27873dd8c500cd4862a2e74f8053c49f40"
+        },
+        {
+          "bytes": 8723,
+          "path": "thinking-off.jinja",
+          "sha256": "693bb47a83abab82c973ed50719929ec88c4695cbb8d84feb1d91897b6837f23"
+        },
+        {
+          "bytes": 11357,
+          "path": "xgrammar-LICENSE",
+          "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+        },
+        {
+          "bytes": 54,
+          "path": "xgrammar-NOTICE",
+          "sha256": "769c6907073c65801bfcfe3ce1c0e80bf0ae4e124e2769d4f026c038ad583c0f"
+        }
+      ],
+      "mounts": [
+        {
+          "path": "calibration",
+          "target": "/opt/calibration"
+        }
+      ]
+    },
+    "q8": {
+      "archive": "glm53-tp2-q8-runtime.tar.gz",
+      "files": [
+        {
+          "bytes": 905,
+          "path": "calibration/manifest.json",
+          "sha256": "3f3566c55dfa5fff0b194fc53f8db0c6bb8a973f705d6e75e4219b6a919b64ce"
+        },
+        {
+          "bytes": 6020208,
+          "path": "calibration/rank-0.bin",
+          "sha256": "ed0b931443ce93e09add92adcc09727d5ef9596c9e5e188832751daf960683d5"
+        },
+        {
+          "bytes": 6020208,
+          "path": "calibration/rank-1.bin",
+          "sha256": "d856c03ff91a5d171117312ff006e33f0c8d0b2adc94ee4f35a223a6ab0926c6"
+        },
+        {
+          "bytes": 117637,
+          "path": "correlation/manifest.json",
+          "sha256": "9ada369e457fafb9032cdf673d324edbddd23b4e3c0f440f68ea5b760127a065"
+        },
+        {
+          "bytes": 195298416,
+          "path": "correlation/rank-0.covariance.bin",
+          "sha256": "da0d065d9ba2bab9464b60741a10e96fbd23e4e12d1fd5891c01ece36b7e9316"
+        },
+        {
+          "bytes": 6020208,
+          "path": "correlation/rank-0.diagonal.bin",
+          "sha256": "ed0b931443ce93e09add92adcc09727d5ef9596c9e5e188832751daf960683d5"
+        },
+        {
+          "bytes": 195298416,
+          "path": "correlation/rank-1.covariance.bin",
+          "sha256": "61e3691b1eb6c9c3f785ad4f61f245f00933e04670f69a04df8a3dec7901b6f9"
+        },
+        {
+          "bytes": 6020208,
+          "path": "correlation/rank-1.diagonal.bin",
+          "sha256": "d856c03ff91a5d171117312ff006e33f0c8d0b2adc94ee4f35a223a6ab0926c6"
+        },
+        {
+          "bytes": 851472,
+          "path": "dflash_reference.fatbin",
+          "sha256": "3ffdb516c366c10dced9e36a7abee27bc5484a2a690d992ff9ce36570c7fa9e0"
+        },
+        {
+          "bytes": 100712,
+          "path": "dflash_reference_attention.cubin",
+          "sha256": "b33690449f594947004f4fd11b2bb08825b56f9a00d779a4d3c8f167cdfc2098"
+        },
+        {
+          "bytes": 970896,
+          "path": "exl3_prompt_whole.fatbin",
+          "sha256": "65c062c3d9f46342c76a29dc844aa57e228dccbc08903c9f877e105b1bc6fc39"
+        },
+        {
+          "bytes": 3583904,
+          "path": "glm_dense_segments.fatbin",
+          "sha256": "8dfd446605497436654d9926153478b93b19959ff79bbe042e2d598f69ae4669"
+        },
+        {
+          "bytes": 448496,
+          "path": "glm_exl3_decode_mcg4.fatbin",
+          "sha256": "9d69cdcdd1bb97a7bb7aaf448b8df844227062a0db4ade4f7f6323e35e61f78b"
+        },
+        {
+          "bytes": 19392,
+          "path": "glm_head_fp8.fatbin",
+          "sha256": "0f15d6c93183a3185680e0cdd8e61f7047c9b5c054ac0d5ba755d65ea6f15ab5"
+        },
+        {
+          "bytes": 80152,
+          "path": "glm_head_fp8_g64.fatbin",
+          "sha256": "0e3d6e28130225f7c7fb633d23b27f20f347e23b017599793d8e6d4e1a08a0ad"
+        },
+        {
+          "bytes": 539152,
+          "path": "glm_kda_segments.fatbin",
+          "sha256": "1f2ef5524f67639f681e5a1a3334d0bc89bb4a456d067d7889a8e26be9ded07d"
+        },
+        {
+          "bytes": 207616,
+          "path": "glm_latent_mma.fatbin",
+          "sha256": "34e82c3d34080e41408fa4e2de24d229ffcbce55d3ad24bae953ffeeb9608650"
+        },
+        {
+          "bytes": 51256,
+          "path": "glm_q4_mse.fatbin",
+          "sha256": "fe539d130e29dcd6f90b53334cf5a931e51d2d9a3273f577109378ced84a9a8d"
+        },
+        {
+          "bytes": 996576,
+          "path": "glm_q4_python_prompt.fatbin",
+          "sha256": "20972abb31288a7cc4fb4865c7cece11b1d013fcbf82a0b6ecde49b7c93e2d5e"
+        },
+        {
+          "bytes": 211840,
+          "path": "glm_q8_correlated.fatbin",
+          "sha256": "767bcdc9b11a921ca23be9d6e99cd53c6718c919e3595a77842e84591c30829b"
+        },
+        {
+          "bytes": 79789200,
+          "path": "libnccl.so.2",
+          "sha256": "01d04c83cf666155466c6a00368a40cd3caa50beca5265abb89d9f14ae99da87"
+        },
+        {
+          "bytes": 4826440,
+          "path": "libtf_candidate.so",
+          "sha256": "1bf5042123f471a1c2c90ea67d262c2986e00a7eb34c98724a14f22945eba3b0"
+        },
+        {
+          "bytes": 3001576,
+          "path": "libtfgrammar.so",
+          "sha256": "1b3c8574372447b3312c17ddd5e79fdfd8f3e3ae2f3e1d63a25fc39466658001"
+        },
+        {
+          "bytes": 51640,
+          "path": "rdma_gather_deployed.fatbin",
+          "sha256": "23affd2303d7da3077ef6afc97f09e1c607f1325aacbb9a24842388389c3bd80"
+        },
+        {
+          "bytes": 51346440,
+          "path": "tensorfold-native",
+          "sha256": "b581b116e6d75ba387fb3629d96c51a159d6c3ba3f1d3c6aa446512316f5b624"
+        },
+        {
+          "bytes": 8723,
+          "path": "thinking-off.jinja",
+          "sha256": "693bb47a83abab82c973ed50719929ec88c4695cbb8d84feb1d91897b6837f23"
+        },
+        {
+          "bytes": 11357,
+          "path": "xgrammar-LICENSE",
+          "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+        },
+        {
+          "bytes": 54,
+          "path": "xgrammar-NOTICE",
+          "sha256": "769c6907073c65801bfcfe3ce1c0e80bf0ae4e124e2769d4f026c038ad583c0f"
+        }
+      ],
+      "mounts": [
+        {
+          "path": "calibration",
+          "target": "/opt/calibration"
+        },
+        {
+          "path": "correlation",
+          "target": "/opt/correlation"
+        }
+      ]
+    }
+  },
+  "checkpoints": {
+    "drafter": {
+      "repository": "incoai/GLM-5.3-Flash-DFlash2",
+      "revision": "bf582e4eacc1810f76656d1811693ff6c6737d2a"
+    },
+    "exl3": {
+      "expert_format": "EXL3 4.0 bpw",
+      "repository": "Mia-AiLab/GLM-5.3-Flash-EXL3-4bpw-TensorFold",
+      "revision": "078455ffe6472f9a52fbc1139f58b9db2881b25c"
+    }
+  },
+  "common_environment": {
+    "CUDA_BINARY_LOADER_THREAD_COUNT": "8",
+    "CUDA_DEVICE_MAX_CONNECTIONS": "8",
+    "CUDA_MODULE_LOADING": "LAZY",
+    "CUDA_VISIBLE_DEVICES": "0",
+    "LD_LIBRARY_PATH": "/opt/glm:/usr/local/cuda/lib64:/usr/local/nvidia/lib:/usr/local/nvidia/lib64:/usr/lib/aarch64-linux-gnu",
+    "NCCL_ALGO": "Ring",
+    "NCCL_BUFFSIZE": "1048576",
+    "NCCL_CROSS_NIC": "1",
+    "NCCL_CUMEM_ENABLE": "0",
+    "NCCL_DEBUG": "INFO",
+    "NCCL_DEBUG_FILE": "/dev/stderr",
+    "NCCL_DEBUG_SUBSYS": "INIT,NET,GRAPH",
+    "NCCL_IB_ADDR_FAMILY": "AF_INET",
+    "NCCL_IB_DISABLE": "0",
+    "NCCL_IB_EXTENDED_IPV4_GIDS": "1",
+    "NCCL_IB_FIFO_TC": "192",
+    "NCCL_IB_GID_INDEX": "3",
+    "NCCL_IB_HCA": "=rocep1s0f1:1,roceP2p1s0f1:1",
+    "NCCL_IB_MERGE_NICS": "0",
+    "NCCL_IB_PRESERVE_PCI_DOMAIN": "1",
+    "NCCL_IB_QPS_PER_CONNECTION": "1",
+    "NCCL_IB_ROCE_VERSION_NUM": "2",
+    "NCCL_IB_ROUTE_DIAGNOSTICS": "1",
+    "NCCL_IB_SUBNET_AWARE_ROUTING": "1",
+    "NCCL_IB_SUBNET_PREFIX_LEN": "24",
+    "NCCL_IB_TC": "104",
+    "NCCL_LL128_BUFFSIZE": "262144",
+    "NCCL_MAX_NCHANNELS": "4",
+    "NCCL_MIN_NCHANNELS": "4",
+    "NCCL_NET": "IB",
+    "NCCL_NETDEVS_POLICY": "ALL",
+    "NCCL_NET_PLUGIN": "none",
+    "NCCL_PROTO": "^LL128",
+    "NCCL_SOCKET_IFNAME": "=enp1s0f1np1",
+    "NCCL_SWITCHLESS_RING_ONLY": "0",
+    "NVIDIA_DRIVER_CAPABILITIES": "compute,utility",
+    "NVIDIA_VISIBLE_DEVICES": "all",
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1",
+    "SC_POSTER_CPUS": "8",
+    "SC_TF_ENABLE": "0",
+    "SPARKCOMM_TF_SLOTS": "4",
+    "TENSORFOLD_CUDA_MEMORY_LIMIT_GB": "100",
+    "TENSORFOLD_LOG_TIME": "1",
+    "TENSORFOLD_MEMORY_RESERVE_GIB": "16",
+    "TENSORFOLD_PREFILL_SHARE": "0.68",
+    "TENSORFOLD_WIRE": "spark",
+    "TF_COMPARE_NATIVE_CONTROL": "1",
+    "TF_DS_RDMA_PREFIX": "24",
+    "TF_GLM_1107_CPU": "8",
+    "TF_GLM_1107_KERNELS": "/opt/glm/rdma_gather_deployed.fatbin",
+    "TF_GLM_1107_LIBRARY": "/opt/glm/libtf_candidate.so",
+    "TF_GLM_1107_MAX_KB": "1024",
+    "TF_GLM_ADMISSION_US": "4000",
+    "TF_GLM_CHUNK_SOLO": "2048",
+    "TF_GLM_COMM_1107": "1",
+    "TF_GLM_COPIES": "1",
+    "TF_GLM_COPY_POLICY_75C": "1",
+    "TF_GLM_DENSE_LATENT_SEGMENTS": "1",
+    "TF_GLM_DENSE_ROWS16": "1",
+    "TF_GLM_DENSE_SEGMENTS_IMAGE": "/opt/glm/glm_dense_segments.fatbin",
+    "TF_GLM_DFLASH_ATTN_TP4": "0",
+    "TF_GLM_DFLASH_CONFIDENCE_ONLY": "1",
+    "TF_GLM_DFLASH_EDGE_06": "0",
+    "TF_GLM_DFLASH_GRAPHS": "1",
+    "TF_GLM_DFLASH_INGEST_GRAPHS": "1",
+    "TF_GLM_DFLASH_MLP_TP4": "1",
+    "TF_GLM_DFLASH_NATIVE_GRAPH": "0",
+    "TF_GLM_DFLASH_ONLY_HEAD": "1",
+    "TF_GLM_DFLASH_REFERENCE": "1",
+    "TF_GLM_DRAFT_CONFIDENCE": "0.3",
+    "TF_GLM_DSEL": "0",
+    "TF_GLM_EXL3_FUSED_CONTRACT": "0",
+    "TF_GLM_EXL3_FUSED_DECODE": "1",
+    "TF_GLM_EXL3_FUSED_DECODE_IMAGE": "/opt/glm/glm_exl3_decode_mcg4.fatbin",
+    "TF_GLM_EXL3_PROMPT_WHOLE": "1",
+    "TF_GLM_EXL3_PROMPT_WHOLE_IMAGE": "/opt/glm/exl3_prompt_whole.fatbin",
+    "TF_GLM_FFN_GRAPHS": "1",
+    "TF_GLM_FFN_WARM": "1",
+    "TF_GLM_FIRST_COPY_TOKENS": "31",
+    "TF_GLM_GREEDY_BATCH": "1",
+    "TF_GLM_GREEDY_SHARED": "1",
+    "TF_GLM_INDEX_CUDA": "1",
+    "TF_GLM_KDA_BATCH_CONTRACT": "0",
+    "TF_GLM_KDA_DECODE_WIDE": "1",
+    "TF_GLM_KDA_MIN_STREAMS": "2",
+    "TF_GLM_KDA_SEGMENTS": "1",
+    "TF_GLM_KDA_SEGMENTS_IMAGE": "/opt/glm/glm_kda_segments.fatbin",
+    "TF_GLM_KV_LIVE_HALF": "1",
+    "TF_GLM_L2PF": "1",
+    "TF_GLM_L2PF_CTAS": "2",
+    "TF_GLM_L2PF_MB": "12",
+    "TF_GLM_L2PF_PACE_GBPS": "150",
+    "TF_GLM_LATENT_MMA_IMAGE": "/opt/glm/glm_latent_mma.fatbin",
+    "TF_GLM_MM": "1",
+    "TF_GLM_NVFP4_FACT": "0",
+    "TF_GLM_NVFP4_FFN_GRAPHS": "0",
+    "TF_GLM_NVME_INDEX_MIB": "64",
+    "TF_GLM_NVME_MIN_CACHE_TOKENS": "137216",
+    "TF_GLM_NVME_MODE": "serial",
+    "TF_GLM_NVME_STAGING_MIB": "192",
+    "TF_GLM_NVME_TIER": "0",
+    "TF_GLM_OVERLAP_PIECES": "3",
+    "TF_GLM_PREFILL_REDUCE": "split",
+    "TF_GLM_PREWARM_SEQUENCE_SLOTS": "1",
+    "TF_GLM_PROF": "0",
+    "TF_GLM_PROMPT_K": "one",
+    "TF_GLM_PROMPT_PAIR": "1",
+    "TF_GLM_PROMPT_STEPS": "1",
+    "TF_GLM_Q4_MSE_IMAGE": "/opt/glm/glm_q4_mse.fatbin",
+    "TF_GLM_Q4_PROMPT_IMAGE": "/opt/glm/glm_q4_python_prompt.fatbin",
+    "TF_GLM_RETAIN_SEQUENCE_SLOTS": "1",
+    "TF_GLM_ROCE_MULTI": "0",
+    "TF_GLM_SAMPLE_BATCH": "1",
+    "TF_GLM_VERIFY_GRAPHS": "0",
+    "TF_GLM_VERIFY_ROWS": "32",
+    "TF_GLM_WARM_TURNS": "0",
+    "TF_GLM_WORLD": "2",
+    "TF_KV_PAGES": "off",
+    "TF_KV_SHARE": "0",
+    "TF_NCCL_LIB": "/opt/glm/libnccl.so.2",
+    "TF_ROCE": "0",
+    "TF_TP_PLAN_TIMEOUT": "30"
+  },
+  "payload_template": {
+    "Cmd": [
+      "serve",
+      "/model",
+      "--backend",
+      "cuda",
+      "--name",
+      "GLM-5.3-Flash",
+      "--host",
+      "0.0.0.0",
+      "--port",
+      "18888",
+      "--context",
+      "196608",
+      "--parallel",
+      "8",
+      "--kv-cache",
+      "fp8",
+      "--drafter",
+      "/drafter",
+      "--prompt-cache-gib",
+      "0",
+      "--no-update-check",
+      "--chat-template",
+      "/opt/glm/thinking-off.jinja",
+      "--temperature",
+      "0"
+    ],
+    "Entrypoint": [
+      "/opt/glm/tensorfold-native"
+    ],
+    "HostConfig": {
+      "CapAdd": [
+        "IPC_LOCK"
+      ],
+      "CpusetCpus": "0-9",
+      "DeviceRequests": [
+        {
+          "Capabilities": [
+            [
+              "gpu"
+            ]
+          ],
+          "Count": -1,
+          "Driver": "nvidia"
+        }
+      ],
+      "Devices": [
+        {
+          "CgroupPermissions": "rw",
+          "PathInContainer": "/dev/infiniband/uverbs0",
+          "PathOnHost": "/dev/infiniband/uverbs0"
+        },
+        {
+          "CgroupPermissions": "rw",
+          "PathInContainer": "/dev/infiniband/uverbs1",
+          "PathOnHost": "/dev/infiniband/uverbs1"
+        },
+        {
+          "CgroupPermissions": "rw",
+          "PathInContainer": "/dev/infiniband/uverbs2",
+          "PathOnHost": "/dev/infiniband/uverbs2"
+        },
+        {
+          "CgroupPermissions": "rw",
+          "PathInContainer": "/dev/infiniband/uverbs3",
+          "PathOnHost": "/dev/infiniband/uverbs3"
+        },
+        {
+          "CgroupPermissions": "rw",
+          "PathInContainer": "/dev/infiniband/rdma_cm",
+          "PathOnHost": "/dev/infiniband/rdma_cm"
+        }
+      ],
+      "IpcMode": "private",
+      "Memory": 120259084288,
+      "MemorySwap": 120259084288,
+      "Mounts": [
+        {
+          "ReadOnly": true,
+          "Source": "@RUNTIME@",
+          "Target": "/opt/glm",
+          "Type": "bind"
+        },
+        {
+          "ReadOnly": true,
+          "Source": "@MODEL@",
+          "Target": "/model",
+          "Type": "bind"
+        },
+        {
+          "ReadOnly": true,
+          "Source": "@DRAFTER@",
+          "Target": "/drafter",
+          "Type": "bind"
+        },
+        {
+          "ReadOnly": false,
+          "Source": "@CACHE@",
+          "Target": "/cache",
+          "Type": "bind"
+        }
+      ],
+      "NetworkMode": "host",
+      "ShmSize": 268435456,
+      "Ulimits": [
+        {
+          "Hard": -1,
+          "Name": "memlock",
+          "Soft": -1
+        }
+      ]
+    },
+    "Image": "sha256:567d5c7ec9cb19d5b91e8ed8df197d68cb8322f4c569453c00dd5a12a924028a",
+    "Labels": {
+      "recipe": "glm53-zig-direct-tp2"
+    },
+    "WorkingDir": "/opt/glm"
+  },
+  "profiles": {
+    "bf16": {
+      "bundle": "bf16",
+      "environment": {
+        "TF_GLM_ABSORB_MMA": "1",
+        "TF_GLM_DENSE_BITS": "16",
+        "TF_GLM_HEAD_BITS": "16",
+        "TF_GLM_HEAD_FP8_IMAGE": "/opt/glm/glm_head_fp8.fatbin",
+        "TF_GLM_Q4_AFFINE_MSE": "0",
+        "TF_GLM_Q4_HEAD_FP8": "0",
+        "TF_GLM_Q4_PYTHON_PROMPT": "0",
+        "TF_GLM_Q4_PYTHON_SPLITS": "0"
+      },
+      "qualified_nvme": false
+    },
+    "q4": {
+      "bundle": "q4",
+      "environment": {
+        "TF_GLM_ABSORB_MMA": "0",
+        "TF_GLM_CALIBRATION_ROOT": "/opt/calibration",
+        "TF_GLM_CALIBRATION_SHA256": "10ba40b675840f9a7d5c88f1fb2ca254ce740d7b595dfe0fa5b4d0099aa1d55b",
+        "TF_GLM_DENSE_BITS": "4",
+        "TF_GLM_HEAD_BITS": "16",
+        "TF_GLM_HEAD_FP8_IMAGE": "/opt/glm/glm_head_fp8.fatbin",
+        "TF_GLM_Q4_ACTIVATION": "1",
+        "TF_GLM_Q4_ACTIVATION_IMAGE": "/opt/glm/glm_q4_activation_refine.fatbin",
+        "TF_GLM_Q4_AFFINE_MSE": "1",
+        "TF_GLM_Q4_HEAD_FP8": "0",
+        "TF_GLM_Q4_PYTHON_PROMPT": "1",
+        "TF_GLM_Q4_PYTHON_SPLITS": "1",
+        "TF_LOAD_PREFETCH": "0"
+      },
+      "qualified_nvme": false
+    },
+    "q4-fp8": {
+      "bundle": "q4",
+      "environment": {
+        "TF_GLM_ABSORB_MMA": "0",
+        "TF_GLM_CALIBRATION_ROOT": "/opt/calibration",
+        "TF_GLM_CALIBRATION_SHA256": "10ba40b675840f9a7d5c88f1fb2ca254ce740d7b595dfe0fa5b4d0099aa1d55b",
+        "TF_GLM_DENSE_BITS": "4",
+        "TF_GLM_HEAD_BITS": "8",
+        "TF_GLM_HEAD_FP8_IMAGE": "/opt/glm/glm_head_fp8_g64.fatbin",
+        "TF_GLM_Q4_ACTIVATION": "1",
+        "TF_GLM_Q4_ACTIVATION_IMAGE": "/opt/glm/glm_q4_activation_refine.fatbin",
+        "TF_GLM_Q4_AFFINE_MSE": "1",
+        "TF_GLM_Q4_HEAD_FP8": "1",
+        "TF_GLM_Q4_PYTHON_PROMPT": "1",
+        "TF_GLM_Q4_PYTHON_SPLITS": "1",
+        "TF_LOAD_PREFETCH": "0"
+      },
+      "qualified_nvme": false
+    },
+    "q8": {
+      "bundle": "q8",
+      "environment": {
+        "TF_GLM_ABSORB_MMA": "1",
+        "TF_GLM_CALIBRATION_ROOT": "/opt/calibration",
+        "TF_GLM_CALIBRATION_SHA256": "3f3566c55dfa5fff0b194fc53f8db0c6bb8a973f705d6e75e4219b6a919b64ce",
+        "TF_GLM_DENSE_BITS": "8",
+        "TF_GLM_HEAD_BITS": "16",
+        "TF_GLM_HEAD_FP8_IMAGE": "/opt/glm/glm_head_fp8.fatbin",
+        "TF_GLM_Q4_AFFINE_MSE": "0",
+        "TF_GLM_Q4_HEAD_FP8": "0",
+        "TF_GLM_Q4_PYTHON_PROMPT": "0",
+        "TF_GLM_Q4_PYTHON_SPLITS": "0",
+        "TF_GLM_Q8_ACTIVATION": "1",
+        "TF_GLM_Q8_CORRELATED": "1",
+        "TF_GLM_Q8_CORRELATED_IMAGE": "/opt/glm/glm_q8_correlated.fatbin",
+        "TF_GLM_Q8_CORRELATION_ROOT": "/opt/correlation",
+        "TF_GLM_Q8_CORRELATION_SHA256": "9ada369e457fafb9032cdf673d324edbddd23b4e3c0f440f68ea5b760127a065",
+        "TF_GLM_Q8_MSE": "1",
+        "TF_LOAD_PREFETCH": "0"
+      },
+      "qualified_nvme": true
+    }
+  },
+  "rank_hosts": [
+    "spark1",
+    "spark2"
+  ],
+  "schema": "glm53-tp2-direct/v1",
+  "tensor_parallel": 2
+}
