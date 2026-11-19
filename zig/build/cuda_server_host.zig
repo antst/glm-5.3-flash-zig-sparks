@@ -15,6 +15,24 @@ pub fn steps(b: *std.Build, host: std.Build.ResolvedTarget, cuda: *std.Build.Mod
         .imports = &.{ .{ .name = "engine_api", .module = native_modules.api }, .{ .name = "tokenizer", .module = mods.tokenizer }, .{ .name = "template", .module = template }, .{ .name = "living", .module = mods.living }, .{ .name = "core", .module = mods.core } },
     });
     const server_json = @import("server.zig").addTo(b, server_tests, host, .debug);
+    const serving_reliability = b.addRunArtifact(b.addTest(.{
+        .root_module = server_tests,
+        .filters = &.{
+            "reply code scanner", "quoted openers", "streamed quoted GLM", "complete calls inside",
+            "single-call TextFilter", "tool visibility HTTP:", "a grammar over the size limit",
+            "tools count once", "a warm pass and the next request cut the same starts",
+        },
+    }));
+    b.step("test-glm-serving-reliability-host", "Warm cuts, quoted tools and grammar limits on the CPU")
+        .dependOn(&serving_reliability.step);
+    const tier_identity = b.createModule(.{
+        .root_source_file = b.path("zig/src/native/cuda_glm_cache_identity.zig"),
+        .target = host,
+        .optimize = .debug,
+        .link_libc = true,
+    });
+    b.step("test-glm-native-tier-identity-host", "Drafter identity separates persisted rings without a GPU")
+        .dependOn(&b.addRunArtifact(b.addTest(.{ .root_module = tier_identity })).step);
     @import("q27_profile_host.zig").steps(b, server_tests);
     b.step("test-drama-cfg-host", "Drama CFG CLI, HTTP and voice transitions without GPU execution").dependOn(&b.addRunArtifact(b.addTest(.{ .root_module = server_tests, .filters = &.{"CFG"} })).step);
     b.step("test-speech-redraw-deadline-host", "Busy speech redraw expiry without counting an unsubmitted take").dependOn(&b.addRunArtifact(b.addTest(.{ .root_module = server_tests, .filters = &.{"a busy redraw stops at its latest start"} })).step);
@@ -42,6 +60,8 @@ pub fn steps(b: *std.Build, host: std.Build.ResolvedTarget, cuda: *std.Build.Mod
     b.step("test-issue-934", "Benchmark config admission and receipt regressions").dependOn(&b.addRunArtifact(b.addTest(.{ .root_module = server_tests, .filters = &.{"issue 934:"} })).step);
     b.step("test-issue-969", "First-EOS classification and incomplete benchmark messages without a GPU").dependOn(&b.addRunArtifact(b.addTest(.{ .root_module = server_tests, .filters = &.{"issue 969"} })).step);
     b.step("test-tool-required-host", "Required tool parsing, grammar form and constrained lane replies on the CPU").dependOn(&b.addRunArtifact(b.addTest(.{ .root_module = server_tests, .filters = &.{"required tools:"} })).step);
+    b.step("test-native-draft-policy-host", "Actual HTTP draft policy with unchanged sampling and grammar").dependOn(&b.addRunArtifact(b.addTest(.{ .root_module = server_tests, .filters = &.{"draft policy HTTP:"} })).step);
+    b.step("test-grammar-compile-http-host", "Grammar compile deadlines become ordinary HTTP400 before submit").dependOn(&b.addRunArtifact(b.addTest(.{ .root_module = server_tests, .filters = &.{"grammar compile server:"} })).step);
     const q27 = @import("qwen27_required.zig").modules(b, mods.lanes);
     server_tests.addImport("qwen27_mask_fake", q27.fake);
     server_tests.addImport("qwen27_masks", q27.masks);

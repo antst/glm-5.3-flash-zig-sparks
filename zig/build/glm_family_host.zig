@@ -35,9 +35,15 @@ pub fn steps(b: *std.Build, cuda: *std.Build.Module, glm: *std.Build.Module, mod
     const activation = b.createModule(.{ .root_source_file = b.path("zig/glm_q8_activation_host.zig"), .target = host, .optimize = .debug, .link_libc = true, .imports = &.{.{ .name = "glm", .module = glm }} });
     b.step("test-glm-q8-activation-host", "Independent weighted Q8 pack error and calibration identity controls")
         .dependOn(&b.addRunArtifact(b.addTest(.{ .root_module = activation })).step);
+    const correlated = b.createModule(.{ .root_source_file = b.path("zig/glm_q8_correlated_host.zig"), .target = host, .optimize = .debug, .link_libc = true, .imports = &.{ .{ .name = "cuda", .module = cuda }, .{ .name = "glm", .module = glm } } });
+    b.step("test-glm-q8-correlated-host", "Correlated Q8 startup ownership, calibration identity and actual launch")
+        .dependOn(&b.addRunArtifact(b.addTest(.{ .root_module = correlated })).step);
     const q4_activation = b.createModule(.{ .root_source_file = b.path("zig/glm_q4_activation_host.zig"), .target = host, .optimize = .debug, .link_libc = true, .imports = &.{ .{ .name = "cuda", .module = cuda }, .{ .name = "glm", .module = glm } } });
     b.step("test-glm-q4-activation-host", "Weighted affine reference, mode agreement and actual startup ABI")
         .dependOn(&b.addRunArtifact(b.addTest(.{ .root_module = q4_activation })).step);
+    const ffn_q8 = b.createModule(.{ .root_source_file = b.path("zig/glm_q4_ffn_q8_host.zig"), .target = host, .optimize = .debug, .link_libc = true, .imports = &.{ .{ .name = "cuda", .module = cuda }, .{ .name = "glm", .module = glm } } });
+    b.step("test-glm-q4-ffn-q8-host", "Mixed FFN Q8 startup identity, architectural selection and shared scratch")
+        .dependOn(&b.addRunArtifact(b.addTest(.{ .root_module = ffn_q8 })).step);
     const target_q4 = b.createModule(.{ .root_source_file = b.path("zig/glm_target_q4_host.zig"), .target = host, .optimize = .debug, .link_libc = true, .imports = &.{ .{ .name = "cuda", .module = cuda }, .{ .name = "core", .module = mods.core }, .{ .name = "glm_cuda", .module = glm } } });
     b.step("test-glm-target-q4-host", "Target Q4 references, graph entrypoint and live-resource declarations")
         .dependOn(&b.addRunArtifact(b.addTest(.{ .root_module = target_q4, .filters = &.{"target Q4"} })).step);

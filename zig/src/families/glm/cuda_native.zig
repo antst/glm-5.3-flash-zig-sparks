@@ -70,6 +70,7 @@ pub const Loaded = struct {
     proposers: @FieldType(@import("engine_api").LaneHost, "proposers") = null,
     admission_quiet_ns: u64 = 0,
     warm_turns: bool = false,
+    greedy_unconstrained_drafts: bool = false,
     host_snaps: bool = false, // TF_GLM_HOST_CACHE: kept states in pinned host memory, --prompt-cache-gib of it
 };
 pub fn benchmark(p: *anyopaque) struct { ranks: ?u32, group: ?[]const u8 } {
@@ -373,6 +374,7 @@ fn finishRank(a: OpenArgs) !Loaded {
         .proposers = @import("cuda_copy_75c.zig").factory(set.copy_policy_75c, own.e),
         .admission_quiet_ns = @as(u64, set.admission_us) * 1000,
         .warm_turns = set.warm_turns,
+        .greedy_unconstrained_drafts = set.verify_rows >= 16 or set.dflash_confidence_only,
         .rows = set.verify_rows,
         .stream_bytes = own.e.seqBytes() + extra, // each stream past the first makes its own sequence on every rank
         .free_streams = 1, // the first is the sequence the engine made

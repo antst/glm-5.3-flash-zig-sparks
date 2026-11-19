@@ -1,10 +1,14 @@
 //! Human-readable names for the startup settings agreement.
 pub fn explain(f: anytype) []const u8 {
     return switch (f) {
+        .q8_correlated => "TF_GLM_Q8_CORRELATED",
+        .correlation_sha => "TF_GLM_Q8_CORRELATION_SHA256",
         .q8_activation => "TF_GLM_Q8_ACTIVATION",
         .q4_activation => "TF_GLM_Q4_ACTIVATION",
         .q4_recurrent_bf16 => "TF_GLM_Q4_RECURRENT_BF16",
         .q4_bf16_families => "TF_GLM_Q4_BF16_FAMILIES",
+        .q4_ffn_q8 => "TF_GLM_Q4_FFN_Q8",
+        .q4_ffn_q8_sha => "TF_GLM_Q4_FFN_Q8_SHA256",
         .calibration_sha => "TF_GLM_CALIBRATION_SHA256",
         .layout => "a different build of this check",
         .rank => "a rank number given twice or out of order",
@@ -82,10 +86,13 @@ pub fn explain(f: anytype) []const u8 {
 
 /// Fields compared in order after layout and rank identity.
 pub const compared = .{
+    "q8_correlated",
+    "correlation_sha",
     "q8_activation",
     "q4_activation",
     "q4_recurrent_bf16",
     "q4_bf16_families",
+    "q4_ffn_q8", "q4_ffn_q8_sha",
     "calibration_sha",
     "kv8",
     "pages",

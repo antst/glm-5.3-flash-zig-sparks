@@ -49,12 +49,15 @@ test {
     _ = @import("json");
     _ = @import("std_options.zig");
     _ = @import("fields.zig");
+    _ = @import("draft_policy_http_test.zig");
+    _ = @import("reply_code.zig");
     _ = @import("reply_text.zig");
     _ = @import("tool_parse.zig");
     _ = @import("tool_lfm2.zig");
     _ = @import("tool_lfm2_stream_test.zig");
     _ = @import("tool_minimax.zig");
     _ = @import("tool_stream.zig");
+    _ = @import("tool_prose_code_http_test.zig");
     _ = @import("tool_params.zig");
     _ = @import("tool_grammar.zig");
     _ = @import("tool_grammar_lfm2.zig");
@@ -260,3 +263,5 @@ test {
     _ = @import("request_starts_turns_test.zig");
     _ = @import("thinking_request_test.zig");
 }
+
+test { _ = @import("grammar_compile_test.zig"); }

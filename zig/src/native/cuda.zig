@@ -460,6 +460,7 @@ fn openWith(comptime F: type, a: Allocator, gpa: Allocator, io: std.Io, o: api.O
         .benchmark_group = bench.group,
         .lanes = streams,
         .draft_sources = .{ .drafter = served.source },
+        .greedy_unconstrained_drafts = if (@hasField(@TypeOf(loaded), "greedy_unconstrained_drafts")) loaded.greedy_unconstrained_drafts else false,
         .context_window = @intCast(window),
         .prefill_step = snaps.requestStep(F),
         .prefill_min_chunk = snaps.requestMinimum(F),

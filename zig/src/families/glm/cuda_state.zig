@@ -231,6 +231,9 @@ pub const Buffers = struct {
         if (w.affine_target) for (b16Shapes(w)) |shape| {
             mm = @max(mm, @import("cuda_affine_target.zig").scratchBytes(rows, shape[1]));
         };
+        if (w.mixed_ffn_q8) for (b16Shapes(w)) |shape| {
+            mm = @max(mm, @import("cuda_mm.zig").partBytes(@min(rows, 64), .{ .w = 0, .n = shape[0], .k = shape[1], .bits = 8 }));
+        };
         const x3: [4]usize = if (c.exl3) exl3.scratchBytesMode(rows, D, ew, prefill, w.exl3_shx, w.exl3_prompt_whole) else @splat(4);
         var split = false;
         var control_cols: usize = 0;

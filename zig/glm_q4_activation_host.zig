@@ -63,7 +63,7 @@ test "Q4 activation: strict cached setting, both head scopes and calibration agr
     previous.q4_activation = false;
     const a = FP.of(2, 0, previous, 8192, true, @splat(0), @splat(0), @splat(0));
     const b = FP.of(2, 1, on, 8192, true, @splat(0), @splat(0), @splat(0));
-    try t.expectEqual(@as(u32, 81), b.layout);
+    try t.expectEqual(@as(u32, 84), b.layout);
     try t.expectEqual(FP.Field.q4_activation, glm.ranks.mismatch(&.{ a, b }).?.field);
     var other = on;
     other.calibration_sha[17] ^= 1;
@@ -149,9 +149,15 @@ test "Q4 activation: actual eight-argument launch and pre-enqueue guards" {
     Fake.fail = false;
 }
 
-test "Q4 activation: experimental tier refuses before engine allocations" {
+test "Q4 activation: calibrated tier scope reaches settings checks before allocations" {
     var e: glm.engine.Engine = undefined;
-    e.settings.q8_mse = false;
+    e.settings = .{};
+    e.share_pages = false;
     e.settings.q4_activation = true;
-    try t.expectError(error.Q4ActivationNvmeScope, glm.nvme_state.State.open(&e, "unused", @splat(0), undefined));
+    try t.expectError(error.NvmeSettings, glm.nvme_state.State.open(&e, "", @splat(0), undefined));
+    e.settings.q4_activation = false;
+    e.settings.q8_mse = true;
+    try t.expectError(error.Q8MseNvmeScope, glm.nvme_state.State.open(&e, "", @splat(0), undefined));
+    e.settings.q8_activation = true;
+    try t.expectError(error.NvmeSettings, glm.nvme_state.State.open(&e, "", @splat(0), undefined));
 }

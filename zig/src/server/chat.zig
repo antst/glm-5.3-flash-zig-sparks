@@ -14,7 +14,6 @@ const clock = @import("clock.zig");
 const wait = @import("wait_reason.zig");
 const server_mod = @import("server.zig");
 const Server = server_mod.Server;
-const chunk_plan = @import("chunk_plan.zig");
 const Mailbox = @import("mailbox.zig").Mailbox;
 const StopHook = @import("stop_hook.zig").StopHook;
 const engine_refusal = @import("engine_refusal.zig");
@@ -186,7 +185,7 @@ pub fn prepare(srv: *Server, cx: *Cx, input: Input, gone: anytype) Failure!Prepa
         .user_end = @intCast(rendered.user_end),
         .shared_prefixes = shared.items,
         // a cut before the conversation's own text: fresh sessions resume their whole harness
-        .chunks = try chunk_plan.withCut(a, try srv.chunks.starts(a, rendered.ids), if (srv.chunks.step > 0) @intCast(@max(system_len, 1) - 1) else 0, rendered.ids.len, srv.chunks.min_chunk),
+        .chunks = try srv.chunks.request(a, rendered.ids, system_len),
         // from the tokens alone, for every request: cached states are keyed by tokens
         .decode_spans = try prompt_mod.replySpans(srv, cx, rendered.ids),
         .tools_json = if (input.tools.len > 0) try json.stringify(a, .{ .array = @constCast(input.tools) }, .{ .ascii = false }) else "",
@@ -197,6 +196,7 @@ pub fn prepare(srv: *Server, cx: *Cx, input: Input, gone: anytype) Failure!Prepa
     try srv.checkFeatures(cx, f, input.tools.len > 0, reasoning, rendered.ids, input.tools, &request);
     server_mod.nameStructure(input.format, &request);
     errdefer srv.release(false, request);
+    try @import("draft_policy.zig").prepare(srv.info, cx, f, &request);
     if (reasoning) {
         const budget_field = f.get("thinking_budget");
         const budget: i64 = if (budget_field != null and budget_field.?.truthy()) budget_field.?.int64() orelse 0 else srv.config.thinking_budget;
@@ -219,7 +219,7 @@ pub fn prepare(srv: *Server, cx: *Cx, input: Input, gone: anytype) Failure!Prepa
         .json, .json_schema => .structured_json,
         else => .automatic,
     } else .automatic;
-    return .{ .response_channel = response_channel, .input = input, .request = request, .prompt_len = rendered.ids.len, .received = received, .thinking = thinking, .reasoning = reasoning, .effort = effort, .sampled = sampling != null, .drafts = drafts, .token_ids = flag(f, "return_token_ids") orelse false, .stops = stops_opt, .preparing = preparing };
+    return .{ .response_channel = response_channel, .input = input, .request = request, .prompt_len = rendered.ids.len, .received = received, .thinking = thinking, .reasoning = reasoning, .effort = effort, .sampled = sampling != null, .drafts = request.drafts, .token_ids = flag(f, "return_token_ids") orelse false, .stops = stops_opt, .preparing = preparing };
 }
 
 /// Submit a prepared request and collect its reply; ``sink`` hears the stream (null: not streamed).

@@ -36,7 +36,7 @@ test "DFlash policy: first-copy startup accepts only3or7 and freezes all-rank ag
     const FP = ranks.Fingerprint;
     const f0 = FP.of(4, 0, legacy, 4096, true, @splat(0), @splat(0), @splat(0));
     const f1 = FP.of(4, 1, seven, 4096, true, @splat(0), @splat(0), @splat(0));
-    try std.testing.expectEqual(@as(u32, 65), f0.layout);
+    try std.testing.expectEqual(@as(u32, 84), f0.layout);
     try std.testing.expectEqual(FP.Field.first_copy_tokens, ranks.mismatch(&.{ f0, f1 }).?.field);
     const agreed = FP.of(4, 0, seven, 4096, true, @splat(0), @splat(0), @splat(0));
     try std.testing.expect(ranks.mismatch(&.{ agreed, f1 }) == null);

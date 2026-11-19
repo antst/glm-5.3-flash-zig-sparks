@@ -146,7 +146,7 @@ test "whole prompt: flag is strict, defaults OFF and is agreed by all ranks" {
     const F = glm.ranks.Fingerprint;
     const digest: [32]u8 = @splat(0);
     var all = [_]F{ F.of(2, 0, settings, 4096, true, digest, digest, digest), F.of(2, 1, settings, 4096, true, digest, digest, digest) };
-    try t.expectEqual(@as(u32, 54), all[0].layout);
+    try t.expectEqual(@as(u32, 84), all[0].layout);
     try t.expect(glm.ranks.mismatch(&all) == null);
     all[1].exl3_prompt_whole = 0;
     try t.expectEqual(F.Field.exl3_prompt_whole, glm.ranks.mismatch(&all).?.field);

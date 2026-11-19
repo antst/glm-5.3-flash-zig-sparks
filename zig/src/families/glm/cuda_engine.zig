@@ -22,15 +22,12 @@ const prompt_pair = @import("cuda_prompt_pair.zig");
 const verify_graph = @import("cuda_verify_graph.zig");
 const sequence_slots = @import("cuda_sequence_slots.zig");
 pub const Options = @import("cuda_engine_types.zig").Options;
-/// The most drafts a chain holds (decode.DepthPolicy's top depth).
 pub const max_drafts = 3;
-/// A greedy pick as it crosses ranks: (value, id) and padding, so the RoCE gather (16-byte packs) can carry it.
 const pair_bytes = 16;
 pub const prompt_rows = fw.prefill_rows;
 pub const solo_rows = fw.solo_rows;
 pub const max_together = @import("cuda_state.zig").prompt_heads;
 pub const Prompt = struct { slot: u32, ids: []const u32 };
-/// A shared verify's max rows and streams: under hc_pre's 64-row block change; 16 streams take 2 rows each.
 pub const shared_rows = 64;
 pub const max_shared = 16;
 const types = @import("cuda_engine_types.zig");
@@ -106,11 +103,11 @@ pub const Engine = struct {
     index_splits: u64 = 0, // prompt steps whose indexer rows split (glm-split-check counts them)
     share_pages: bool = false, // TF_KV_SHARE: a kept state leaves its prefix's pages to the shared store that holds them
     l2pf: ?l2pf_mod.L2pf = null, // TF_GLM_L2PF: the prefetch's side stream, kernels and table, made after the weights tile
-    /// Opens rank `rank` of `world` over `comm`; the ranks agree on settings (cuda_ranks) before the weights load.
     pub fn init(gpa: std.mem.Allocator, io: std.Io, d: *const cuda.Driver, ctx: *const cuda.Context, checkpoint: []const u8, lib: *const cuda.nccl.Library, comm: cuda.nccl.Comm, rank: usize, world: usize, o: Options) !*Engine {
         if (world > ranks.max_world) return error.TooManyRanks;
         try @import("cuda_q8_activation_options.zig").require(o, world);
-        try @import("cuda_q4_activation_options.zig").require(o, world);
+        try @import("cuda_q8_correlated_options.zig").require(o, world);
+        try @import("cuda_q4_ffn_q8.zig").require(o, world);
         try @import("cuda_q4_recurrent.zig").require(o.settings, world);
         try @import("cuda_q4_precision_families.zig").require(o.settings, world);
         try @import("cuda_tile_affine.zig").require(o.settings, world, o.vision != null);
@@ -209,10 +206,7 @@ pub const Engine = struct {
             .enabled = o.settings.tiled, .dense = o.settings.dense_bits, .head = o.settings.head_bits,
             .packs = &e.packs,
         };
-        tiler.q8_mse = o.settings.q8_mse;
-        tiler.q4_activation = o.settings.q4_activation;
-        tiler.q4_recurrent_bf16 = o.settings.q4_recurrent_bf16;
-        tiler.q4_bf16_families = o.settings.q4_bf16_families;
+        tiler.configure(o.settings);
         tiler.calibration = if (o.settings.q8_activation or o.settings.q4_activation) .{ .manifest = o.settings.calibration_sha, .checkpoint = checkpoint_digest } else null;
         e.w = try @import("cuda_load_owner.zig").finish(try weights.load(gpa, io, d, stream, e.m.tools(), checkpoint, c, share, layers, @import("cuda_dflash_head_mode.zig").selection(o.settings, o.mtp, o.drafter)), tiler, @import("cuda_tile_affine.zig").Context.apply);
         errdefer e.w.deinit();
@@ -350,7 +344,6 @@ pub const Engine = struct {
         out.* = .{.{ .w = &e.w, .st = segs[0].st, .b = b, .segs = segs }};
         return .{ .d = e.d, .m = &e.m, .decode_select = if (e.decode_select) |*owner| owner else null, .stream = e.stream, .ranks = out, .exchange = e.exchange(), .pieces = null, .split = e.settings.split, .ring = e.settings.ring, .kda_wide = e.settings.kda_wide, .taps = if (e.drafter) |dr| dr.taps(false) else null, .l2pf = if (e.l2pf) |*p| p else null, .dense_segments = if (e.dense_segments) |*o_dense| o_dense else null, .kda_segments = if (e.kda_segments) |*o_kda| o_kda else null };
     }
-    /// Binds slot `slot`'s sequence for the steps that follow, making it (a zeroed state) on first use.
     pub fn bind(e: *Engine, slot: u32) !void {
         if (slot >= e.seqs.items.len) try e.seqs.appendNTimes(e.gpa, null, slot + 1 - e.seqs.items.len);
         const made = e.seqs.items[slot] == null;

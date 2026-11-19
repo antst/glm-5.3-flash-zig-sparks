@@ -215,3 +215,11 @@ pub const q4_precision_families = @import("cuda_q4_precision_families.zig");
 test {
     _ = @import("cuda_q4_precision_families_test.zig");
 }
+pub const q8_correlated = @import("cuda_q8_correlated.zig");
+pub const q8_correlated_reference = @import("cuda_q8_correlated_reference.zig");
+pub const q8_correlated_options = @import("cuda_q8_correlated_options.zig");
+pub const q8_correlated_owner = @import("cuda_q8_correlated_owner.zig");
+pub const q8_correlation_input = @import("cuda_q8_correlation_input.zig");
+pub const q4_ffn_q8 = @import("cuda_q4_ffn_q8.zig");
+pub const packed_tags = @import("cuda_packed_tags.zig");
+pub const tile_affine = @import("cuda_tile_affine.zig");

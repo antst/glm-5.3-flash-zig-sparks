@@ -32,7 +32,7 @@ pub const Packed = struct {
             if (p.ptrs[mid] < w) lo = mid + 1 else hi = mid;
         }
         if (lo == p.ptrs.len or p.ptrs[lo] != w) return .{ .w = w, .n = n, .k = k };
-        if (p.affine) {
+        if (p.affine and (p.bits.len == 0 or p.bits[lo] == 4)) {
             const sizes = @import("cuda_q4.zig").bytes(n, k);
             return .{ .w = w, .n = n, .k = k, .s = w + sizes[0], .bias = w + sizes[0] + sizes[1], .npad = @import("cuda_q4.zig").npadOf(n), .bits = 4 };
         }

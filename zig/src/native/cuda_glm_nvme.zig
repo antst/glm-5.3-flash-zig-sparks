@@ -20,7 +20,7 @@ fn gib(value: f64) !u64 {
     return @intFromFloat(value * (1 << 30));
 }
 
-fn identity(a: std.mem.Allocator, io: std.Io, ctx: *const cuda.Context, e: *Engine) ![32]u8 {
+fn identity(a: std.mem.Allocator, io: std.Io, ctx: *const cuda.Context, e: *Engine, o: api.Open) ![32]u8 {
     const exe = try std.process.executablePathAlloc(io, a);
     defer a.free(exe);
     const code = try @import("sys").file_identity.hash(io, exe, 1 << 31);
@@ -32,7 +32,11 @@ fn identity(a: std.mem.Allocator, io: std.Io, ctx: *const cuda.Context, e: *Engi
     inline for (@typeInfo(@TypeOf(f)).@"struct".field_names) |name| h.update(std.mem.asBytes(&@field(f, name)));
     const gpu = [3]u64{ try ctx.capability(), @intCast(try ctx.d.version()), @intFromBool(e.mtp) };
     h.update(std.mem.asBytes(&gpu));
-    return h.finalResult();
+    const draft_digest: ?[32]u8 = if (e.drafter != null)
+        try glm.ranks.artifact(a, io, o.drafter orelse return error.NvmeDrafterIdentityScope)
+    else
+        null;
+    return @import("cuda_glm_cache_identity.zig").withDrafter(h.finalResult(), draft_digest, o.drafter_bits);
 }
 
 const Slot = struct { id: u64 = 0, sent: bool = false };
@@ -330,7 +334,7 @@ pub fn attach(a: std.mem.Allocator, io: std.Io, ctx: *const cuda.Context, o: api
         return err;
     };
     const cfg: rank_state.Config = .{ .cap = try gib(o.learn_gib), .floor = try gib(o.learn_min_free_gib), .staging = limits.staging, .index = limits.index, .serial_mode = limits.mode == .serial, .lookahead = @intCast(store.rules.lookahead) };
-    try wire.open(e, root, try identity(a, io, ctx, e), cfg);
+    try wire.open(e, root, try identity(a, io, ctx, e, o), cfg);
     errdefer {
         var reply: [8]u64 = undefined;
         _ = wire.invoke(e, .close, .{ .kind = 0 }, &.{}, &reply) catch {};

@@ -8,9 +8,10 @@ const heat = @import("heat");
 const l2pf = @import("cuda_l2pf.zig");
 const wireOpens = @import("cuda_rank_options.zig").wireOpens;
 pub const Settings = struct {
-    q8_activation: bool = false,
-    q4_activation: bool = false,
+    q8_correlated: @import("cuda_q8_correlated_options.zig").Choice = .{},
+    q8_activation: bool = false, q4_activation: bool = false,
     q4_recurrent_bf16: u8 = 0, q4_bf16_families: u8 = 0,
+    q4_ffn_q8: @import("cuda_q4_ffn_q8.zig").Choice = .{},
     calibration_sha: [32]u8 = @splat(0),
     absorb_mma: bool = false,
     kv8: bool = false, // --kv-cache fp8, supplied by the native options rather than an environment override
@@ -36,9 +37,7 @@ pub const Settings = struct {
     layers: u32 = 0, // TF_GLM_LAYERS: the first this many layers only, a thin model for one-GPU checks (0: all)
     q8_mse: bool = false,
     q4_affine_mse: bool = false,
-    q4_head_fp8: bool = false,
-    q4_python_prompt: bool = false,
-    q4_python_splits: bool = false,
+    q4_head_fp8: bool = false, q4_python_prompt: bool = false, q4_python_splits: bool = false,
     dense_bits: u8 = 16, // TF_GLM_DENSE_BITS: the dense linears packed at load to 4, 6 or 8 bits (16: bf16)
     head_bits: u8 = 16, // TF_GLM_HEAD_BITS: the head, likewise
     roce_multi: bool = false, // TF_GLM_ROCE_MULTI: 1 (three ranks or more: small all-gathers on fabric/tp's multirank RoCE beside NCCL) or 0
@@ -77,7 +76,9 @@ pub const Settings = struct {
         s.q4_activation = try @import("cuda_q4_activation_options.zig").read(get, problem);
         s.q4_recurrent_bf16 = try @import("cuda_q4_recurrent.zig").read(get, problem);
         s.q4_bf16_families = try @import("cuda_q4_precision_families.zig").read(get, problem);
+        s.q4_ffn_q8 = try @import("cuda_q4_ffn_q8.zig").read(get, problem);
         const act = try @import("cuda_q8_activation_options.zig").readFor(get, problem, s.q4_activation);
+        s.q8_correlated = try @import("cuda_q8_correlated_options.zig").read(get, problem);
         s.q8_activation = act.on;
         s.calibration_sha = act.sha;
         s.q8_mse = try @import("cuda_dense16.zig").flag(get("TF_GLM_Q8_MSE"), problem, "TF_GLM_Q8_MSE: 0 or 1");
@@ -292,16 +293,13 @@ pub const Settings = struct {
         return s;
     }
 };
-/// The most ranks a world holds: rank 0's greedy pick gathers every rank's top-1 into one host array of this size.
 pub const max_world = 16;
-/// A setting by name (null when unset): a registered switch through the profile registry, the rest as before.
 pub fn environment(name: [:0]const u8) ?[]const u8 { return @import("profile").lookup(name); }
-/// Whether the group brings up its own RoCE path: not where TF_GLM_ROCE_MULTI=1 lends fabric/tp's wire (3+ ranks).
 pub fn ownRoce(s: Settings, world: usize) bool { return !(s.roce_multi and world >= 3); }
 pub const Fingerprint = extern struct {
-    layout: u32 = 81,
-    q8_activation: u32 = 0,
-    q4_activation: u32 = 0,
+    layout: u32 = 84, q4_ffn_q8: u32 = 0, q4_ffn_q8_sha: [32]u8 = @splat(0),
+    q8_correlated: u32 = 0, correlation_sha: [32]u8 = @splat(0),
+    q8_activation: u32 = 0, q4_activation: u32 = 0,
     q4_recurrent_bf16: u32 = 0, q4_bf16_families: u32 = 0,
     calibration_sha: [32]u8 = @splat(0),
     world: u32,
@@ -376,10 +374,10 @@ pub const Fingerprint = extern struct {
     absorb_mma: u32 = 0,
     pub const Field = enum {
         layout,
+        q8_correlated, correlation_sha, q4_ffn_q8, q4_ffn_q8_sha,
         q8_activation,
         q4_activation,
-        q4_recurrent_bf16,
-        q4_bf16_families,
+        q4_recurrent_bf16, q4_bf16_families,
         calibration_sha,
         rank,
         world,
@@ -440,8 +438,7 @@ pub const Fingerprint = extern struct {
         q8_mse,
         q4_affine_mse,
         q4_head_fp8,
-        q4_python_prompt,
-        q4_python_splits,
+        q4_python_prompt, q4_python_splits,
         bits,
         capacity,
         heat_high,
@@ -463,6 +460,10 @@ pub const Fingerprint = extern struct {
         checkpoint_digest: [32]u8,
     ) Fingerprint {
         const f: Fingerprint = .{
+            .q4_ffn_q8 = @intFromBool(s.q4_ffn_q8.on),
+            .q4_ffn_q8_sha = if (s.q4_ffn_q8.on) s.q4_ffn_q8.sha else @splat(0),
+            .q8_correlated = @intFromBool(s.q8_correlated.on),
+            .correlation_sha = if (s.q8_correlated.on) s.q8_correlated.sha else @splat(0),
             .q8_activation = @intFromBool(s.q8_activation),
             .q4_activation = @intFromBool(s.q4_activation),
             .q4_recurrent_bf16 = @as(u32, s.q4_recurrent_bf16),
@@ -538,7 +539,6 @@ pub const Fingerprint = extern struct {
     }
 };
 pub const Mismatch = struct { field: Fingerprint.Field, rank: usize };
-/// The first field where rank `r`'s fingerprint differs from rank 0's (or holds the wrong rank), null when all agree.
 pub fn mismatch(all: []const Fingerprint) ?Mismatch {
     for (all, 0..) |f, r| {
         if (f.layout != all[0].layout) return .{ .field = .layout, .rank = r };

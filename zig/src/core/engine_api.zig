@@ -16,7 +16,6 @@ pub const EmbeddingBatch = lanes.embedding.Batch;
 pub const embedding_vector = @import("embedding_vector.zig");
 pub const load_ledger = @import("load_ledger.zig");
 pub const kv_ledger = @import("kv_ledger.zig");
-
 /// One image of a request (``Request.images``): the tower's input and the placeholder rows its output replaces.
 pub const Image = lanes.stream.Image;
 
@@ -209,6 +208,7 @@ pub const Info = struct {
     warm_turns: bool = false,
     /// The engine decodes plain whatever a request asks: no drafter loaded, or this chip is faster plain.
     plain_only: bool = false,
+    greedy_unconstrained_drafts: bool = false, // Default sampled/grammar requests to target-only decoding.
     /// Available proposals, independent of a request's choice to use them.
     draft_sources: DraftSources = .{},
     /// The immutable retained-prefix plan applied at startup, not a process memory limit or current cache occupancy.

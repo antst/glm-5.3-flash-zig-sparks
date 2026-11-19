@@ -53,7 +53,7 @@ test "verify rows: strict startup width copy coupling cached values and rank agr
     const FP = glm.ranks.Fingerprint;
     const f0 = FP.of(4, 0, off, 4096, true, @splat(0), @splat(0), @splat(0));
     const f1 = FP.of(4, 1, on, 4096, true, @splat(0), @splat(0), @splat(0));
-    try t.expectEqual(@as(u32, 65), f0.layout);
+    try t.expectEqual(@as(u32, 84), f0.layout);
     try t.expectEqual(FP.Field.verify_rows, glm.ranks.mismatch(&.{ f0, f1 }).?.field);
     const wide_fp = FP.of(4, 1, wide32, 4096, true, @splat(0), @splat(0), @splat(0));
     const old_fp = FP.of(4, 0, on, 4096, true, @splat(0), @splat(0), @splat(0));

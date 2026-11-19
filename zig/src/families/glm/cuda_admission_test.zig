@@ -30,7 +30,7 @@ test "GLM admission wait: strict cached default and rank agreement" {
         FP.of(4, 0, off, 4096, true, @splat(0), @splat(0), @splat(0)),
         FP.of(4, 1, on, 4096, true, @splat(0), @splat(0), @splat(0)),
     };
-    try t.expectEqual(@as(u32, 65), all[0].layout);
+    try t.expectEqual(@as(u32, 84), all[0].layout);
     try t.expectEqual(FP.Field.admission_us, ranks.mismatch(&all).?.field);
     try t.expectEqualStrings("TF_GLM_ADMISSION_US", @import("cuda_rank_names.zig").explain(FP.Field.admission_us));
     all[0] = FP.of(4, 0, on, 4096, true, @splat(0), @splat(0), @splat(0));
