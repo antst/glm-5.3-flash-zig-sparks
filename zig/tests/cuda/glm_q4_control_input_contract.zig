@@ -19,14 +19,14 @@ pub fn run(gpu: check.Gpu, rank: usize) !void {
     defer s.deinit();
     var module = try cuda.Module.load(gpu.d, cuda.kernels.glm_mm);
     defer module.unload();
-    var glue_module = try cuda.Module.load(gpu.d, cuda.kernels.glm_glue);
-    defer glue_module.unload();
+    var ops_module = try cuda.Module.load(gpu.d, cuda.kernels.glm_ops);
+    defer ops_module.unload();
     defer s.synchronize() catch @panic("control contract stream did not drain before module unload");
     var ref = try old.Kernels.load(module);
     var ks = try glm.mm.Kernels.load(module);
     ref.pdl = false;
     ks.pdl = false;
-    const copy = try glue_module.function("tf_glm_copy_rows");
+    const copy = try ops_module.function("tf_glm_copy_rows");
     const set: glm.glue.Set = .{ .glue = undefined, .mm = &ks, .copy_rows = copy };
     for (ks.by_rows, 0..) |f, i| {
         const needed: i32 = if (i < 2) 128 else 256;

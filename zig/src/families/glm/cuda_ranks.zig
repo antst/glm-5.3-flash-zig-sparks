@@ -298,7 +298,7 @@ pub fn environment(name: [:0]const u8) ?[]const u8 { return @import("profile").l
 /// Whether the group brings up its own RoCE path: not where TF_GLM_ROCE_MULTI=1 lends fabric/tp's wire (3+ ranks).
 pub fn ownRoce(s: Settings, world: usize) bool { return !(s.roce_multi and world >= 3); }
 pub const Fingerprint = extern struct {
-    layout: u32 = 79,
+    layout: u32 = 80,
     q8_activation: u32 = 0,
     q4_activation: u32 = 0,
     q4_recurrent_bf16: u32 = 0,

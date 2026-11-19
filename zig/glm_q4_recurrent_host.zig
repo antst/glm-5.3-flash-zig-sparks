@@ -21,7 +21,7 @@ test "Q4 recurrent BF16: cached strict choice, inherited calibration scope, and 
     try t.expect(off.q4_recurrent_bf16 == 0);
     Env.value = "0";
     try t.expectEqualDeep(off, try glm.ranks.Settings.read(Env.get, &problem));
-    for ([_][]const u8{ "", "3", "01", "true", " 1" }) |bad| {
+    for ([_][]const u8{ "", "4", "01", "true", " 1" }) |bad| {
         Env.value = bad;
         try t.expectError(error.BadSetting, glm.ranks.Settings.read(Env.get, &problem));
     }
@@ -40,6 +40,6 @@ test "Q4 recurrent BF16: cached strict choice, inherited calibration scope, and 
     previous.q4_recurrent_bf16 = 0;
     const a = FP.of(2, 0, previous, 8192, true, @splat(0), @splat(0), @splat(0));
     const b = FP.of(2, 1, on, 8192, true, @splat(0), @splat(0), @splat(0));
-    try t.expectEqual(@as(u32, 79), b.layout);
+    try t.expectEqual(@as(u32, 80), b.layout);
     try t.expectEqual(FP.Field.q4_recurrent_bf16, glm.ranks.mismatch(&.{ a, b }).?.field);
 }

@@ -63,7 +63,7 @@ test "Q4 activation: strict cached setting, both head scopes and calibration agr
     previous.q4_activation = false;
     const a = FP.of(2, 0, previous, 8192, true, @splat(0), @splat(0), @splat(0));
     const b = FP.of(2, 1, on, 8192, true, @splat(0), @splat(0), @splat(0));
-    try t.expectEqual(@as(u32, 79), b.layout);
+    try t.expectEqual(@as(u32, 80), b.layout);
     try t.expectEqual(FP.Field.q4_activation, glm.ranks.mismatch(&.{ a, b }).?.field);
     var other = on;
     other.calibration_sha[17] ^= 1;

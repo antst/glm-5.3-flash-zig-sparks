@@ -206,3 +206,7 @@ pub const q4_control_input = @import("cuda_q4_control_input.zig");
 test {
     _ = @import("cuda_q4_control_input_test.zig");
 }
+
+test {
+    _ = q4_recurrent;
+}

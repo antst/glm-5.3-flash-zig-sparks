@@ -115,7 +115,7 @@ test "Q4 input control: parser preserves0/1 and agrees mode2 before load" {
     try t.expectEqual(@as(u8, 0), off.q4_recurrent_bf16);
     E.v = "0";
     try t.expectEqualDeep(off, try ranks.Settings.read(E.get, &problem));
-    for ([_][]const u8{ "3", "02", "-1", "true", " 2" }) |bad| {
+    for ([_][]const u8{ "4", "02", "-1", "true", " 2" }) |bad| {
         E.v = bad;
         try t.expectError(error.BadSetting, ranks.Settings.read(E.get, &problem));
     }
@@ -133,7 +133,7 @@ test "Q4 input control: parser preserves0/1 and agrees mode2 before load" {
     baseline.q4_recurrent_bf16 = 1;
     const b = F.of(2, 0, baseline, 8192, true, @splat(0), @splat(0), @splat(0));
     const c = F.of(2, 1, on, 8192, true, @splat(0), @splat(0), @splat(0));
-    try t.expectEqual(@as(u32, 79), c.layout);
+    try t.expectEqual(@as(u32, 80), c.layout);
     try t.expectEqual(F.Field.q4_recurrent_bf16, ranks.mismatch(&.{ b, c }).?.field);
     try t.expectEqual(@as(u32, 0), a.q4_recurrent_bf16);
 }

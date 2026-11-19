@@ -32,6 +32,12 @@ pub fn packWithMoments(gpa: std.mem.Allocator, io: std.Io, w: *weights.Weights, 
 }
 
 pub fn packWithRecurrent(gpa: std.mem.Allocator, io: std.Io, w: *weights.Weights, m: *const mm.Kernels, qs: *const q4.Kernels, stream: cuda.Stream, d: *const cuda.Driver, calibrated: ?*const @import("cuda_q8_moments.zig").Data, keep_recurrent: bool) !mm.Packed {
+    return packWithMode(gpa, io, w, m, qs, stream, d, calibrated, @intFromBool(keep_recurrent));
+}
+
+fn packWithMode(gpa: std.mem.Allocator, io: std.Io, w: *weights.Weights, m: *const mm.Kernels, qs: *const q4.Kernels, stream: cuda.Stream, d: *const cuda.Driver, calibrated: ?*const @import("cuda_q8_moments.zig").Data, mode: u8) !mm.Packed {
+    if (mode > 3) return error.Q4RecurrentBf16Scope;
+    const keep_recurrent = mode != 0;
     try tile.padKdaInputs(w, d, stream);
     var list: std.ArrayList(tile.Lin) = .empty;
     defer list.deinit(gpa);
@@ -68,7 +74,7 @@ pub fn packWithRecurrent(gpa: std.mem.Allocator, io: std.Io, w: *weights.Weights
     var retained: usize = 0;
     var retained_bytes: usize = 0;
     for (list.items, 0..) |l, i| {
-        const control = keep_recurrent and @import("cuda_q4_recurrent.zig").isControl(w, l.field);
+        const control = @import("cuda_q4_recurrent.zig").isRetained(w, l.field, mode);
         if ((i + 1 == list.items.len and w.head == .bf16) or control) {
             if (control) {
                 retained += 1;
@@ -166,6 +172,6 @@ pub const Context = struct {
         }
         if (t.q4_recurrent_bf16 == 2) try @import("cuda_q4_control_input.zig").prepare(w, t.mk, t.s, t.d);
         if (t.head_fp8) try @import("cuda_head_fp8.zig").pack(t.gpa, t.io, w, t.lane orelse return error.HeadFp8Scope, t.s, t.d);
-        t.packs.* = if (t.affine) try packWithRecurrent(t.gpa, t.io, w, t.mk, t.qs, t.s, t.d, calibrated, t.q4_recurrent_bf16 != 0) else try tile.tileLinearsFit(t.gpa, w, t.mk, t.s, t.d, t.dense, t.head, t.q8_mse, calibrated);
+        t.packs.* = if (t.affine) try packWithMode(t.gpa, t.io, w, t.mk, t.qs, t.s, t.d, calibrated, t.q4_recurrent_bf16) else try tile.tileLinearsFit(t.gpa, w, t.mk, t.s, t.d, t.dense, t.head, t.q8_mse, calibrated);
     }
 };
