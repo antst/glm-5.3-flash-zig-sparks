@@ -3,6 +3,7 @@ pub fn explain(f: anytype) []const u8 {
     return switch (f) {
         .q8_activation => "TF_GLM_Q8_ACTIVATION",
         .q4_activation => "TF_GLM_Q4_ACTIVATION",
+        .q4_recurrent_bf16 => "TF_GLM_Q4_RECURRENT_BF16",
         .calibration_sha => "TF_GLM_CALIBRATION_SHA256",
         .layout => "a different build of this check",
         .rank => "a rank number given twice or out of order",
@@ -82,6 +83,7 @@ pub fn explain(f: anytype) []const u8 {
 pub const compared = .{
     "q8_activation",
     "q4_activation",
+    "q4_recurrent_bf16",
     "calibration_sha",
     "kv8",
     "pages",

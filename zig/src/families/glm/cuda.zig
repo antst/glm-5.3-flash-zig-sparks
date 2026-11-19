@@ -198,3 +198,5 @@ test {
     _ = @import("cuda_nvfp4_mode_test.zig");
     _ = @import("cuda_warm_turns_test.zig");
 }
+
+pub const q4_recurrent = @import("cuda_q4_recurrent.zig");

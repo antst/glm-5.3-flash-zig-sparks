@@ -132,6 +132,8 @@ test "CUDA load cache: every TP load scope defers file advice through all-rank r
         const close = std.mem.indexOf(u8, source, "defer load_cache.deinit()") orelse return error.NoTpAbort;
         const ready = std.mem.indexOf(u8, source, "load_cache.finishAfter(") orelse return error.NoTpReady;
         try t.expect(start < close and close < ready);
+        if (std.mem.eql(u8, path, "glm/cuda_native.zig"))
+            try t.expect(std.mem.indexOf(u8, source[start..close], "and try ctx.attribute(.integrated) == 0") != null);
         try t.expect(std.mem.indexOf(u8, source[start..close], "> 1") != null);
         const last = if (std.mem.eql(u8, path, "flashnext/cuda_lanes_load.zig")) "mtp.Head.init" else if (std.mem.eql(u8, path, "glm/cuda_native.zig")) "dflash_load.load" else if (std.mem.eql(u8, path, "minimax_m3/cuda_native.zig")) "engine.Engine.init" else if (std.mem.eql(u8, path, "nemotron/cuda_engine.zig")) "weights.load(gpa" else if (std.mem.eql(u8, path, "nemotron/cuda_worker.zig")) "loadLayers(gpa" else "m.weights.upload";
         const read = std.mem.indexOfPos(u8, source, start, last) orelse return error.NoLastLoad;

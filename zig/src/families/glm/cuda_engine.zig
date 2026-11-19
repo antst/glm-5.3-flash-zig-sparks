@@ -111,6 +111,7 @@ pub const Engine = struct {
         if (world > ranks.max_world) return error.TooManyRanks;
         try @import("cuda_q8_activation_options.zig").require(o, world);
         try @import("cuda_q4_activation_options.zig").require(o, world);
+        try @import("cuda_q4_recurrent.zig").require(o.settings, world);
         try @import("cuda_tile_affine.zig").require(o.settings, world, o.vision != null);
         try @import("cuda_q8_mse.zig").require(o.settings, world, o.vision != null);
         try @import("cuda_admission_options.zig").require(o, world);
@@ -209,6 +210,7 @@ pub const Engine = struct {
         };
         tiler.q8_mse = o.settings.q8_mse;
         tiler.q4_activation = o.settings.q4_activation;
+        tiler.q4_recurrent_bf16 = o.settings.q4_recurrent_bf16;
         tiler.calibration = if (o.settings.q8_activation or o.settings.q4_activation) .{ .manifest = o.settings.calibration_sha, .checkpoint = checkpoint_digest } else null;
         e.w = try @import("cuda_load_owner.zig").finish(try weights.load(gpa, io, d, stream, e.m.tools(), checkpoint, c, share, layers, @import("cuda_dflash_head_mode.zig").selection(o.settings, o.mtp, o.drafter)), tiler, @import("cuda_tile_affine.zig").Context.apply);
         errdefer e.w.deinit();

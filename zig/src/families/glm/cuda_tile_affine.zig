@@ -28,6 +28,10 @@ pub fn pack(gpa: std.mem.Allocator, io: std.Io, w: *weights.Weights, m: *const m
 }
 
 pub fn packWithMoments(gpa: std.mem.Allocator, io: std.Io, w: *weights.Weights, m: *const mm.Kernels, qs: *const q4.Kernels, stream: cuda.Stream, d: *const cuda.Driver, calibrated: ?*const @import("cuda_q8_moments.zig").Data) !mm.Packed {
+    return packWithRecurrent(gpa, io, w, m, qs, stream, d, calibrated, false);
+}
+
+pub fn packWithRecurrent(gpa: std.mem.Allocator, io: std.Io, w: *weights.Weights, m: *const mm.Kernels, qs: *const q4.Kernels, stream: cuda.Stream, d: *const cuda.Driver, calibrated: ?*const @import("cuda_q8_moments.zig").Data, keep_recurrent: bool) !mm.Packed {
     try tile.padKdaInputs(w, d, stream);
     var list: std.ArrayList(tile.Lin) = .empty;
     defer list.deinit(gpa);
@@ -61,11 +65,16 @@ pub fn packWithMoments(gpa: std.mem.Allocator, io: std.Io, w: *weights.Weights, 
     var groups: usize = 0;
     var improved: usize = 0;
     var zero_moments: usize = 0;
+    var retained: usize = 0;
+    var retained_bytes: usize = 0;
     for (list.items, 0..) |l, i| {
-        if (i + 1 == list.items.len and w.head == .bf16) {
-            try mm.tile(m, stream, l.field.*, tmp.ptr, l.n, l.k);
-            try d.check(d.api.cuMemcpyDtoDAsync_v2(l.field.*, tmp.ptr, l.n * l.k * 2, stream.handle), "cuMemcpyDtoDAsync");
-            try stream.synchronize();
+        const control = keep_recurrent and @import("cuda_q4_recurrent.zig").isControl(w, l.field);
+        if ((i + 1 == list.items.len and w.head == .bf16) or control) {
+            if (control) {
+                retained += 1;
+                retained_bytes += l.n * l.k * 2;
+            }
+            try @import("cuda_q4_recurrent.zig").retain(m, stream, d, l, tmp.ptr);
             continue;
         }
         const sizes = q4.bytes(l.n, l.k);
@@ -119,6 +128,7 @@ pub fn packWithMoments(gpa: std.mem.Allocator, io: std.Io, w: *weights.Weights, 
     if (calibrated != null) std.log.info("GLM_Q4_ACTIVATION rank={d} active=true groups={d} improved={d} zero={d} rounds=2", .{
         w.share.rank, groups, improved, zero_moments,
     });
+    if (keep_recurrent) std.log.info("GLM_Q4_RECURRENT_BF16 rank={d} active=true matrices={d} bytes={d}", .{ w.share.rank, retained, retained_bytes });
     return .{ .ptrs = result, .bits = bits, .affine = true };
 }
 
@@ -128,6 +138,7 @@ pub const Context = struct {
     affine: bool,
     q8_mse: bool = false,
     q4_activation: bool = false,
+    q4_recurrent_bf16: bool = false,
     calibration: ?@import("cuda_q8_moments.zig").Identity = null,
     head_fp8: bool = false,
     lane: ?*const cuda.qmmf.Lane = null,
@@ -154,6 +165,6 @@ pub const Context = struct {
             calibrated = try @import("cuda_q8_moments.zig").Data.open(t.gpa, t.io, root, id, w.share.rank);
         }
         if (t.head_fp8) try @import("cuda_head_fp8.zig").pack(t.gpa, t.io, w, t.lane orelse return error.HeadFp8Scope, t.s, t.d);
-        t.packs.* = if (t.affine) try packWithMoments(t.gpa, t.io, w, t.mk, t.qs, t.s, t.d, calibrated) else try tile.tileLinearsFit(t.gpa, w, t.mk, t.s, t.d, t.dense, t.head, t.q8_mse, calibrated);
+        t.packs.* = if (t.affine) try packWithRecurrent(t.gpa, t.io, w, t.mk, t.qs, t.s, t.d, calibrated, t.q4_recurrent_bf16) else try tile.tileLinearsFit(t.gpa, w, t.mk, t.s, t.d, t.dense, t.head, t.q8_mse, calibrated);
     }
 };

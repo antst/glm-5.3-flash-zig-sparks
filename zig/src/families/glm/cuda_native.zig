@@ -208,8 +208,9 @@ fn openRank(a: StartArgs, set: ranks.Settings) !Loaded {
     const p = a.p;
     const roce_bytes = a.roce_bytes;
     const copies = try cuda.priority_copies.read("TF_GLM_COPIES", o.drafts);
-    var load_cache = @import("core").checkpoint.cache.Load.begin(io, p.world > 1);
+    var load_cache = @import("core").checkpoint.cache.Load.begin(io, p.world > 1 and try ctx.attribute(.integrated) == 0);
     defer load_cache.deinit();
+    std.log.info("GLM_LOAD_CACHE rank={d} deferred_to_ready={any} per_layer_release={any}", .{ p.rank, load_cache.active, !load_cache.active });
     // TF_KV_SHARE keeps prompts as the pool's pages: refused before the weights load, every rank told (startup)
     if (a.share > 0 and !set.pages) return error.GlmShareNeedsPages;
     if (@import("cuda_kv_host.zig").onHost() and !set.pages) return error.GlmKvHostNeedsPages;
