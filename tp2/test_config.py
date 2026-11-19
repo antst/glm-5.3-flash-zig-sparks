@@ -49,9 +49,18 @@ class DirectRecipeTests(unittest.TestCase):
     def test_nvme_only_on_qualified_profile(self):
         with self.assertRaisesRegex(ValueError,'Q8/BF16'):
             self.render('--precision','q4','--tier','nvme')
-        nodes, _ = self.render('--precision','q8','--tier','nvme')
-        self.assertIn('TF_GLM_NVME_TIER=native-tiered',nodes[0]['payload']['Env'])
-        self.assertIn('--learn-conversations',nodes[0]['payload']['Cmd'])
+        nodes, report = self.render('--precision','q8','--tier','nvme')
+        for node in nodes:
+            env = dict(value.split('=',1) for value in node['payload']['Env'])
+            self.assertEqual(env['TF_GLM_NVME_TIER'],'native-tiered')
+            self.assertEqual(env['TF_GLM_NVME_MODE'],'serial')
+            self.assertEqual(env['TF_GLM_NVME_STAGING_MIB'],'256')
+            self.assertEqual(env['TF_GLM_NVME_INDEX_MIB'],'64')
+            self.assertIn('--learn-conversations',node['payload']['Cmd'])
+        _, other = self.render('--precision','q8','--tier','nvme','--learn-gib','48')
+        self.assertNotEqual(report['namespace'],other['namespace'])
+        off, _ = self.render('--precision','q8')
+        self.assertIn('TF_GLM_NVME_STAGING_MIB=192',off[0]['payload']['Env'])
 
     def test_refuses_mismatched_topology_and_ports(self):
         with self.assertRaisesRegex(ValueError,'two distinct'):
@@ -60,6 +69,19 @@ class DirectRecipeTests(unittest.TestCase):
             self.render('--port','28665')
         with self.assertRaisesRegex(ValueError,'direct-link IPv4'):
             self.render('--master','192.168.2.201')
+
+    def test_million_token_q8_profile(self):
+        flags = ('--precision','q8','--context','1048576','--parallel','1','--prompt-cache-gib','0')
+        nodes, report = self.render(*flags)
+        self.assertEqual((report['context'], report['parallel'], report['tier']), (1048576, 1, 'off'))
+        for node in nodes:
+            argv = node['payload']['Cmd']
+            self.assertEqual(argv[argv.index('--context')+1], '1048576')
+        for bad in (('--parallel','4'), ('--tier','nvme'), ('--precision','q4'), ('--prompt-cache-gib','1.75')):
+            with self.subTest(bad=bad), self.assertRaisesRegex(ValueError,'long-context TP2'):
+                self.render(*flags,*bad)
+        with self.assertRaisesRegex(ValueError,'1048576'):
+            self.render(*flags,'--context','1048577')
 
     def test_rejects_bad_runtime_bytes_and_escape(self):
         with tempfile.TemporaryDirectory() as folder:

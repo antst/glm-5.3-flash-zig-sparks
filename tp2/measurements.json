@@ -1,0 +1,1356 @@
+{
+  "schema": 1,
+  "measured_at": "2026-11-19T22:00:08.557835+00:00",
+  "tensor_parallel": 2,
+  "topology": "direct second ports, TC104",
+  "speed_active_lanes": 8,
+  "context": 196608,
+  "kv": "FP8",
+  "expert_checkpoint": "EXL3 4.0 bpw",
+  "nvme_speed": false,
+  "ram_cache_gib_speed": 0,
+  "balanced_matching_request_bodies": 48,
+  "quality_fixture_sha256": "7e589b839be4065b405c77df782707c6407adf23cc5cd54d6ab7fad0384bb0eb",
+  "rows": [
+    {
+      "profile": "bf16",
+      "label": "Ours BF16/BF16",
+      "source_commit": "4c286e54f0902b367b3d5def70c10668b8dbf98c",
+      "native_sha256": "b87140a3224ce706aa6624c971ec6665c61ef89dcbdcf63c821fe6ef8ce1d91b",
+      "quality_limit": 8,
+      "original": {
+        "C1": {
+          "prose": 29.772776678030688,
+          "code": 47.19999358690001
+        },
+        "whole_wave_tok_s": {
+          "4": 70.03071822800203,
+          "6": 87.9682877880326,
+          "8": 104.35109743648576
+        },
+        "measured_original_requests": 41
+      },
+      "balanced": {
+        "common_window_tok_s": {
+          "1": 40.03698347980762,
+          "4": 69.63418741461018,
+          "8": 94.62292253111868
+        },
+        "cases": [
+          {
+            "name": "code-lru",
+            "clients": 1,
+            "decode_tok_s": 54.58356997946872,
+            "end_to_end_tok_s": 53.07617335200738,
+            "worst_TTFT_s": 0.2261395025998354
+          },
+          {
+            "name": "prose-wetlands",
+            "clients": 1,
+            "decode_tok_s": 31.5928889655152,
+            "end_to_end_tok_s": 31.15827093223851,
+            "worst_TTFT_s": 0.20800516940653324
+          },
+          {
+            "name": "code-csv",
+            "clients": 1,
+            "decode_tok_s": 43.963374961251795,
+            "end_to_end_tok_s": 43.096765260485896,
+            "worst_TTFT_s": 0.20546096190810204
+          },
+          {
+            "name": "prose-grid",
+            "clients": 1,
+            "decode_tok_s": 31.96523764826847,
+            "end_to_end_tok_s": 31.540541858166673,
+            "worst_TTFT_s": 0.19942542351782322
+          },
+          {
+            "name": "code-toposort",
+            "clients": 1,
+            "decode_tok_s": 48.65644920601281,
+            "end_to_end_tok_s": 47.55969248244203,
+            "worst_TTFT_s": 0.20984035916626453
+          },
+          {
+            "name": "prose-vaccines",
+            "clients": 1,
+            "decode_tok_s": 32.67647309797724,
+            "end_to_end_tok_s": 32.233172216867054,
+            "worst_TTFT_s": 0.19866374135017395
+          },
+          {
+            "name": "code-sql",
+            "clients": 1,
+            "decode_tok_s": 54.02972643851699,
+            "end_to_end_tok_s": 52.5937667273261,
+            "worst_TTFT_s": 0.2201747875660658
+          },
+          {
+            "name": "prose-heat",
+            "clients": 1,
+            "decode_tok_s": 31.714815862936902,
+            "end_to_end_tok_s": 31.278287216967072,
+            "worst_TTFT_s": 0.20722436346113682
+          },
+          {
+            "name": "cohort-a",
+            "clients": 4,
+            "decode_tok_s": 69.37054428507136,
+            "end_to_end_tok_s": 68.92613233455691,
+            "worst_TTFT_s": 0.8113837782293558
+          },
+          {
+            "name": "cohort-b",
+            "clients": 4,
+            "decode_tok_s": 69.89883252129165,
+            "end_to_end_tok_s": 69.40395709949524,
+            "worst_TTFT_s": 0.8196657449007034
+          },
+          {
+            "name": "all-eight",
+            "clients": 8,
+            "decode_tok_s": 94.62292253111865,
+            "end_to_end_tok_s": 94.24355126805403,
+            "worst_TTFT_s": 1.6261488478630781
+          }
+        ],
+        "timed_requests": 48,
+        "raw_native_text_and_usage_checked": true
+      },
+      "bench2": {
+        "summary": {
+          "single_prose": {
+            "decode_tps": 30.188501022435446,
+            "ttft": 0.16492152214050293,
+            "sha": "7d7966f9fea5",
+            "tokens": 600
+          },
+          "single_code": {
+            "decode_tps": 48.10975295245231,
+            "ttft": 0.18626856803894043,
+            "sha": "eb2377509cc8",
+            "tokens": 600
+          },
+          "prefill_16K": {
+            "prompt_tokens": 15921,
+            "ttft": 11.015334129333496,
+            "prefill_tps": 1445.3488031382421
+          },
+          "prefill_64K": {
+            "prompt_tokens": 64335,
+            "ttft": 44.07063961029053,
+            "prefill_tps": 1459.8154365106543
+          },
+          "conc2": {
+            "per_stream_tps": [
+              27.8,
+              25.2
+            ],
+            "sum_tps": 53.1,
+            "ttft_max": 0.41818928718566895
+          },
+          "conc4": {
+            "per_stream_tps": [
+              19.2,
+              18.1,
+              18.6,
+              18.5
+            ],
+            "sum_tps": 74.4,
+            "ttft_max": 0.8452141284942627
+          },
+          "mixed1": {
+            "long_prompt_tokens": 50926,
+            "long_ttft": 51.18,
+            "decoders": [
+              {
+                "before_tps": 30.0,
+                "during_tps": 9.5,
+                "gap_p50": 73,
+                "gap_p95": 1456,
+                "gap_max": 1752,
+                "after_tps": 29.4
+              }
+            ]
+          },
+          "mixed3": {
+            "long_prompt_tokens": 50889,
+            "long_ttft": 51.81,
+            "decoders": [
+              {
+                "before_tps": 18.4,
+                "during_tps": 6.3,
+                "gap_p50": 110,
+                "gap_p95": 1499,
+                "gap_max": 1774,
+                "after_tps": 18.6
+              },
+              {
+                "before_tps": 22.4,
+                "during_tps": 6.6,
+                "gap_p50": 110,
+                "gap_p95": 1500,
+                "gap_max": 1774,
+                "after_tps": 19.0
+              },
+              {
+                "before_tps": 20.7,
+                "during_tps": 6.6,
+                "gap_p50": 110,
+                "gap_p95": 1499,
+                "gap_max": 1774,
+                "after_tps": 19.1
+              }
+            ]
+          },
+          "prefill_pair": {
+            "alone_ttft": 20.86,
+            "alone_tokens": 30480,
+            "pair_ttft": [
+              42.09,
+              22.24
+            ],
+            "pair_tokens": [
+              30612,
+              30510
+            ]
+          }
+        },
+        "metric_scope": "Original unmodified client summary. Single decode chooses the faster repetition; mixed token rates are event-scaled estimates, not exact per-interval token counts. Long TTFT, actual prompt counts and inter-content event gaps remain separately reported."
+      },
+      "quality": {
+        "text": 730,
+        "code": 154,
+        "total": 884,
+        "cases": 959,
+        "categories": {
+          "qa": {
+            "correct": 129,
+            "total": 150
+          },
+          "reason": {
+            "correct": 40,
+            "total": 40
+          },
+          "arith": {
+            "correct": 40,
+            "total": 40
+          },
+          "track": {
+            "correct": 40,
+            "total": 40
+          },
+          "gsm8k": {
+            "correct": 195,
+            "total": 200
+          },
+          "mmlu": {
+            "correct": 254,
+            "total": 285
+          },
+          "follow": {
+            "correct": 32,
+            "total": 40
+          },
+          "legacy_humaneval_chat": {
+            "correct": 154,
+            "total": 164
+          }
+        },
+        "capped": [
+          "HumanEval/147"
+        ],
+        "small": {
+          "code": 8,
+          "structured": 5
+        },
+        "artifact_sha256": "b8f942d52192b9fbaed750f730075594f3159f1db044390958168d5959410016"
+      },
+      "evidence_windows": {
+        "quality": "model-window-20261117T041138Z-533e6a",
+        "speed": "model-window-20261117T041138Z-533e6a"
+      }
+    },
+    {
+      "profile": "q4",
+      "label": "Ours Q4/BF16",
+      "source_commit": "920e5fd29af96d04d9bfcd4c0ff499af765fb65c",
+      "native_sha256": "6b9c9a6f2206f878feb6d21b2bbd4c27873dd8c500cd4862a2e74f8053c49f40",
+      "quality_limit": 8,
+      "original": {
+        "C1": {
+          "prose": 45.50856690786276,
+          "code": 64.48992784365504
+        },
+        "whole_wave_tok_s": {
+          "4": 91.66564884460165,
+          "6": 108.661440858247,
+          "8": 115.56292698567003
+        },
+        "measured_original_requests": 41
+      },
+      "balanced": {
+        "common_window_tok_s": {
+          "1": 53.984481115846904,
+          "4": 81.57819652935034,
+          "8": 102.71506355521812
+        },
+        "cases": [
+          {
+            "name": "code-lru",
+            "clients": 1,
+            "decode_tok_s": 61.15625503778449,
+            "end_to_end_tok_s": 59.4508425061015,
+            "worst_TTFT_s": 0.20366919972002506
+          },
+          {
+            "name": "prose-wetlands",
+            "clients": 1,
+            "decode_tok_s": 43.23307838722076,
+            "end_to_end_tok_s": 42.47434998264329,
+            "worst_TTFT_s": 0.18727733008563519
+          },
+          {
+            "name": "code-csv",
+            "clients": 1,
+            "decode_tok_s": 63.601078922335105,
+            "end_to_end_tok_s": 61.90979651648979,
+            "worst_TTFT_s": 0.18728195317089558
+          },
+          {
+            "name": "prose-grid",
+            "clients": 1,
+            "decode_tok_s": 49.304667867369304,
+            "end_to_end_tok_s": 48.34188395626458,
+            "worst_TTFT_s": 0.18151303753256798
+          },
+          {
+            "name": "code-toposort",
+            "clients": 1,
+            "decode_tok_s": 61.113429447226835,
+            "end_to_end_tok_s": 59.51790368654002,
+            "worst_TTFT_s": 0.19147136993706226
+          },
+          {
+            "name": "prose-vaccines",
+            "clients": 1,
+            "decode_tok_s": 46.30397972852087,
+            "end_to_end_tok_s": 45.45255169818451,
+            "worst_TTFT_s": 0.1830016728490591
+          },
+          {
+            "name": "code-sql",
+            "clients": 1,
+            "decode_tok_s": 66.9022020850135,
+            "end_to_end_tok_s": 64.86956388138967,
+            "worst_TTFT_s": 0.2019964661449194
+          },
+          {
+            "name": "prose-heat",
+            "clients": 1,
+            "decode_tok_s": 45.95645279540857,
+            "end_to_end_tok_s": 45.1064758194512,
+            "worst_TTFT_s": 0.1853786800056696
+          },
+          {
+            "name": "cohort-a",
+            "clients": 4,
+            "decode_tok_s": 80.35398861364467,
+            "end_to_end_tok_s": 79.78529596507101,
+            "worst_TTFT_s": 0.752242598682642
+          },
+          {
+            "name": "cohort-b",
+            "clients": 4,
+            "decode_tok_s": 82.82105547964355,
+            "end_to_end_tok_s": 82.24151582757916,
+            "worst_TTFT_s": 0.747836496680975
+          },
+          {
+            "name": "all-eight",
+            "clients": 8,
+            "decode_tok_s": 102.71506355521812,
+            "end_to_end_tok_s": 102.31097742639338,
+            "worst_TTFT_s": 1.5012636613100767
+          }
+        ],
+        "timed_requests": 48,
+        "raw_native_text_and_usage_checked": true
+      },
+      "bench2": {
+        "summary": {
+          "single_prose": {
+            "decode_tps": 45.18954275498874,
+            "ttft": 0.15204501152038574,
+            "sha": "f34a71e94969",
+            "tokens": 600
+          },
+          "single_code": {
+            "decode_tps": 64.37378583710557,
+            "ttft": 0.16814208030700684,
+            "sha": "0be7b0fa0d5f",
+            "tokens": 600
+          },
+          "prefill_16K": {
+            "prompt_tokens": 16018,
+            "ttft": 11.160177946090698,
+            "prefill_tps": 1435.2817739443797
+          },
+          "prefill_64K": {
+            "prompt_tokens": 64274,
+            "ttft": 44.33909726142883,
+            "prefill_tps": 1449.601006106022
+          },
+          "conc2": {
+            "per_stream_tps": [
+              36.1,
+              37.4
+            ],
+            "sum_tps": 73.5,
+            "ttft_max": 0.3998444080352783
+          },
+          "conc4": {
+            "per_stream_tps": [
+              23.5,
+              24.2,
+              24.1,
+              24.4
+            ],
+            "sum_tps": 96.2,
+            "ttft_max": 0.7573986053466797
+          },
+          "mixed1": {
+            "long_prompt_tokens": 50928,
+            "long_ttft": 52.2,
+            "decoders": [
+              {
+                "before_tps": 43.9,
+                "during_tps": 14.0,
+                "gap_p50": 49,
+                "gap_p95": 1452,
+                "gap_max": 1760,
+                "after_tps": 44.3
+              }
+            ]
+          },
+          "mixed3": {
+            "long_prompt_tokens": 51013,
+            "long_ttft": 51.93,
+            "decoders": [
+              {
+                "before_tps": 22.4,
+                "during_tps": 8.2,
+                "gap_p50": 84,
+                "gap_p95": 1485,
+                "gap_max": 1768,
+                "after_tps": 24.5
+              },
+              {
+                "before_tps": 23.5,
+                "during_tps": 8.0,
+                "gap_p50": 84,
+                "gap_p95": 1485,
+                "gap_max": 1768,
+                "after_tps": 24.3
+              },
+              {
+                "before_tps": 26.4,
+                "during_tps": 8.3,
+                "gap_p50": 84,
+                "gap_p95": 1485,
+                "gap_max": 1768,
+                "after_tps": 24.9
+              }
+            ]
+          },
+          "prefill_pair": {
+            "alone_ttft": 21.23,
+            "alone_tokens": 30671,
+            "pair_ttft": [
+              42.37,
+              22.43
+            ],
+            "pair_tokens": [
+              30541,
+              30534
+            ]
+          }
+        },
+        "metric_scope": "Original unmodified client summary. Single decode chooses the faster repetition; mixed token rates are event-scaled estimates, not exact per-interval token counts. Long TTFT, actual prompt counts and inter-content event gaps remain separately reported."
+      },
+      "quality": {
+        "text": 721,
+        "code": 160,
+        "total": 881,
+        "cases": 959,
+        "categories": {
+          "qa": {
+            "correct": 128,
+            "total": 150
+          },
+          "reason": {
+            "correct": 40,
+            "total": 40
+          },
+          "arith": {
+            "correct": 39,
+            "total": 40
+          },
+          "track": {
+            "correct": 40,
+            "total": 40
+          },
+          "gsm8k": {
+            "correct": 195,
+            "total": 200
+          },
+          "mmlu": {
+            "correct": 249,
+            "total": 285
+          },
+          "follow": {
+            "correct": 30,
+            "total": 40
+          },
+          "legacy_humaneval_chat": {
+            "correct": 160,
+            "total": 164
+          }
+        },
+        "capped": [
+          "gsm8k-0675",
+          "mmlu-02551",
+          "follow-36"
+        ],
+        "small": {
+          "code": 8,
+          "structured": 7
+        },
+        "artifact_sha256": "e40e9ac030e6f9eb609fa36d2edbd3bfcc38efbcdbb56e8f61c784fcc53cb1d8"
+      },
+      "evidence_windows": {
+        "quality": "model-window-20261118T111918Z-b9a276",
+        "speed": "model-window-20261119T211144Z-920b11"
+      }
+    },
+    {
+      "profile": "q4-fp8",
+      "label": "Ours Q4/FP8",
+      "source_commit": "920e5fd29af96d04d9bfcd4c0ff499af765fb65c",
+      "native_sha256": "6b9c9a6f2206f878feb6d21b2bbd4c27873dd8c500cd4862a2e74f8053c49f40",
+      "quality_limit": 8,
+      "original": {
+        "C1": {
+          "prose": 48.19541545633749,
+          "code": 73.15000949326335
+        },
+        "whole_wave_tok_s": {
+          "4": 94.13457404813688,
+          "6": 107.37203354243763,
+          "8": 124.32118861726158
+        },
+        "measured_original_requests": 41
+      },
+      "balanced": {
+        "common_window_tok_s": {
+          "1": 56.86940085479932,
+          "4": 84.76548986661865,
+          "8": 106.13955957992694
+        },
+        "cases": [
+          {
+            "name": "code-lru",
+            "clients": 1,
+            "decode_tok_s": 59.79457908675785,
+            "end_to_end_tok_s": 58.09154384531719,
+            "worst_TTFT_s": 0.21253758668899536
+          },
+          {
+            "name": "prose-wetlands",
+            "clients": 1,
+            "decode_tok_s": 46.719652713247406,
+            "end_to_end_tok_s": 45.810939854753876,
+            "worst_TTFT_s": 0.19088061526417732
+          },
+          {
+            "name": "code-csv",
+            "clients": 1,
+            "decode_tok_s": 66.8041892935922,
+            "end_to_end_tok_s": 64.9411478872097,
+            "worst_TTFT_s": 0.18646462261676788
+          },
+          {
+            "name": "prose-grid",
+            "clients": 1,
+            "decode_tok_s": 54.17450699320847,
+            "end_to_end_tok_s": 53.0004460242815,
+            "worst_TTFT_s": 0.18167494423687458
+          },
+          {
+            "name": "code-toposort",
+            "clients": 1,
+            "decode_tok_s": 62.72072372360535,
+            "end_to_end_tok_s": 61.02927115855071,
+            "worst_TTFT_s": 0.19239814206957817
+          },
+          {
+            "name": "prose-vaccines",
+            "clients": 1,
+            "decode_tok_s": 50.97372330951124,
+            "end_to_end_tok_s": 49.8598958084779,
+            "worst_TTFT_s": 0.19439272210001945
+          },
+          {
+            "name": "code-sql",
+            "clients": 1,
+            "decode_tok_s": 70.96306658599437,
+            "end_to_end_tok_s": 68.68449216163492,
+            "worst_TTFT_s": 0.20075504295527935
+          },
+          {
+            "name": "prose-heat",
+            "clients": 1,
+            "decode_tok_s": 47.695712920727686,
+            "end_to_end_tok_s": 46.77654262687977,
+            "worst_TTFT_s": 0.18542805686593056
+          },
+          {
+            "name": "cohort-a",
+            "clients": 4,
+            "decode_tok_s": 84.03204359467007,
+            "end_to_end_tok_s": 83.44651785847492,
+            "worst_TTFT_s": 0.7391094136983156
+          },
+          {
+            "name": "cohort-b",
+            "clients": 4,
+            "decode_tok_s": 85.5053377850204,
+            "end_to_end_tok_s": 84.85149048442545,
+            "worst_TTFT_s": 0.7526288852095604
+          },
+          {
+            "name": "all-eight",
+            "clients": 8,
+            "decode_tok_s": 106.13955957992695,
+            "end_to_end_tok_s": 105.7045799382457,
+            "worst_TTFT_s": 1.4913387317210436
+          }
+        ],
+        "timed_requests": 48,
+        "raw_native_text_and_usage_checked": true
+      },
+      "bench2": {
+        "summary": {
+          "single_prose": {
+            "decode_tps": 47.92228054218202,
+            "ttft": 0.15007734298706055,
+            "sha": "55dd4e3ecd11",
+            "tokens": 600
+          },
+          "single_code": {
+            "decode_tps": 73.33829251684615,
+            "ttft": 0.16742610931396484,
+            "sha": "b42b9b3ab657",
+            "tokens": 600
+          },
+          "prefill_16K": {
+            "prompt_tokens": 15825,
+            "ttft": 11.07670783996582,
+            "prefill_tps": 1428.6735940530893
+          },
+          "prefill_64K": {
+            "prompt_tokens": 63808,
+            "ttft": 44.15244793891907,
+            "prefill_tps": 1445.1746840463436
+          },
+          "conc2": {
+            "per_stream_tps": [
+              36.8,
+              35.4
+            ],
+            "sum_tps": 72.2,
+            "ttft_max": 0.3876767158508301
+          },
+          "conc4": {
+            "per_stream_tps": [
+              24.9,
+              25.3,
+              25.8,
+              24.2
+            ],
+            "sum_tps": 100.2,
+            "ttft_max": 0.7711930274963379
+          },
+          "mixed1": {
+            "long_prompt_tokens": 50446,
+            "long_ttft": 51.42,
+            "decoders": [
+              {
+                "before_tps": 45.3,
+                "during_tps": 14.3,
+                "gap_p50": 47,
+                "gap_p95": 1445,
+                "gap_max": 1728,
+                "after_tps": 45.1
+              }
+            ]
+          },
+          "mixed3": {
+            "long_prompt_tokens": 50663,
+            "long_ttft": 51.81,
+            "decoders": [
+              {
+                "before_tps": 26.9,
+                "during_tps": 8.5,
+                "gap_p50": 83,
+                "gap_p95": 1489,
+                "gap_max": 1761,
+                "after_tps": 25.1
+              },
+              {
+                "before_tps": 25.2,
+                "during_tps": 8.5,
+                "gap_p50": 83,
+                "gap_p95": 1487,
+                "gap_max": 1761,
+                "after_tps": 25.6
+              },
+              {
+                "before_tps": 27.6,
+                "during_tps": 8.0,
+                "gap_p50": 83,
+                "gap_p95": 1489,
+                "gap_max": 1761,
+                "after_tps": 25.0
+              }
+            ]
+          },
+          "prefill_pair": {
+            "alone_ttft": 21.07,
+            "alone_tokens": 30467,
+            "pair_ttft": [
+              42.24,
+              22.36
+            ],
+            "pair_tokens": [
+              30381,
+              30359
+            ]
+          }
+        },
+        "metric_scope": "Original unmodified client summary. Single decode chooses the faster repetition; mixed token rates are event-scaled estimates, not exact per-interval token counts. Long TTFT, actual prompt counts and inter-content event gaps remain separately reported."
+      },
+      "quality": {
+        "text": 722,
+        "code": 160,
+        "total": 882,
+        "cases": 959,
+        "categories": {
+          "qa": {
+            "correct": 128,
+            "total": 150
+          },
+          "reason": {
+            "correct": 40,
+            "total": 40
+          },
+          "arith": {
+            "correct": 40,
+            "total": 40
+          },
+          "track": {
+            "correct": 40,
+            "total": 40
+          },
+          "gsm8k": {
+            "correct": 195,
+            "total": 200
+          },
+          "mmlu": {
+            "correct": 250,
+            "total": 285
+          },
+          "follow": {
+            "correct": 29,
+            "total": 40
+          },
+          "legacy_humaneval_chat": {
+            "correct": 160,
+            "total": 164
+          }
+        },
+        "capped": [
+          "mmlu-02551",
+          "follow-04",
+          "follow-36"
+        ],
+        "small": {
+          "code": 8,
+          "structured": 7
+        },
+        "artifact_sha256": "79e6b80fda0e00789f98ff78bd3052a4428bd384d464e381cc1fcda6572b670a"
+      },
+      "evidence_windows": {
+        "quality": "model-window-20261118T123250Z-3c7520",
+        "speed": "model-window-20261119T213039Z-b5ea88"
+      }
+    },
+    {
+      "profile": "q8",
+      "label": "Ours Q8/BF16",
+      "source_commit": "847757c2e612951263799ac1ffc91d2081cedcec",
+      "native_sha256": "b581b116e6d75ba387fb3629d96c51a159d6c3ba3f1d3c6aa446512316f5b624",
+      "quality_limit": 8,
+      "original": {
+        "C1": {
+          "prose": 38.931348701689004,
+          "code": 59.46290343489723
+        },
+        "whole_wave_tok_s": {
+          "4": 85.54820208525139,
+          "6": 97.59998459015934,
+          "8": 116.77537865493878
+        },
+        "measured_original_requests": 41
+      },
+      "balanced": {
+        "common_window_tok_s": {
+          "1": 49.1458909367385,
+          "4": 79.39083533143965,
+          "8": 103.75883716224871
+        },
+        "cases": [
+          {
+            "name": "code-lru",
+            "clients": 1,
+            "decode_tok_s": 62.45786894648254,
+            "end_to_end_tok_s": 60.59925337798212,
+            "worst_TTFT_s": 0.21211976744234562
+          },
+          {
+            "name": "prose-wetlands",
+            "clients": 1,
+            "decode_tok_s": 40.64422709915858,
+            "end_to_end_tok_s": 39.969299853017276,
+            "worst_TTFT_s": 0.19057773053646088
+          },
+          {
+            "name": "code-csv",
+            "clients": 1,
+            "decode_tok_s": 57.06851884524147,
+            "end_to_end_tok_s": 55.71848923159971,
+            "worst_TTFT_s": 0.18703488260507584
+          },
+          {
+            "name": "prose-grid",
+            "clients": 1,
+            "decode_tok_s": 42.17853871579807,
+            "end_to_end_tok_s": 41.45986567616818,
+            "worst_TTFT_s": 0.18765156716108322
+          },
+          {
+            "name": "code-toposort",
+            "clients": 1,
+            "decode_tok_s": 59.02768705379191,
+            "end_to_end_tok_s": 57.527652102938994,
+            "worst_TTFT_s": 0.19311912916600704
+          },
+          {
+            "name": "prose-vaccines",
+            "clients": 1,
+            "decode_tok_s": 41.159024578947374,
+            "end_to_end_tok_s": 40.47798796958123,
+            "worst_TTFT_s": 0.1874854452908039
+          },
+          {
+            "name": "code-sql",
+            "clients": 1,
+            "decode_tok_s": 57.481041573762695,
+            "end_to_end_tok_s": 56.02858893608707,
+            "worst_TTFT_s": 0.19759641773998737
+          },
+          {
+            "name": "prose-heat",
+            "clients": 1,
+            "decode_tok_s": 39.88210470457561,
+            "end_to_end_tok_s": 39.246026669178086,
+            "worst_TTFT_s": 0.18742848746478558
+          },
+          {
+            "name": "cohort-a",
+            "clients": 4,
+            "decode_tok_s": 80.47529050854638,
+            "end_to_end_tok_s": 79.93021628841944,
+            "worst_TTFT_s": 0.7646855935454369
+          },
+          {
+            "name": "cohort-b",
+            "clients": 4,
+            "decode_tok_s": 78.32099387021674,
+            "end_to_end_tok_s": 77.78135612213677,
+            "worst_TTFT_s": 0.7688122801482677
+          },
+          {
+            "name": "all-eight",
+            "clients": 8,
+            "decode_tok_s": 103.75883716224871,
+            "end_to_end_tok_s": 103.37655119302572,
+            "worst_TTFT_s": 1.511972438544035
+          }
+        ],
+        "timed_requests": 48,
+        "raw_native_text_and_usage_checked": true
+      },
+      "bench2": {
+        "summary": {
+          "single_prose": {
+            "decode_tps": 38.874399398592054,
+            "ttft": 0.15364646911621094,
+            "sha": "c01fbe002841",
+            "tokens": 600
+          },
+          "single_code": {
+            "decode_tps": 59.75365404815443,
+            "ttft": 0.1692030429840088,
+            "sha": "8b73df498a7e",
+            "tokens": 600
+          },
+          "prefill_16K": {
+            "prompt_tokens": 15752,
+            "ttft": 11.114402770996094,
+            "prefill_tps": 1417.260137549278
+          },
+          "prefill_64K": {
+            "prompt_tokens": 63445,
+            "ttft": 43.92264366149902,
+            "prefill_tps": 1444.471341227886
+          },
+          "conc2": {
+            "per_stream_tps": [
+              31.5,
+              28.1
+            ],
+            "sum_tps": 59.6,
+            "ttft_max": 0.4069833755493164
+          },
+          "conc4": {
+            "per_stream_tps": [
+              22.6,
+              22.5,
+              22.0,
+              22.4
+            ],
+            "sum_tps": 89.4,
+            "ttft_max": 0.7850375175476074
+          },
+          "mixed1": {
+            "long_prompt_tokens": 50158,
+            "long_ttft": 51.65,
+            "decoders": [
+              {
+                "before_tps": 36.8,
+                "during_tps": 11.8,
+                "gap_p50": 56,
+                "gap_p95": 1463,
+                "gap_max": 1749,
+                "after_tps": 36.8
+              }
+            ]
+          },
+          "mixed3": {
+            "long_prompt_tokens": 50244,
+            "long_ttft": 52.11,
+            "decoders": [
+              {
+                "before_tps": 19.5,
+                "during_tps": 7.5,
+                "gap_p50": 93,
+                "gap_p95": 1511,
+                "gap_max": 1781,
+                "after_tps": 22.1
+              },
+              {
+                "before_tps": 20.9,
+                "during_tps": 7.4,
+                "gap_p50": 93,
+                "gap_p95": 1511,
+                "gap_max": 1781,
+                "after_tps": 22.0
+              },
+              {
+                "before_tps": 23.2,
+                "during_tps": 7.6,
+                "gap_p50": 93,
+                "gap_p95": 1511,
+                "gap_max": 1781,
+                "after_tps": 22.4
+              }
+            ]
+          },
+          "prefill_pair": {
+            "alone_ttft": 21.04,
+            "alone_tokens": 30235,
+            "pair_ttft": [
+              42.08,
+              22.26
+            ],
+            "pair_tokens": [
+              30235,
+              30154
+            ]
+          }
+        },
+        "metric_scope": "Original unmodified client summary. Single decode chooses the faster repetition; mixed token rates are event-scaled estimates, not exact per-interval token counts. Long TTFT, actual prompt counts and inter-content event gaps remain separately reported."
+      },
+      "quality": {
+        "text": 724,
+        "code": 155,
+        "total": 879,
+        "cases": 959,
+        "categories": {
+          "qa": {
+            "correct": 127,
+            "total": 150
+          },
+          "reason": {
+            "correct": 40,
+            "total": 40
+          },
+          "arith": {
+            "correct": 40,
+            "total": 40
+          },
+          "track": {
+            "correct": 40,
+            "total": 40
+          },
+          "gsm8k": {
+            "correct": 194,
+            "total": 200
+          },
+          "mmlu": {
+            "correct": 254,
+            "total": 285
+          },
+          "follow": {
+            "correct": 29,
+            "total": 40
+          },
+          "legacy_humaneval_chat": {
+            "correct": 155,
+            "total": 164
+          }
+        },
+        "capped": [
+          "qa-sort-06",
+          "gsm8k-1176",
+          "follow-04",
+          "HumanEval/147"
+        ],
+        "small": {
+          "code": 8,
+          "structured": 5
+        },
+        "artifact_sha256": "5918f149685bef2eebb24f4cd9aa5bd9d4ca18d52df093cba9857ce2ef8bae8d"
+      },
+      "evidence_windows": {
+        "quality": "model-window-20261119T125028Z-085317",
+        "speed": "model-window-20261119T125028Z-085317"
+      }
+    },
+    {
+      "profile": "mia",
+      "label": "Mia Zig Q8/BF16",
+      "source_commit": "80be4d6882837d8e0840827ae2aab6124fd48da3",
+      "native_sha256": "0be8ca673d65ccf60d0472e3edc5f80ba99abc4a9e49c555bf2c9611d6d58e00",
+      "quality_limit": 4,
+      "original": {
+        "C1": {
+          "prose": 39.40108728341845,
+          "code": 49.535356014086915
+        },
+        "whole_wave_tok_s": {
+          "4": 80.31524929775698,
+          "6": 95.709273149186,
+          "8": 107.2800204344755
+        },
+        "measured_original_requests": 41
+      },
+      "balanced": {
+        "common_window_tok_s": {
+          "1": 49.16784611766623,
+          "4": 75.83652803991592,
+          "8": 95.24940358293854
+        },
+        "cases": [
+          {
+            "name": "code-lru",
+            "clients": 1,
+            "decode_tok_s": 64.41834309383358,
+            "end_to_end_tok_s": 62.51567740021338,
+            "worst_TTFT_s": 0.2043006643652916
+          },
+          {
+            "name": "prose-wetlands",
+            "clients": 1,
+            "decode_tok_s": 38.231235693241814,
+            "end_to_end_tok_s": 37.65955440570036,
+            "worst_TTFT_s": 0.18472815304994583
+          },
+          {
+            "name": "code-csv",
+            "clients": 1,
+            "decode_tok_s": 53.2391717012978,
+            "end_to_end_tok_s": 52.09053881744262,
+            "worst_TTFT_s": 0.1842718943953514
+          },
+          {
+            "name": "prose-grid",
+            "clients": 1,
+            "decode_tok_s": 39.52531753682473,
+            "end_to_end_tok_s": 38.95281870962117,
+            "worst_TTFT_s": 0.1738768257200718
+          },
+          {
+            "name": "code-toposort",
+            "clients": 1,
+            "decode_tok_s": 58.970984173121025,
+            "end_to_end_tok_s": 57.47951285681937,
+            "worst_TTFT_s": 0.19272681698203087
+          },
+          {
+            "name": "prose-vaccines",
+            "clients": 1,
+            "decode_tok_s": 41.76725328801702,
+            "end_to_end_tok_s": 41.08700963977314,
+            "worst_TTFT_s": 0.18227384611964226
+          },
+          {
+            "name": "code-sql",
+            "clients": 1,
+            "decode_tok_s": 65.58991014293187,
+            "end_to_end_tok_s": 63.66887071711187,
+            "worst_TTFT_s": 0.19895848259329796
+          },
+          {
+            "name": "prose-heat",
+            "clients": 1,
+            "decode_tok_s": 40.794686369249845,
+            "end_to_end_tok_s": 40.135434047811856,
+            "worst_TTFT_s": 0.18540601804852486
+          },
+          {
+            "name": "cohort-a",
+            "clients": 4,
+            "decode_tok_s": 73.6803362591157,
+            "end_to_end_tok_s": 73.26596215191992,
+            "worst_TTFT_s": 0.7357114255428314
+          },
+          {
+            "name": "cohort-b",
+            "clients": 4,
+            "decode_tok_s": 78.05581892193685,
+            "end_to_end_tok_s": 77.54004770282023,
+            "worst_TTFT_s": 0.7393674775958061
+          },
+          {
+            "name": "all-eight",
+            "clients": 8,
+            "decode_tok_s": 95.24940358293858,
+            "end_to_end_tok_s": 94.94893032829071,
+            "worst_TTFT_s": 1.4728738758713007
+          }
+        ],
+        "timed_requests": 48,
+        "raw_native_text_and_usage_checked": true
+      },
+      "bench2": {
+        "summary": {
+          "single_prose": {
+            "decode_tps": 39.655945883551574,
+            "ttft": 0.14625048637390137,
+            "sha": "45a679be13ac",
+            "tokens": 600
+          },
+          "single_code": {
+            "decode_tps": 49.51823355380391,
+            "ttft": 0.1650691032409668,
+            "sha": "3dbb0dbaf761",
+            "tokens": 600
+          },
+          "prefill_16K": {
+            "prompt_tokens": 15845,
+            "ttft": 9.570918321609497,
+            "prefill_tps": 1655.5360172936278
+          },
+          "prefill_64K": {
+            "prompt_tokens": 63531,
+            "ttft": 37.810853242874146,
+            "prefill_tps": 1680.2318527940938
+          },
+          "conc2": {
+            "per_stream_tps": [
+              29.2,
+              29.9
+            ],
+            "sum_tps": 59.2,
+            "ttft_max": 0.3810558319091797
+          },
+          "conc4": {
+            "per_stream_tps": [
+              21.6,
+              20.9,
+              20.9,
+              20.3
+            ],
+            "sum_tps": 83.7,
+            "ttft_max": 0.7562849521636963
+          },
+          "mixed1": {
+            "long_prompt_tokens": 50568,
+            "long_ttft": 45.33,
+            "decoders": [
+              {
+                "before_tps": 36.8,
+                "during_tps": 11.9,
+                "gap_p50": 55,
+                "gap_p95": 86,
+                "gap_max": 2779,
+                "after_tps": 37.4
+              }
+            ]
+          },
+          "mixed3": {
+            "long_prompt_tokens": 50345,
+            "long_ttft": 45.45,
+            "decoders": [
+              {
+                "before_tps": 23.3,
+                "during_tps": 7.1,
+                "gap_p50": 93,
+                "gap_p95": 2549,
+                "gap_max": 2792,
+                "after_tps": 21.4
+              },
+              {
+                "before_tps": 21.9,
+                "during_tps": 7.2,
+                "gap_p50": 93,
+                "gap_p95": 2549,
+                "gap_max": 2792,
+                "after_tps": 21.6
+              },
+              {
+                "before_tps": 20.7,
+                "during_tps": 7.3,
+                "gap_p50": 93,
+                "gap_p95": 2549,
+                "gap_max": 2792,
+                "after_tps": 21.8
+              }
+            ]
+          },
+          "prefill_pair": {
+            "alone_ttft": 18.2,
+            "alone_tokens": 30316,
+            "pair_ttft": [
+              36.76,
+              23.27
+            ],
+            "pair_tokens": [
+              30302,
+              30276
+            ]
+          }
+        },
+        "metric_scope": "Original unmodified client summary. Single decode chooses the faster repetition; mixed token rates are event-scaled estimates, not exact per-interval token counts. Long TTFT, actual prompt counts and inter-content event gaps remain separately reported."
+      },
+      "quality": {
+        "text": 716,
+        "code": 156,
+        "total": 872,
+        "cases": 959,
+        "categories": {
+          "qa": {
+            "correct": 125,
+            "total": 150
+          },
+          "reason": {
+            "correct": 40,
+            "total": 40
+          },
+          "arith": {
+            "correct": 39,
+            "total": 40
+          },
+          "track": {
+            "correct": 40,
+            "total": 40
+          },
+          "gsm8k": {
+            "correct": 195,
+            "total": 200
+          },
+          "mmlu": {
+            "correct": 250,
+            "total": 285
+          },
+          "follow": {
+            "correct": 27,
+            "total": 40
+          },
+          "legacy_humaneval_chat": {
+            "correct": 156,
+            "total": 164
+          }
+        },
+        "capped": [
+          "qa-sort-06",
+          "HumanEval/147"
+        ],
+        "small": {
+          "code": 8,
+          "structured": 5
+        },
+        "artifact_sha256": "91f532805b70dc736df6211285017c4f7b83a8d5a086d285f52640f867624068"
+      },
+      "evidence_windows": {
+        "quality": "model-window-20261116T174640Z-8a17de",
+        "speed": "model-window-20261117T004507Z-2fe434",
+        "bench2": "model-window-20261119T214855Z-c3762d"
+      }
+    }
+  ],
+  "holdouts": {
+    "c24_vs_c19": {
+      "cases": 242,
+      "checkpoint": "quality-holdout-decode-v2",
+      "C19": 226,
+      "C24_BF16": 223,
+      "C24_FP8": 225
+    },
+    "q8_vs_mia": {
+      "cases": 242,
+      "checkpoint": "quality-holdout-q8-range-v4",
+      "ours": 223,
+      "mia": 219
+    }
+  },
+  "single_lane_long_context": {
+    "profile": "q8",
+    "engine_context": 1048576,
+    "parallel": 1,
+    "tier": "off",
+    "draft": false,
+    "prompt_tokens": 1041491,
+    "cached_tokens": 0,
+    "prefill_seconds": 781.245252357,
+    "prefill_tok_s": 1333.116581326855,
+    "response_seconds": 781.6024325191975,
+    "retrieval_exact": true,
+    "generated_token_sha256": "10a1e9319f97111608c193a1985f494d70ff801d535fb2749e50a939a76454e2",
+    "window": "model-window-20261119T213252Z-7efc1b",
+    "result_sha256": "299b8843129a8cc56ff843bb53a9f704c540064816283bde238c1cecbb17069b"
+  }
+}

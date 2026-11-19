@@ -18,6 +18,11 @@ executable's later cache qualification. Source snapshot commits attest to measur
 bytes retrospectively; they do not claim that the historical binaries embedded those later
 commit identifiers, or that a new build would be bit-identical.
 
+The direct-link TP2 configuration uses the signed source snapshots and pinned runtime files
+listed in [TP2 source identities](tp2/SOURCE.json). Its Q4 and Q8 archives include calibration
+statistics used by the matching engine at startup. The original source notices are kept in
+each engine branch.
+
 MiaAI-Lab's unchanged Zig recipe is the separately configured comparison engine. Its benchmark
 client sources are retained under their original attribution. No source or binary from this
 recipe is inserted into that reference engine.

@@ -12,6 +12,8 @@ import shlex
 
 HEADS = {'bf16': ('16', '16', '0'), 'q4': ('4', '16', '0'),
          'q4-fp8': ('4', '8', '1'), 'q8': ('8', '16', '0')}
+STANDARD_CONTEXT = 196_608
+MAX_CONTEXT = 1_048_576
 
 
 def require(condition, message):
@@ -33,10 +35,13 @@ def validate(args, hosts, ports):
     require(args.expert_checkpoint == 'exl3', 'TP2 has EXL3 profiles')
     require(args.prefill == 'stepped' and args.verify_rows == 32 and not args.warm_turns,
             'TP2 uses stepped prefill, 32 verification rows and warm turns off')
-    require(1 <= args.parallel <= 8 and 4096 <= args.context <= 196608,
-            'TP2 requires 1 to 8 lanes and a context from 4096 to 196608')
+    require(1 <= args.parallel <= 8 and 4096 <= args.context <= MAX_CONTEXT,
+            f'TP2 requires 1 to 8 lanes and a context from 4096 to {MAX_CONTEXT}')
     require(math.isfinite(args.prompt_cache_gib) and 0 <= args.prompt_cache_gib <= 32,
             'Invalid RAM cache size')
+    if args.context > STANDARD_CONTEXT:
+        require(args.precision == 'q8' and args.parallel == 1 and args.tier == 'off' and args.prompt_cache_gib == 0,
+                'For long-context TP2 use --precision q8 --parallel 1 --tier off --prompt-cache-gib 0')
     require(math.isfinite(args.learn_gib) and 1 <= args.learn_gib <= 4096,
             'Invalid NVMe cache size')
     require(0 <= args.require_cache_tokens <= 196608, 'Invalid cached-prefix threshold')
@@ -111,6 +116,8 @@ def construct(args, recipe, sources, create_command):
                TF_TP_PLAN_PORT=str(args.plan_port), NCCL_IB_ADDR_RANGE=args.roce_address_range,
                TF_GLM_NVME_TIER='native-tiered' if tiered else '0',
                TF_GLM_NVME_MIN_CACHE_TOKENS=str(args.require_cache_tokens))
+    if tiered:
+        env['TF_GLM_NVME_STAGING_MIB'] = '256'
     config = dict(tensor_parallel=2, topology='direct', precision=args.precision,
                   source_commit=source['source_commit'], native_sha256=source['native_sha256'],
                   model=recipe['checkpoints']['exl3'], drafter=recipe['checkpoints']['drafter'],
@@ -119,6 +126,10 @@ def construct(args, recipe, sources, create_command):
                   prompt_cache_gib=args.prompt_cache_gib,
                   calibration_sha256=env.get('TF_GLM_CALIBRATION_SHA256'),
                   correlation_sha256=env.get('TF_GLM_Q8_CORRELATION_SHA256'))
+    if tiered:
+        config.update(learn_gib=args.learn_gib, require_cache_tokens=args.require_cache_tokens,
+                      nvme_staging_mib=int(env['TF_GLM_NVME_STAGING_MIB']),
+                      nvme_index_mib=int(env['TF_GLM_NVME_INDEX_MIB']))
     fingerprint = hashlib.sha256(json.dumps(config, sort_keys=True).encode()).hexdigest()[:12]
     namespace = f'tp2-{args.precision}-{source["source_commit"][:12]}-{fingerprint}'
     nodes, commands = [], []

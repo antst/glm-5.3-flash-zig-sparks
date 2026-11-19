@@ -14,7 +14,9 @@ SHA256:Cvk54dwEpcJjiuIiqlXrwstNKnXtDMh8tXDKpdD+LD4
 `SIGNING-KEY.pub` contains the public key. `ALLOWED_SIGNERS` permits that key for
 Git signatures under the stated maintainer identity. Neither file contains a private key.
 
-From a clone containing the source branches, verify a source snapshot listed in `SOURCE.json`:
+From a clone containing the source branches, verify a snapshot listed in
+[TP4 source identities](SOURCE.json) or [TP2 source identities](tp2/SOURCE.json).
+This example checks the main TP4 engine:
 
 ```sh
 ssh-keygen -lf SIGNING-KEY.pub
