@@ -212,6 +212,8 @@ The default qualification covers deterministic temperature0 and thinking disable
 chat template. Changing sampling, templates, precision or checkpoint changes the request contract.
 Use model/context settings within the documented memory fit. Context and parallelism share the
 same UMA capacity; eight active lanes do not promise eight simultaneously full192K contexts.
+The launcher accepts up to 1,048,576 tokens. TP4's completed long-context measurements reach
+192K. Available memory and the active lane count determine which larger settings can start.
 
 ## RAM and NVMe prompt-cache tiers
 

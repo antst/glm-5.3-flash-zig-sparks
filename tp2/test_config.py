@@ -77,11 +77,19 @@ class DirectRecipeTests(unittest.TestCase):
         for node in nodes:
             argv = node['payload']['Cmd']
             self.assertEqual(argv[argv.index('--context')+1], '1048576')
-        for bad in (('--parallel','4'), ('--tier','nvme'), ('--precision','q4'), ('--prompt-cache-gib','1.75')):
-            with self.subTest(bad=bad), self.assertRaisesRegex(ValueError,'long-context TP2'):
-                self.render(*flags,*bad)
+        _, other = self.render(*flags,'--parallel','4','--precision','q4')
+        self.assertEqual(other['context'],1048576)
+        self.assertFalse(other['context_and_parallel_match_measured_scope'])
         with self.assertRaisesRegex(ValueError,'1048576'):
             self.render(*flags,'--context','1048577')
+
+    def test_switch_recipe_accepts_model_context(self):
+        recipe = json.loads((ROOT.parent/'recipe.json').read_text())
+        args = self.arguments('--tp','4','--master','192.168.2.201','--roce-address-range','192.168.2.0/24',
+                              '--context','1048576','--parallel','1','--prompt-cache-gib','0')
+        nodes, report = render_config.construct(args,recipe)
+        self.assertEqual((len(nodes),report['context']), (4,1048576))
+        self.assertFalse(report['context_and_parallel_match_measured_scope'])
 
     def test_rejects_bad_runtime_bytes_and_escape(self):
         with tempfile.TemporaryDirectory() as folder:

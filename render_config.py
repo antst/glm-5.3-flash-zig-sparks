@@ -10,6 +10,7 @@ import re
 import shlex
 
 P = pathlib.Path(__file__).resolve().parent
+MAX_CONTEXT = 1_048_576
 
 
 def require(condition, message):
@@ -89,13 +90,14 @@ def construct(args, recipe):
     require(args.expert_checkpoint in ('exl3', 'nvfp4'), 'Choose exl3 or nvfp4 experts')
     require(args.precision in ('bf16', 'q4', 'q4-fp8', 'q8'), 'Unknown projection/head precision')
     require(args.verify_rows in (16, 32), 'Verification rows must be16 or32')
-    require(1 <= args.parallel <= 8 and 4096 <= args.context <= 196608, 'Unsupported context/parallel range')
+    require(1 <= args.parallel <= 8 and 4096 <= args.context <= MAX_CONTEXT,
+        f'TP4 requires 1 to 8 lanes and a context from 4096 to {MAX_CONTEXT}')
     require(math.isfinite(args.prompt_cache_gib) and 0 <= args.prompt_cache_gib <= 32, 'Invalid RAM cache size')
     require(math.isfinite(args.learn_gib) and 1 <= args.learn_gib <= 4096, 'Invalid NVMe cache size')
     require(args.tier in ('off', 'nvme') and args.prefill in ('whole', 'stepped'), 'Unknown cache/prefill mode')
     require(not args.warm_turns, 'Background warm turns have not passed activation qualification; keep them off')
     require(args.tier != 'nvme' or args.prompt_cache_gib > 0, 'Persistent snapshots require useful RAM cache room')
-    require(0 <= args.require_cache_tokens <= 196608, 'Invalid required cached-prefix size')
+    require(0 <= args.require_cache_tokens <= MAX_CONTEXT, 'Invalid required cached-prefix size')
     require(args.tier != 'nvme' or args.require_cache_tokens <= args.context,
         'Required cached prefix exceeds the context; choose --require-cache-tokens explicitly')
     ipaddress.IPv4Address(args.master)

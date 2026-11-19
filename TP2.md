@@ -35,6 +35,9 @@ The eight-lane benchmark configuration uses a 196608-token context, stepped pref
 and 32 verification rows. The attention KV and recurrent state share the host's UMA
 capacity.
 
+The launcher accepts up to 1,048,576 tokens. Each additional lane and snapshot budget
+uses memory alongside the model. The engine checks available memory at startup.
+
 For a single long request, use `--precision q8 --context 1048576 --parallel 1
 --prompt-cache-gib 0 --tier off`. The Q8/BF16 build processed a cold prompt of
 1,041,491 tokens on Sparks 3 and 4 and returned the receipt code from the start of

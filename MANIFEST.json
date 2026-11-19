@@ -14,8 +14,8 @@
     "SIGNING.md": "6ce40f3aca8c508f3cd2fe0c56930bd9c1a1f300b8398c9471399aa1a3b9d279",
     "SOURCE.json": "de1a084a5c582d526209baffcc63ba4e451c4066b5f1d864e85878227f8b2881",
     "THIRD_PARTY_NOTICES.md": "885d2499465c75dec989355bc0975e7497d9289ac9c10ff9ecc357a498e140fa",
-    "TP2.md": "e01159612d3295d5eee021a902bffa3ac5829d00fbb8b5853bada0f3f5a05893",
-    "TP4.md": "84f4bf4b9611350bff41a6a5f410cd6c75e65423f18a3189c4d479374106cd28",
+    "TP2.md": "82101d852d49c02e88f5ba7652efec35f5c14df3945ac4274bc0d2574e643eec",
+    "TP4.md": "536b07fc2c960006946f62828ee037be39ce6721f40fa3a0b34dc057b605d41e",
     "benchmark-evidence-mia-p8/BALANCED-SUMMARY.json": "270221f6d01acd74cc19b922aeebcf96431e499f0aa95ffb7ba0e428b79380ef",
     "benchmark-evidence-mia-p8/INDEPENDENT-VERIFIED.json": "0c4106c940dce28d68c61f7ebe0cc7d44334ecc0674ac5e2e9ad69ea3e6e6ef0",
     "benchmark-evidence-mia-p8/INDEX.json": "ec32792ea2b10f68ec397b34ed986d501e54658cef7cef25653d2d7b99bc7a4d",
@@ -507,18 +507,18 @@
     "notices/nccl/NCCL-ThirdPartyNotices.txt": "afc433a3b9262c3266f5e683e017fb6a44687c5098967928e478be6614e77df6",
     "notices/nccl/nccl-2.32.3-dual-pci-domain.patch": "a0deca2f21b8cad56bc68a5f5468936b7a6b894db160cfa1d62a6a3d59358836",
     "recipe.json": "2411f094ced7a13f51dc8d3ed8a3108cff80d4a6b52dc58682dc6dc9455ebb6b",
-    "render_config.py": "2bb472edafacf4c6efe851b028084889c85e3dcb96429fea1e8abb2439a3b0d5",
+    "render_config.py": "71b238634dad6641f6c25bbc84303da105c9535cc10f717a87c5edf753c4b10d",
     "source-sha256-nvfp4-retained.json": "5b1e59fc40b3a633224db82b43314b0b8760fc522967be0f73918b919a4dca91",
     "source-sha256.json": "40c907eee2dc870b0744ab1e29e007b816b25c98bb65275f5919b70bc1a2ab0a",
     "tp2/RELEASE-ASSETS.json": "d59e814ce7fa6834e28c695148c15a20a4def56a35c45ce1c687c2bc0d863213",
     "tp2/SOURCE.json": "9ad872bf74a10c91c5d89e23285c024ff5514686d53744a2276fc1969a70ac82",
-    "tp2/config.py": "e8ce6e7bb58f90391ebb8e532c1068c8b87533d36913d104904901b9f30f75f7",
+    "tp2/config.py": "5565dcd86320d450c3f3a4b12eaf100674a25a49b2b3c4ca211a72c1152aad65",
     "tp2/measurements.json": "4bf251ec73fec45882abecce10babfb22aeb8b6680e6195ea8f20d4a8ce92c0b",
     "tp2/package_runtime.py": "06c27294fdb8ce936baca1470356e9bcf74e57ee02da3e27922ecbb465b57e19",
     "tp2/recipe.json": "37c689a2a9d625979f60f11c6b7ec763be191de6afe2892be3e3dd8a50a9175d",
     "tp2/source-sha256-bf16.json": "54d11e03dcfb18148c912e8e7e7f3e750cb59ac70b2df90b52a44471b6d58f13",
     "tp2/source-sha256-q4.json": "c77287314a8d3c6e6a4f4386a116167d708c4814d41e0efe8d01f09f4bf62a7c",
     "tp2/source-sha256-q8.json": "719e7cf176d4ecb2ae835650badba1dbb70e04498adaf904a2085e6d8a5623ac",
-    "tp2/test_config.py": "028582e0f74dd378199acd79698b343f842204e66fc7edcc0272ca36dbbf0f80"
+    "tp2/test_config.py": "2d52ed343a0502cc01b2089193897b32557f289cfc7821eafc4b18f82c3a1f5d"
   }
 }

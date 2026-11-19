@@ -12,7 +12,6 @@ import shlex
 
 HEADS = {'bf16': ('16', '16', '0'), 'q4': ('4', '16', '0'),
          'q4-fp8': ('4', '8', '1'), 'q8': ('8', '16', '0')}
-STANDARD_CONTEXT = 196_608
 MAX_CONTEXT = 1_048_576
 
 
@@ -39,12 +38,9 @@ def validate(args, hosts, ports):
             f'TP2 requires 1 to 8 lanes and a context from 4096 to {MAX_CONTEXT}')
     require(math.isfinite(args.prompt_cache_gib) and 0 <= args.prompt_cache_gib <= 32,
             'Invalid RAM cache size')
-    if args.context > STANDARD_CONTEXT:
-        require(args.precision == 'q8' and args.parallel == 1 and args.tier == 'off' and args.prompt_cache_gib == 0,
-                'For long-context TP2 use --precision q8 --parallel 1 --tier off --prompt-cache-gib 0')
     require(math.isfinite(args.learn_gib) and 1 <= args.learn_gib <= 4096,
             'Invalid NVMe cache size')
-    require(0 <= args.require_cache_tokens <= 196608, 'Invalid cached-prefix threshold')
+    require(0 <= args.require_cache_tokens <= MAX_CONTEXT, 'Invalid cached-prefix threshold')
     require(len(hosts) == 2 and len(set(hosts)) == 2, 'Choose two distinct rank hosts for TP2')
     require(all(re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9_.-]{0,252}', host) for host in hosts),
             'Invalid rank host label')
@@ -123,6 +119,7 @@ def construct(args, recipe, sources, create_command):
                   model=recipe['checkpoints']['exl3'], drafter=recipe['checkpoints']['drafter'],
                   model_root=str(roots['model']), drafter_root=str(roots['drafter']),
                   context=args.context, parallel=args.parallel, tier=args.tier, verify_rows=32,
+                  context_and_parallel_match_measured_scope=(args.context == 196608 and args.parallel == 8),
                   prompt_cache_gib=args.prompt_cache_gib,
                   calibration_sha256=env.get('TF_GLM_CALIBRATION_SHA256'),
                   correlation_sha256=env.get('TF_GLM_Q8_CORRELATION_SHA256'))
