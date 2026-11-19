@@ -18,6 +18,7 @@ pub const In = union(enum) {
 /// One KDA layer, `heads` heads: its input projection, f_b, g_b, o (bf16 or MXFP8), the chain's taps and norm.
 pub const Layer = struct {
     proj: In,
+    control_tail: u64 = 0, // optional weights-owned original BF16 f_a/g_a/b matrix
     fb: u64,
     gb: u64,
     o: projection.Proj,
@@ -61,7 +62,7 @@ pub fn rowWidth(own_heads: usize) usize {
 }
 
 /// The block's scratch for `rows` rows: projection, decay and gate rows, chain saves, B16 partials, a split's tmp.
-pub const Scratch = struct { p: u64, ka: u64, kg: u64, saves: kda.Saves, wide: kda.Wide, mm_part: u64, tmp: u64 = 0 };
+pub const Scratch = struct { p: u64, ka: u64, kg: u64, saves: kda.Saves, wide: kda.Wide, mm_part: u64, tmp: u64 = 0, tmp_bytes: usize = 0 };
 
 /// forward.kda_block: out [rows][dims] fp32 partial; `wide`: three-kernel chain; `prompt`: commits the conv window.
 pub fn block(set: glue.Set, ks: *const kda.Kernels, stream: cuda.Stream, l: Layer, s: Scratch, x: u64, x_stride: usize, rows: usize, conv_state: u64, state_in: u64, wide: bool, prompt: bool, out: u64) !void {
@@ -110,6 +111,7 @@ pub fn project(set: glue.Set, stream: cuda.Stream, l: Layer, s: Scratch, x: u64,
             if (!one) try columns(set, stream, s.tmp, w - fa, s.p + fa * 2, w, rows);
         },
     }
+    if (l.control_tail != 0) try @import("cuda_q4_control_input.zig").overwrite(selected, stream, l, s, x, x_stride, rows);
     try b16.matmul(selected, stream, s.p + fa * 2, w, l.fb, s.ka, s.mm_part, rows, n, kda.dk, false);
     try b16.matmul(selected, stream, s.p + (fa + kda.dk) * 2, w, l.gb, s.kg, s.mm_part, rows, n, kda.dk, false);
 }

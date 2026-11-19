@@ -232,8 +232,12 @@ pub const Buffers = struct {
             mm = @max(mm, @import("cuda_affine_target.zig").scratchBytes(rows, shape[1]));
         };
         const x3: [4]usize = if (c.exl3) exl3.scratchBytesMode(rows, D, ew, prefill, w.exl3_shx, w.exl3_prompt_whole) else @splat(4);
-        var split = false; // a KDA stack in two parts moves each part's rows through one more buffer
-        for (w.layers) |l| split = split or (l.mixer == .kda and l.mixer.kda.proj == .split);
+        var split = false;
+        var control_cols: usize = 0;
+        for (w.layers) |l| if (l.mixer == .kda) {
+            split = split or l.mixer.kda.proj == .split;
+            if (l.mixer.kda.control_tail != 0) control_cols = @max(control_cols, 2 * c.kda_dim + l.mixer.kda.heads);
+        };
         const hist_len = if (pairs > cuda.grouped.small) (pairs + cuda.grouped.small - 1) / cuda.grouped.small * (count + 1) else 1;
         const sizes: [twin_checked]usize = .{
             rows * 4,     rows * S * D * 2, rows * D * 2,           rows * (D / 64) * 4,
@@ -272,11 +276,11 @@ pub const Buffers = struct {
             rows * D * 2, rows * D * 2, rows * 2 * D * 2, rows * D * 2, // hin, me, mcat, mx
             rows * D * 4, // part: this rank's fp32 partial rows a split exchange sends from
             x3[0], x3[1], x3[2], x3[3], // EXL3 experts: 8-slot picks, rotated inputs, a decode window's partials
-            if (split) rows * @max(3 * n, kw - 3 * n) * 2 else 4, // a split KDA stack's part rows
+            if (split or control_cols > 0) rows * @max(if (split) @max(3 * n, kw - 3 * n) else 0, control_cols) * 2 else 4, // split/control temporary
         };
         var held = sizes;
         if (twin != null) for (&held, 0..) |*bytes, i| { // a twin allocates its own rows only
-            if (!twinHolds(i) and !(w.affine_target and i == 42)) bytes.* = 0;
+            if (!twinHolds(i) and !(w.affine_target and i == 42) and !(control_cols > 0 and i == 75)) bytes.* = 0;
         };
         var p: [sizes.len]u64 = undefined;
         const a = try arena(d, &held, &p);
@@ -332,9 +336,11 @@ pub const Buffers = struct {
         };
         out.moe.x3 = .{ .picks = p[71], .xg = p[72], .xu = p[73], .z = p[74] };
         out.kda.tmp = p[75];
+        if (control_cols > 0) out.kda.tmp_bytes = sizes[75];
         if (twin) |of| {
             var t = of.*;
             t.arena = out.arena;
+            if (control_cols > 0) { t.kda.tmp = out.kda.tmp; t.kda.tmp_bytes = out.kda.tmp_bytes; }
             inline for (@typeInfo(@TypeOf(twin_at)).@"struct".field_names) |f| @field(t, f) = @field(out, f);
             if (w.affine_target) inline for (.{ "kda", "dsa", "dense", "moe" }) |field| {
                 @field(t, field).mm_part = @field(out, field).mm_part;

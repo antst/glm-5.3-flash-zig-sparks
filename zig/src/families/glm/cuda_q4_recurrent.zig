@@ -5,13 +5,18 @@ const weights = @import("cuda_weights.zig");
 const tile = @import("cuda_tile.zig");
 const mm = @import("cuda_mm.zig");
 
-pub fn read(get: *const fn ([:0]const u8) ?[]const u8, problem: *[]const u8) !bool {
-    return @import("cuda_dense16.zig").flag(get("TF_GLM_Q4_RECURRENT_BF16"), problem, "TF_GLM_Q4_RECURRENT_BF16: 0 or 1");
+pub fn read(get: *const fn ([:0]const u8) ?[]const u8, problem: *[]const u8) !u8 {
+    const raw = get("TF_GLM_Q4_RECURRENT_BF16") orelse return 0;
+    if (std.mem.eql(u8, raw, "0")) return 0;
+    if (std.mem.eql(u8, raw, "1")) return 1;
+    if (std.mem.eql(u8, raw, "2")) return 2;
+    problem.* = "TF_GLM_Q4_RECURRENT_BF16: 0, 1 or 2";
+    return error.BadSetting;
 }
 
 pub fn require(settings: anytype, world: usize) !void {
-    if (!settings.q4_recurrent_bf16) return;
-    if (world != 2 or !settings.q4_affine_mse or !settings.q4_activation or settings.dense_bits != 4 or !settings.tiled)
+    if (settings.q4_recurrent_bf16 == 0) return;
+    if (settings.q4_recurrent_bf16 > 2 or world != 2 or !settings.q4_affine_mse or !settings.q4_activation or settings.dense_bits != 4 or !settings.tiled)
         return error.Q4RecurrentBf16Scope;
 }
 

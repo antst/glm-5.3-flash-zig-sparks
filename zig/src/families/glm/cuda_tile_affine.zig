@@ -138,7 +138,7 @@ pub const Context = struct {
     affine: bool,
     q8_mse: bool = false,
     q4_activation: bool = false,
-    q4_recurrent_bf16: bool = false,
+    q4_recurrent_bf16: u8 = 0,
     calibration: ?@import("cuda_q8_moments.zig").Identity = null,
     head_fp8: bool = false,
     lane: ?*const cuda.qmmf.Lane = null,
@@ -164,7 +164,8 @@ pub const Context = struct {
             const root = @import("cuda_ranks.zig").environment("TF_GLM_CALIBRATION_ROOT") orelse return error.Q8CalibrationIdentity;
             calibrated = try @import("cuda_q8_moments.zig").Data.open(t.gpa, t.io, root, id, w.share.rank);
         }
+        if (t.q4_recurrent_bf16 == 2) try @import("cuda_q4_control_input.zig").prepare(w, t.mk, t.s, t.d);
         if (t.head_fp8) try @import("cuda_head_fp8.zig").pack(t.gpa, t.io, w, t.lane orelse return error.HeadFp8Scope, t.s, t.d);
-        t.packs.* = if (t.affine) try packWithRecurrent(t.gpa, t.io, w, t.mk, t.qs, t.s, t.d, calibrated, t.q4_recurrent_bf16) else try tile.tileLinearsFit(t.gpa, w, t.mk, t.s, t.d, t.dense, t.head, t.q8_mse, calibrated);
+        t.packs.* = if (t.affine) try packWithRecurrent(t.gpa, t.io, w, t.mk, t.qs, t.s, t.d, calibrated, t.q4_recurrent_bf16 != 0) else try tile.tileLinearsFit(t.gpa, w, t.mk, t.s, t.d, t.dense, t.head, t.q8_mse, calibrated);
     }
 };

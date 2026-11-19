@@ -18,17 +18,17 @@ test "Q4 recurrent BF16: cached strict choice, inherited calibration scope, and 
     defer Env.value = null;
     var problem: []const u8 = "";
     const off = try glm.ranks.Settings.read(Env.get, &problem);
-    try t.expect(!off.q4_recurrent_bf16);
+    try t.expect(off.q4_recurrent_bf16 == 0);
     Env.value = "0";
     try t.expectEqualDeep(off, try glm.ranks.Settings.read(Env.get, &problem));
-    for ([_][]const u8{ "", "2", "01", "true", " 1" }) |bad| {
+    for ([_][]const u8{ "", "3", "01", "true", " 1" }) |bad| {
         Env.value = bad;
         try t.expectError(error.BadSetting, glm.ranks.Settings.read(Env.get, &problem));
     }
     Env.value = "1";
     var on = try glm.ranks.Settings.read(Env.get, &problem);
     Env.value = "0";
-    try t.expect(on.q4_recurrent_bf16);
+    try t.expect(on.q4_recurrent_bf16 == 1);
     try t.expectError(error.Q4RecurrentBf16Scope, glm.q4_recurrent.require(on, 2));
     on.q4_affine_mse = true;
     on.q4_activation = true;
@@ -37,9 +37,9 @@ test "Q4 recurrent BF16: cached strict choice, inherited calibration scope, and 
     try t.expectError(error.Q4RecurrentBf16Scope, glm.q4_recurrent.require(on, 4));
     const FP = glm.ranks.Fingerprint;
     var previous = on;
-    previous.q4_recurrent_bf16 = false;
+    previous.q4_recurrent_bf16 = 0;
     const a = FP.of(2, 0, previous, 8192, true, @splat(0), @splat(0), @splat(0));
     const b = FP.of(2, 1, on, 8192, true, @splat(0), @splat(0), @splat(0));
-    try t.expectEqual(@as(u32, 78), b.layout);
+    try t.expectEqual(@as(u32, 79), b.layout);
     try t.expectEqual(FP.Field.q4_recurrent_bf16, glm.ranks.mismatch(&.{ a, b }).?.field);
 }

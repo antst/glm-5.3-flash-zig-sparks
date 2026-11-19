@@ -124,6 +124,10 @@ pub fn targets(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.bu
     const activation_exe = b.addExecutable(.{ .name = "tf-glm-affine-activation-test", .root_module = activation_runner });
     b.step("glm-affine-activation-runner", "Build only the calibrated affine startup comparator")
         .dependOn(&b.addInstallArtifact(activation_exe, .{}).step);
+    const control_runner = b.createModule(.{ .root_source_file = b.path("zig/tests/cuda/glm_q4_control_input_main.zig"), .target = target, .optimize = optimize, .link_libc = true, .strip = strip, .imports = &.{ .{ .name = "cuda", .module = cuda }, .{ .name = "core", .module = mods.core }, .{ .name = "glm_cuda", .module = runner.import_table.get("glm_cuda").? } } });
+    const control_exe = b.addExecutable(.{ .name = "tf-glm-q4-control-input", .root_module = control_runner });
+    b.step("glm-q4-control-input-runner", "Build only the original full-width BF16 recurrent input comparator")
+        .dependOn(&b.addInstallArtifact(control_exe, .{}).step);
     // tf-tp-watch-check: the ranks' lines with no GPU or NCCL; a failing or dying rank stops every rank
     b.installArtifact(b.addExecutable(.{ .name = "tf-tp-watch-check", .root_module = b.createModule(.{ .root_source_file = b.path("zig/tests/cuda/tp_watch_check.zig"), .target = target, .optimize = optimize, .link_libc = true, .strip = strip, .imports = &.{.{ .name = "cuda", .module = cuda }} }) }));
     @import("living_dense.zig").target(b, target, optimize, cuda, mods.qwen35);

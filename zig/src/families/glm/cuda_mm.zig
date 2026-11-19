@@ -105,6 +105,15 @@ pub fn partBytes(m: usize, w: Tiled) usize {
 
 /// x [m][k] (`ldx` apart) by `w` -> out [m][n] (`wide`: fp32); `one`: prompt blocks at any rows, sums per row alike.
 pub fn matmul(k: *const Kernels, s: cuda.Stream, x: u64, ldx: usize, w: Tiled, out: u64, part: u64, m: usize, wide: bool, one: bool) !void {
+    return matmulMode(k, s, x, ldx, w, out, part, m, wide, one, false);
+}
+
+pub fn matmulOneSlice(k: *const Kernels, s: cuda.Stream, x: u64, ldx: usize, w: Tiled, out: u64, part: u64, m: usize, wide: bool, one: bool) !void {
+    if (w.bits != 16 or w.bias != 0 or w.s != 0) return error.SingleSliceBf16Only;
+    return matmulMode(k, s, x, ldx, w, out, part, m, wide, one, true);
+}
+
+fn matmulMode(k: *const Kernels, s: cuda.Stream, x: u64, ldx: usize, w: Tiled, out: u64, part: u64, m: usize, wide: bool, one: bool, single: bool) !void {
     if (w.k % 64 != 0 or w.n % 8 != 0 or x % 16 != 0 or ldx % 8 != 0) return error.BadShape;
     if (w.bias != 0) {
         const affine = k.affine orelse return error.AffineTargetNotEnabled;
@@ -118,7 +127,7 @@ pub fn matmul(k: *const Kernels, s: cuda.Stream, x: u64, ldx: usize, w: Tiled, o
         const rows = if (big) m - done else @min(m - done, 64);
         const i: usize = if (big) 3 else if (rows <= 16) 0 else if (rows <= 32) 1 else 2;
         const bm = bucket(i);
-        const sk = if (big) 1 else splitK(w.n, w.k); // a prompt's blocks share each weight tile in L2: no slices
+        const sk = if (big or single) 1 else splitK(w.n, w.k); // a prompt's blocks share each weight tile in L2: no slices
         const o = out + done * w.n * @as(usize, if (wide) 4 else 2);
         var a: cuda.Args = .{};
         a.add(x + done * ldx * 2);
@@ -135,10 +144,10 @@ pub fn matmul(k: *const Kernels, s: cuda.Stream, x: u64, ldx: usize, w: Tiled, o
         const cols: u32 = @intCast((w.n + 63) / 64);
         const row_blocks: u32 = @intCast((rows + bm - 1) / bm);
         if (big and wi == 0) {
-            try cuda.launch.launch(k.prompt, .{ .grid = .{ .x = row_blocks, .y = cols }, .block = .{ .x = 256 }, .shared = smem(128), .pdl = k.pdl }, s, &a);
+            try cuda.launch.launch(k.prompt, .{ .grid = .{ .x = row_blocks, .y = cols }, .block = .{ .x = 256 }, .shared = smem(128), .pdl = if (single) false else k.pdl }, s, &a);
         } else { // packed prompts take the 128-row bucket's blocks, one slice
             const f = if (wi == 0) k.by_rows[i] else k.packed_rows[wi - 1][i];
-            try cuda.launch.launch(f, .{ .grid = .{ .x = cols, .y = row_blocks, .z = @intCast(sk) }, .block = .{ .x = if (bm <= 32) 128 else 256 }, .shared = sharedBytes(w.bits, bm), .pdl = k.pdl }, s, &a);
+            try cuda.launch.launch(f, .{ .grid = .{ .x = cols, .y = row_blocks, .z = @intCast(sk) }, .block = .{ .x = if (bm <= 32) 128 else 256 }, .shared = sharedBytes(w.bits, bm), .pdl = if (single) false else k.pdl }, s, &a);
         }
         if (sk > 1) {
             const total = rows * w.n;
