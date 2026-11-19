@@ -164,7 +164,7 @@ test "Q4 recurrent BF16: whole input mode preserves old modes and actual linear 
     old.q4_recurrent_bf16 = 2;
     const a = ranks.Fingerprint.of(2, 0, old, 8192, true, @splat(0), @splat(0), @splat(0));
     const b = ranks.Fingerprint.of(2, 1, on, 8192, true, @splat(0), @splat(0), @splat(0));
-    try t.expectEqual(@as(u32, 80), b.layout);
+    try t.expectEqual(@as(u32, 81), b.layout);
     try t.expectEqual(ranks.Fingerprint.Field.q4_recurrent_bf16, ranks.mismatch(&.{ a, b }).?.field);
     const sizes = @import("cuda_q4.zig").bytes(12576, 4096);
     try t.expectEqual(@as(usize, 2510094336), 34 * (12576 * 4096 * 2 - sizes[0] - sizes[1] - sizes[2]));

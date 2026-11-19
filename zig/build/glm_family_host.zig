@@ -26,6 +26,8 @@ pub fn steps(b: *std.Build, cuda: *std.Build.Module, glm: *std.Build.Module, mod
         .dependOn(&b.addRunArtifact(b.addTest(.{ .root_module = glm, .filters = &.{"Q4 input control:"} })).step);
     b.step("test-glm-q4-full-recurrent-host", "Actual architectural input/control classification and full BF16 tile/copy/drain")
         .dependOn(&b.addRunArtifact(b.addTest(.{ .root_module = glm, .filters = &.{"Q4 recurrent BF16:"} })).step);
+    b.step("test-glm-q4-families-host", "Cached architectural BF16 family selection, inventory and actual retained routes")
+        .dependOn(&b.addRunArtifact(b.addTest(.{ .root_module = glm, .filters = &.{"Q4 precision families:"} })).step);
     const recurrent = b.createModule(.{ .root_source_file = b.path("zig/glm_q4_recurrent_host.zig"), .target = b.graph.host, .optimize = .debug, .link_libc = true, .imports = &.{.{ .name = "glm", .module = glm }} });
     b.step("test-glm-q4-recurrent-host", "Architectural BF16 retention, actual tile ABI and rank agreement")
         .dependOn(&b.addRunArtifact(b.addTest(.{ .root_module = recurrent })).step);

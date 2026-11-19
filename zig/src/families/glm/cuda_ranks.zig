@@ -10,7 +10,7 @@ const wireOpens = @import("cuda_rank_options.zig").wireOpens;
 pub const Settings = struct {
     q8_activation: bool = false,
     q4_activation: bool = false,
-    q4_recurrent_bf16: u8 = 0,
+    q4_recurrent_bf16: u8 = 0, q4_bf16_families: u8 = 0,
     calibration_sha: [32]u8 = @splat(0),
     absorb_mma: bool = false,
     kv8: bool = false, // --kv-cache fp8, supplied by the native options rather than an environment override
@@ -76,6 +76,7 @@ pub const Settings = struct {
         var s: Settings = .{};
         s.q4_activation = try @import("cuda_q4_activation_options.zig").read(get, problem);
         s.q4_recurrent_bf16 = try @import("cuda_q4_recurrent.zig").read(get, problem);
+        s.q4_bf16_families = try @import("cuda_q4_precision_families.zig").read(get, problem);
         const act = try @import("cuda_q8_activation_options.zig").readFor(get, problem, s.q4_activation);
         s.q8_activation = act.on;
         s.calibration_sha = act.sha;
@@ -298,10 +299,10 @@ pub fn environment(name: [:0]const u8) ?[]const u8 { return @import("profile").l
 /// Whether the group brings up its own RoCE path: not where TF_GLM_ROCE_MULTI=1 lends fabric/tp's wire (3+ ranks).
 pub fn ownRoce(s: Settings, world: usize) bool { return !(s.roce_multi and world >= 3); }
 pub const Fingerprint = extern struct {
-    layout: u32 = 80,
+    layout: u32 = 81,
     q8_activation: u32 = 0,
     q4_activation: u32 = 0,
-    q4_recurrent_bf16: u32 = 0,
+    q4_recurrent_bf16: u32 = 0, q4_bf16_families: u32 = 0,
     calibration_sha: [32]u8 = @splat(0),
     world: u32,
     rank: u32,
@@ -378,6 +379,7 @@ pub const Fingerprint = extern struct {
         q8_activation,
         q4_activation,
         q4_recurrent_bf16,
+        q4_bf16_families,
         calibration_sha,
         rank,
         world,
@@ -464,6 +466,7 @@ pub const Fingerprint = extern struct {
             .q8_activation = @intFromBool(s.q8_activation),
             .q4_activation = @intFromBool(s.q4_activation),
             .q4_recurrent_bf16 = @as(u32, s.q4_recurrent_bf16),
+            .q4_bf16_families = @as(u32, s.q4_bf16_families),
             .calibration_sha = if (s.q8_activation or s.q4_activation) s.calibration_sha else @splat(0),
             .kv8 = @intFromBool(s.kv8),
             .pages = @intFromBool(s.pages),

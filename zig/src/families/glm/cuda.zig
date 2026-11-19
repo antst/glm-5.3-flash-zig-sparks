@@ -210,3 +210,8 @@ test {
 test {
     _ = q4_recurrent;
 }
+
+pub const q4_precision_families = @import("cuda_q4_precision_families.zig");
+test {
+    _ = @import("cuda_q4_precision_families_test.zig");
+}
