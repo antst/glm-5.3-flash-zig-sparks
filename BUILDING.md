@@ -152,15 +152,17 @@ a fresh package-manager rebuild may have a different image identity.
 
 ## TP2 engine builds
 
-Use the single `engine/tp2` branch for work shared by all four TP2 profiles. Its signed
-commit `a6842081` has the same source tree as measured TensorFold `c829c30e`.
+Use `engine/tp2` to build all four TP2 profiles. Its signed merge commit `a6842081`
+contains the three archive source histories and has the same source tree as
+measured TensorFold `c829c30e`. One SM121 executable built from that tree ran
+BF16/BF16, Q4/BF16, Q4/FP8 and Q8/BF16.
 [Shared TP2 source](https://github.com/antst/glm-5.3-flash-zig-sparks/tree/engine/tp2)
 
-The published runtime archives pin the signed `engine/tp2-bf16`, `engine/tp2-q4`, and
-`engine/tp2-q8` source snapshots. [TP2 archive source identities](tp2/SOURCE.json) bind each to its source tree,
-file manifest, native build version and measured executable. For each branch, use the same
-ARM64 target, Zig toolchain and pinned 146-image input as above, with the version listed
-for that branch.
+The runtime archives pin signed source tags under `archive/tp2-*`. Each archive
+records its exact source tree, file manifest, native build version and measured
+executable. To rebuild an archive snapshot, check out its tag and use the ARM64
+target, Zig toolchain and pinned 146-image input above, with the build version
+listed for that tag. [TP2 archive source identities](tp2/SOURCE.json)
 
 The [TP2 recipe](tp2/recipe.json) declares the required external modules, libraries and
 calibration files. The measured archives preserve their directory layout and executable mode.

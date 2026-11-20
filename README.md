@@ -17,6 +17,7 @@ shows the interfaces, rank order, bootstrap address, and command for its topolog
 ## Choose a precision
 
 All four primary profiles use the same EXL3 4.0 bpw expert weights and FP8 live KV.
+TP2 and TP4 default to Q4 projections with an FP8 output head (`q4-fp8`).
 
 | `--precision` | Dense projections | Output head |
 |---|---|---|
@@ -132,6 +133,6 @@ overhead. [TP2 cache settings](TP2.md#ram-and-nvme) · [TP4 cache settings](TP4.
 
 ## Source builds
 
-The signed source inventories identify the code and executable shipped in each
-archive. Use `engine/tp2` for development across all four TP2 profiles.
+Use `engine/tp2` to build or develop any TP2 profile. The signed archive source
+tags identify the code and executable shipped in each runtime.
 [Build instructions](BUILDING.md) · [Shared TP2 source](https://github.com/antst/glm-5.3-flash-zig-sparks/tree/engine/tp2) · [TP2 archive sources](tp2/SOURCE.json) · [TP4 archive sources](SOURCE.json) · [Signatures](SIGNING.md) · [Licenses](RECIPE-NOTICE.md)

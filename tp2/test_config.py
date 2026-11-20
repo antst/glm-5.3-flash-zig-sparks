@@ -106,6 +106,22 @@ class DirectRecipeTests(unittest.TestCase):
         for recipe in (self.recipe, switch):
             self.assert_full_context_args(recipe['payload_template']['Cmd'])
 
+    def test_default_precision_is_q4_fp8_on_both_topologies(self):
+        switch = json.loads((ROOT.parent/'recipe.json').read_text())
+        switch_args = ('--tp', '4', '--master', '192.168.2.201',
+                       '--roce-address-range', '10.78.0.0/15')
+        tp4 = render_config.construct(self.arguments(*switch_args), switch)
+        for topology, (nodes, report) in (('tp2', self.render()), ('tp4', tp4)):
+            with self.subTest(topology=topology):
+                self.assertEqual(report['precision'], 'q4-fp8')
+                self.assert_full_context(nodes, report)
+                for node in nodes:
+                    env = dict(value.split('=', 1) for value in node['payload']['Env'])
+                    self.assertEqual((env['TF_GLM_DENSE_BITS'], env['TF_GLM_HEAD_BITS'],
+                                      env['TF_GLM_Q4_HEAD_FP8']), ('4', '8', '1'))
+        self.assertEqual(tuple(switch['defaults'][field] for field in
+                               ('precision', 'context', 'parallel')), ('q4-fp8', 1048576, 1))
+
     def assert_full_context(self, nodes, report):
         self.assertEqual((report['context'], report['parallel']), (1048576, 1))
         for node in nodes:

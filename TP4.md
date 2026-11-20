@@ -59,18 +59,17 @@ See [SIGNING.md](SIGNING.md) for the release's signing identity and verification
 The configuration generator writes four rank payloads and shell commands. It does not start
 containers or change a proxy registration.
 
-This EXL3/BF16 command uses the default 1,048,576-token context and one active request.
+This EXL3 command defaults to Q4/FP8, a 1,048,576-token context and one active request.
 
 ```sh
 python3 render_config.py --tp 4 \
-  --expert-checkpoint exl3 --precision bf16 \
   --runtime-root /srv/glm/runtime --model-root /srv/weights/glm53-exl3 \
   --drafter-root /srv/weights/glm53-dflash2 --cache-root /var/cache/glm53 \
   --master 192.168.2.201 --roce-address-range 10.78.0.0/15 \
   --verify-runtime --output /tmp/glm53-rendered
 ```
 
-Choose `--precision q4`, `q4-fp8` or `q8` to render a different EXL3 option. Set `--hosts` to the four
+Choose `--precision bf16`, `q4` or `q8` to render a different EXL3 option. Set `--hosts` to the four
 rank hostnames if they differ from the measured fleet. Reserve distinct HTTP, NCCL bootstrap,
 rank-control and gather-bootstrap ports using `--port`, `--nccl-port` and `--plan-port`.
 NCCL's rank-control port is its bootstrap port plus one. Only rank0 provides the public HTTP endpoint.

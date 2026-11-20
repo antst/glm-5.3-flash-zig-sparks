@@ -162,6 +162,7 @@ def construct(args, recipe, sources, create_command):
         commands.append(dict(host=host, rank=rank, prepare_cache=shlex.join(prepare),
                              create=shlex.join(create_command(name, payload)), start=shlex.join(['docker','start',name])))
     return nodes, dict(**config, commands=commands, namespace=namespace, rank_control_port=args.nccl_port + 1,
-                       source_branch=source['branch'], source_manifest_sha256=source['source_manifest_sha256'],
+                       source_branch=source['branch'], source_tag=source.get('tag'),
+                       source_manifest_sha256=source['source_manifest_sha256'],
                        runtime_archive=bundle['archive'], runtime_assets_required=sorted(assets),
                        runtime_file_hashes_checked=args.verify_runtime, rendered_only=True, deployed=False)

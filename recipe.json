@@ -560,10 +560,10 @@
   },
   "defaults": {
     "expert_checkpoint": "exl3",
-    "precision": "bf16",
+    "precision": "q4-fp8",
     "verify_rows": 32,
-    "context": 196608,
-    "parallel": 8,
+    "context": 1048576,
+    "parallel": 1,
     "prompt_cache_gib": 1.75,
     "tier": "off",
     "prefill": "stepped",

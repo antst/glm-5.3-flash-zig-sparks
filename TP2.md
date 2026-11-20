@@ -4,12 +4,16 @@ Use two Sparks with the second ports connected directly. The measured setup uses
 
 ## Runtime
 
-| Precision | Engine source | Runtime archive | Startup packing |
+Build and develop all four profiles from [`engine/tp2`](https://github.com/antst/glm-5.3-flash-zig-sparks/tree/engine/tp2).
+Exact sources for the published runtime archives are identified by signed tags.
+[Archive sources](tp2/SOURCE.json)
+
+| Precision | Archive source commit | Runtime archive | Startup packing |
 |---|---|---|---|
-| BF16/BF16 | `engine/tp2-bf16` | `glm53-tp2-bf16-runtime.tar.gz` | BF16 projections and head |
-| Q4/BF16 | `engine/tp2-q4` | `glm53-tp2-q4-runtime.tar.gz` | C24 activation-aware Q4, BF16 head |
-| Q4/FP8 | `engine/tp2-q4` | `glm53-tp2-q4-runtime.tar.gz` | C24 activation-aware Q4, grouped FP8 head |
-| Q8/BF16 | `engine/tp2-q8` | `glm53-tp2-q8-runtime.tar.gz` | Activation-aware Q8 with correlated rounding |
+| BF16/BF16 | `4c286e54` | `glm53-tp2-bf16-runtime.tar.gz` | BF16 projections and head |
+| Q4/BF16 | `920e5fd2` | `glm53-tp2-q4-runtime.tar.gz` | C24 activation-aware Q4, BF16 head |
+| Q4/FP8 (default) | `920e5fd2` | `glm53-tp2-q4-runtime.tar.gz` | C24 activation-aware Q4, grouped FP8 head |
+| Q8/BF16 | `847757c2` | `glm53-tp2-q8-runtime.tar.gz` | Activation-aware Q8 with correlated rounding |
 
 The Q4 and Q8 bundles include rank-specific calibration data used at weight load. Keep the
 calibration and correlation directories with the matching runtime. All four profiles use the
@@ -18,12 +22,13 @@ same [EXL3 4.0 bpw weights and DFlash2 drafter](TP4.md#weights-and-dependencies)
 Download the matching archive and verify its SHA256 before extracting it.
 [TP2 runtime downloads](https://github.com/antst/glm-5.3-flash-zig-sparks/releases/tag/v1.2.12-tp2-tp4) · [Archive hashes](tp2/RELEASE-ASSETS.json)
 
-With the selected archive extracted into `/srv/glm/tp2`, render two ranks and
-verify the bundle. The command uses the default 1,048,576-token context and one
-active request.
+Extract the Q4 archive into `/srv/glm/tp2`, then render two ranks and verify the
+bundle. The command defaults to Q4/FP8, a 1,048,576-token context and one active
+request. For another profile, use its runtime archive and pass `--precision bf16`,
+`--precision q4`, or `--precision q8`.
 
 ```sh
-python3 render_config.py --tp 2 --precision q4-fp8 \
+python3 render_config.py --tp 2 \
   --hosts spark1 spark2 --master 10.79.12.1 --roce-address-range 10.79.0.0/16 \
   --runtime-root /srv/glm/tp2 --model-root /srv/weights/glm53-exl3 \
   --drafter-root /srv/weights/glm53-dflash2 --cache-root /var/cache/glm53 \

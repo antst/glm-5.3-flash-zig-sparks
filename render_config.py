@@ -245,7 +245,8 @@ def parser():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument('--tp', type=int, choices=[2, 4], default=4)
     p.add_argument('--expert-checkpoint', choices=['exl3', 'nvfp4'], default='exl3')
-    p.add_argument('--precision', choices=['bf16', 'q4', 'q4-fp8', 'q8'], default='bf16')
+    p.add_argument('--precision', choices=['bf16', 'q4', 'q4-fp8', 'q8'], default='q4-fp8',
+                   help='Projection and output head profile (default: %(default)s)')
     p.add_argument('--verify-rows', type=int, choices=[16, 32], default=32)
     p.add_argument('--tier', choices=['off', 'nvme'], default='off')
     p.add_argument('--prefill', choices=['whole', 'stepped'], default='stepped')
