@@ -122,7 +122,7 @@ attention resumes. Use `--prompt-cache-gib 0 --tier off` for cold-prefill measur
 | Topology | Long-context evidence | Qualified NVMe profile |
 |---|---|---|
 | TP2 | All four EXL3 profiles served a cold 1,041,491-token prompt with the serving defaults | Q8/BF16 at 160K and 192K |
-| TP4 | Completed measurements through 192K | BF16/BF16 at 160K and 192K |
+| TP4 | BF16/BF16 and Q4/BF16 served a cold 1,041,491-token prompt | BF16/BF16 at 160K and 192K |
 
 Context, lane count, and snapshots share memory. Choose a higher lane count
 explicitly when you have budgeted for concurrent requests. To reproduce the

@@ -89,9 +89,14 @@ checkpoint revision, drafter revision, weight-directory paths, precision and set
 The default qualification covers deterministic temperature0 and thinking disabled with the pinned
 chat template. Changing sampling, templates, precision or checkpoint changes the request contract.
 Context and parallelism share the same UMA capacity. The engine checks available
-memory at startup. TP4 long-context measurements currently cover up to 192K.
-To reproduce the throughput benchmark settings, use
+memory at startup. To reproduce the throughput benchmark settings, use
 `--context 196608 --parallel 8 --prompt-cache-gib 0 --tier off`.
+
+With the default context and one active request, BF16/BF16 and Q4/BF16 each processed a
+cold 1,041,491-token prompt and returned the same exact receipt code as TP2. Prefill took
+545.07 seconds for BF16/BF16 and 561.60 seconds for Q4/BF16. Q4/FP8 and Q8/BF16 both
+started with the 1M limit and passed a 3,191-token retrieval check. The retrieval fixtures
+disable drafting. The NVMe measurements below cover 160K and 192K prompts.
 
 ## Quality and performance
 
