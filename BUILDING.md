@@ -152,8 +152,12 @@ a fresh package-manager rebuild may have a different image identity.
 
 ## TP2 engine builds
 
-The recipe repo also carries the signed `engine/tp2-bf16`, `engine/tp2-q4` and `engine/tp2-q8`
-branches. [TP2 source identities](tp2/SOURCE.json) bind each branch to its source tree,
+Use the single `engine/tp2` branch for work shared by all four TP2 profiles. Its signed
+commit `a6842081` has the same source tree as measured TensorFold `c829c30e`.
+[Shared TP2 source](https://github.com/antst/glm-5.3-flash-zig-sparks/tree/engine/tp2)
+
+The published runtime archives pin the signed `engine/tp2-bf16`, `engine/tp2-q4`, and
+`engine/tp2-q8` source snapshots. [TP2 archive source identities](tp2/SOURCE.json) bind each to its source tree,
 file manifest, native build version and measured executable. For each branch, use the same
 ARM64 target, Zig toolchain and pinned 146-image input as above, with the version listed
 for that branch.
