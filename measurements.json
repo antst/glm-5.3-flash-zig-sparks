@@ -4971,5 +4971,52 @@
     "path": "/home/antst/glm-53-flash-zig-tp4-20261108/mia-zig-comparison-20261114/original-mia-profile-windows/20261116T162310Z/COMPARISON.json",
     "sha256": "2d680537cc90a9cda2930cab7f1e794c2384cd8f0c8cfb73d13941d88a6c662c"
   },
-  "artifact_status": "QUALIFIED_TP4_RELEASE_CONTENT"
+  "artifact_status": "QUALIFIED_TP4_RELEASE_CONTENT",
+  "tp4_q8_frozen_refresh": {
+    "measured_date": "2026-11-20",
+    "run_id": "model-window-20261120T085826Z-c7bb64",
+    "source_commit": "c829c30e755153491768b72689ec8a7843ea05aa",
+    "native_sha256": "6d6ab8a0e19e8bd72102876c87028b04c03b9c6ee46c59313d2135df65087de8",
+    "packaged_reference_source_commit": "1e3ba2cf32cb1dea035e38ad41adffc7ea402c6d",
+    "packaged_reference_native_sha256": "9c877e091f0aa4aa8f489576b9640d346c1d1056987a2a16e9d6605823ad5259",
+    "profile": "Q8/BF16",
+    "topology": "switch",
+    "traffic_class": 104,
+    "context": 196608,
+    "active_request_limit": 8,
+    "live_kv": "contiguous FP8",
+    "prompt_RAM_cache_gib": 0,
+    "NVMe": false,
+    "balanced": {
+      "metric": "common-window decode tok/s",
+      "completion_tokens": 400,
+      "repetitions": 2,
+      "timed_requests": 48,
+      "exact_replies": 48,
+      "packaged": {
+        "1": 84.92292970398152,
+        "4": 135.92018620280405,
+        "8": 176.66990411151346
+      },
+      "refresh": {
+        "1": 90.3065412952031,
+        "4": 141.6648683498418,
+        "8": 181.63338457997875
+      },
+      "change_pct": {
+        "1": 6.339408696788262,
+        "4": 4.226511386959286,
+        "8": 2.809465762392871
+      }
+    },
+    "cold_prefill_replay": {
+      "prompt_tokens": 63997,
+      "packaged_native_prefill_seconds": 31.603596103,
+      "refresh_native_prefill_seconds": 31.630065409,
+      "exact_native_reply": true
+    },
+    "result_sha256": "1419e06ac813a2b462ca6e676b3050e77e7d94684c583295fd88f994bd7d8e89",
+    "input_sha256": "5d9f67ce50b1232dd1e5061830d9bcf16ffd8d4b515d4911bf9384d42c34db43",
+    "driver_delta_sha256": "2eb136243ba301695844f515e999a32503cf4159f50046cb0db4f9e23144275f"
+  }
 }

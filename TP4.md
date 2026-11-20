@@ -63,6 +63,30 @@ clients and their licenses are included; the benchmark requests and natural stop
 The separately measured Mia eight-lane run is in `benchmark-evidence-mia-p8`; run
 `python3 benchmark-evidence-mia-p8/verify.py benchmark-evidence-mia-p8` to verify its41 original-client responses.
 
+### Frozen TensorFold refresh Q8/BF16
+
+The November 20 speed check used frozen TensorFold `c829c30e` and the published
+TP4 Q8/BF16 recipe on four switched Sparks. It retained the EXL3 4.0 bpw experts,
+Q8 projections, BF16 head, DFlash2 drafter, contiguous FP8 KV, and borrowed dual
+RoCE rails at traffic class 104. The context was 196,608 tokens, the active limit
+was eight requests, and both the RAM prompt cache and NVMe were off. The
+comparison uses the saved packaged run at `1e3ba2cf`.
+
+| Balanced decode | Packaged tok/s | Refresh tok/s | Change |
+|---|---:|---:|---:|
+| C1 | 84.92 | 90.31 | +6.34% |
+| C4 | 135.92 | 141.66 | +4.23% |
+| C8 | 176.67 | 181.63 | +2.81% |
+
+The two runs use the same fixed prompt bodies, two repetitions, and 400
+completion tokens per response. All 48 native token hashes, text hashes, and
+token-usage signatures matched. The saved 63,997-token cold prompt also
+matched its native output. Native prefill measured 31.604 s on the packaged
+build and 31.630 s on the refresh, about 2,025 and 2,023 prompt tok/s.
+
+The packaged-runtime tables below give the full quality scores, original
+client results, and other precision profiles. [Refresh measurement record](measurements.json)
+
 <!-- BEGIN CURRENT MEASUREMENTS -->
 
 ### TP4 measured configurations

@@ -5,7 +5,7 @@ A native Zig TensorFold recipe for two directly connected DGX Sparks or four Spa
 | Topology | Link | Setup and measurements |
 |---|---|---|
 | **TP2** | Two Sparks, direct links on the second ports, traffic class 104 | [TP2 setup and runtime bundles](TP2.md) · [Current TP2 measurements](TP2-REFRESH.md) |
-| **TP4** | Four Sparks, switched first ports, traffic class 104 | [TP4 recipe and benchmark tables](TP4.md) |
+| **TP4** | Four Sparks, switched first ports, traffic class 104 | [TP4 recipe and benchmark tables](TP4.md) · [Q8 refresh](TP4.md#frozen-tensorfold-refresh-q8bf16) |
 
 ## Choose a precision
 
@@ -94,3 +94,19 @@ At roughly 64K, the original client measured 1,445 prompt tok/s for our Q8 and 1
 - **Live KV and RAM prefix reuse.** Inference uses FP8 KV in memory. The packaged TP2 profiles use contiguous live KV. `--prompt-cache-gib` budgets reusable prompt snapshots in RAM. Use `--prompt-cache-gib 0 --tier off` to measure cold prefill.
 - **Persistent NVMe snapshots.** On TP2, the renderer enables the native disk tier for Q8/BF16. Use `--tier nvme --prompt-cache-gib 1.75 --learn-gib 32` with the cache root on local NVMe. A hit restores the saved prefix into memory before attention resumes. `--learn-gib` sets the disk budget per rank, and `--require-cache-tokens` sets the minimum eligible prefix length (default 137,216 tokens). The renderer gives each rank and configuration its own cache directory.
 - **Measured disk behavior.** On the packaged Q8 build, NVMe reopen reduced native time to first token from **112.21 s to 3.65 s** at 160K and **134.18 s to 2.89 s** at 192K. The run used 207.5 MiB of pinned staging per rank and peaked at 3.12 MiB of index metadata per rank. Validation covered cold seeding at both lengths and recovery from a corrupted snapshot. Disk-tier operation at 1M is still unverified. [TP2 cache configuration](TP2.md#ram-and-nvme) · [TP2 cache timings](TP2-REFRESH.md#native-tiered-kv-cache) · [TP4 cache timings](TP4.md#native-tiered-kv-cache-release-measurements)
+
+## TP4 Q8 refresh
+
+Frozen TensorFold `c829c30e` ran Q8/BF16 on four switched Sparks at traffic class
+104, with eight active lanes and both prompt-cache tiers off. The reference is
+the saved packaged TP4 Q8/BF16 run at `1e3ba2cf`.
+
+| Balanced decode | Packaged tok/s | Refresh tok/s | Change |
+|---|---:|---:|---:|
+| C1 | 84.92 | 90.31 | +6.34% |
+| C4 | 135.92 | 141.66 | +4.23% |
+| C8 | 176.67 | 181.63 | +2.81% |
+
+All 48 fixed-prompt replies matched exactly. The same 63,997-token prompt
+produced an exact reply and took 31.60 s to prefill on the packaged build and
+31.63 s on the refresh. [TP4 refresh benchmark details](TP4.md#frozen-tensorfold-refresh-q8bf16)
