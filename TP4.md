@@ -47,151 +47,6 @@ Source and model licenses are separate. Read the pinned model cards before use. 
 specifies CC BY-NC-ND4.0 for research/evaluation and separate commercial licensing from its provider.
 Weights are downloaded separately and are not redistributed in the runtime package.
 
-## Quality and performance
-
-The fixed quality suite contains795 text tasks and164 coding tasks. The small panel contains eight
-coding and eight structured-output tasks, with separate served/raw and plain/drafted checks. Wrong
-answers and truncations stay in the results. Q4 selection requires8/8 coding and at least7/8
-structured results. Q8 is checked against the actual-default Mia Q8 reference, including its native
-output hashes, rather than changing that reference's results to fit a different precision floor.
-
-The release evidence bundle contains the original benchmark request bodies, byte-exact SSE
-responses and recorded line-arrival clocks for all five rows. Run
-`python3 benchmark-evidence/verify.py benchmark-evidence` to check the request/SSE/client hashes
-and independently recompute both C4/C6/C8 metrics. This needs neither a model nor a GPU. Original
-clients and their licenses are included; the benchmark requests and natural stopping are unchanged.
-The separately measured Mia eight-lane run is in `benchmark-evidence-mia-p8`; run
-`python3 benchmark-evidence-mia-p8/verify.py benchmark-evidence-mia-p8` to verify its41 original-client responses.
-
-### Frozen TensorFold refresh Q8/BF16
-
-The November 20 speed check used frozen TensorFold `c829c30e` and the published
-TP4 Q8/BF16 recipe on four switched Sparks. It retained the EXL3 4.0 bpw experts,
-Q8 projections, BF16 head, DFlash2 drafter, contiguous FP8 KV, and borrowed dual
-RoCE rails at traffic class 104. The context was 196,608 tokens, the active limit
-was eight requests, and both the RAM prompt cache and NVMe were off. The
-comparison uses the saved packaged run at `1e3ba2cf`.
-
-| Balanced decode | Packaged tok/s | Refresh tok/s | Change |
-|---|---:|---:|---:|
-| C1 | 84.92 | 90.31 | +6.34% |
-| C4 | 135.92 | 141.66 | +4.23% |
-| C8 | 176.67 | 181.63 | +2.81% |
-
-The two runs use the same fixed prompt bodies, two repetitions, and 400
-completion tokens per response. All 48 native token hashes, text hashes, and
-token-usage signatures matched. The saved 63,997-token cold prompt also
-matched its native output. Native prefill measured 31.604 s on the packaged
-build and 31.630 s on the refresh, about 2,025 and 2,023 prompt tok/s.
-
-The packaged-runtime tables below give the full quality scores, original
-client results, and other precision profiles. [Refresh measurement record](measurements.json)
-
-<!-- BEGIN CURRENT MEASUREMENTS -->
-
-### TP4 measured configurations
-
-Every populated speed cell below comes from actual runs of Mia’s unchanged `acc.py`, `acc8.py` and `bench2.py`, with the saved request bodies and SSE arrival clocks. **There are no extrapolated rates.** C1 is the original measured stream rate; C4/C8 use aggregate post-first tokens over the entire wave, not a sum of separately timed stream rates.
-
-**All five rows below use an eight-request limit for these speed measurements.** Mia’s engine, weights and Q8/BF16 compute are unchanged; its latest speed run uses context196608 and prompt cache0, matching ours. Its existing quality score is retained. Q8/BF16 is the same-precision reference pair.
-
-All rows use EXL3 experts and FP8 KV. NVMe and the prompt RAM cache are off for the speed measurements. This is a whole-configuration comparison, not an isolated-kernel comparison.
-
-| Projections / output head | Active-lane limit | Full /959 | Text /795 | Code /164 | Small code / structured | 1 active: prose | 1 active: code | 4 active: prose | 8 active: prose |
-|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| Ours BF16/BF16 | 8 | 881 | 725 | 156 | 8/8 / 5/8 | 51.25 | 73.53 | 124.15 | 170.43 |
-| Ours Q4/BF16 | 8 | 878 | 724 | 154 | 8/8 / 7/8 | 72.60 | 87.12 | 149.04 | 190.15 |
-| Ours Q4/FP8 | 8 | 882 | 729 | 153 | 8/8 / 7/8 | 75.85 | 91.50 | 148.15 | 200.53 |
-| Ours Q8/BF16 | 8 | 878 | 724 | 154 | 8/8 / 5/8 | 68.30 | 88.37 | 145.11 | 186.18 |
-| Mia Zig Q8/BF16 | 8 | 878 | 724 | 154 | 8/8 / 5/8 | 63.54 | 85.16 | 129.69 | 175.63 |
-
-Rates are tok/s. Mia’s row combines the existing878/959 quality result with its latest measured eight-request speed run; the unchanged engine/weights/precision did not require a full quality rerun. The short panel again passed8/8 code and5/8 structured, with all24 plain/drafted native outputs exact. Its speed run used reserve16GiB and a100GiB CUDA memory ceiling. The original client’s request-rate sum is retained in the raw evidence and described in measurement-notes.md; it is excluded from the headline comparison because queued requests can occupy different time intervals.
-
-Coherent BF16 original-client speed and small panel are closed on the release executable. Its full881/959 quality panel is closed. Q8 full878/959 and all959 native hashes match actual-default Mia. Recovered BF16 similarly matches all959 native hashes of source-unmodified controlled Mia BF16. EXL3 Q4 and Q4/FP8 meet the8/8 code and7/8 structured floor. Mia Q8 and ours both score8/8 code and5/8 structured; all48 small-panel native outputs match.
-
-## Secondary balanced benchmark
-
-400 completion tokens, two repetitions; eight solo-task geometric mean, two four-request cohorts and one eight-request cohort using common-window throughput. The Mia row uses the latest actual eight-lane measurement with context196608/cache0. These values do not replace Mia’s original benchmark.
-
-| Profile | C1 tok/s | C4 tok/s | C8 tok/s |
-|---|---:|---:|---:|
-| Ours BF16/BF16 | 66.41 | 115.71 | 155.07 |
-| Ours Q4/BF16 | 88.28 | 134.26 | 169.21 |
-| Ours Q4/FP8 | 91.03 | 138.69 | 175.36 |
-| Ours Q8/BF16 | 84.92 | 135.92 | 176.67 |
-| Mia Zig Q8/BF16 | 80.40 | 128.70 | 166.24 |
-
-Previous matched BF16 balanced controls:66.75–66.91 /116.26–116.34 /155.39–155.42. That small secondary speed deficit remains open. Signed byte-verified source snapshot commits and their limits are recorded in SOURCE.json. Retained NVFP4 and controlled BF16 records remain in supplementary data; further NVFP4 optimization is stopped per the user’s direction.
-
-Precision labels are independent: EXL34.0bpw describes expert weights, the first option names dense projection weights, the second names the target output head, and FP8 KV describes attention-cache storage. KV and head precision do not have to match.
-
-## Same original benchmark requests: whole-wave throughput
-
-These rates are reconstructed from the actual acc.py/acc8.py requests and recorded line-arrival clocks: summed post-first tokens divided by the interval from the first content in the wave to the last. Natural stopping and prompt bodies are unchanged. The Mia result includes two actual waves at C6 and two at C8 with an eight-request limit. Every stream produced content before the first stream finished in each wave.
-
-| Profile | 4 active tok/s | 6 active tok/s | 8 active tok/s |
-|---|---:|---:|---:|
-| Ours BF16/BF16 | 124.15 | 147.69 | 170.43 |
-| Ours Q4/BF16 | 149.04 | 175.30 | 190.15 |
-| Ours Q4/FP8 | 148.15 | 175.80 | 200.53 |
-| Ours Q8/BF16 | 145.11 | 163.80 | 186.18 |
-| Mia Zig Q8/BF16 | 129.69 | 162.56 | 175.63 |
-
-## Quality by category
-
-Same frozen inventory and unchanged scorers. Scores are finite diagnostics, not a guarantee of identical answers or universal superiority across precisions.
-
-| Profile | qa /150 | reason /40 | arith /40 | track /40 | gsm8k /200 | mmlu /285 | follow /40 | legacy_humaneval_chat /164 |
-|---|---:|---:|---:|---:|---:|---:|---:|---:|
-| Ours BF16/BF16 | 129 | 40 | 40 | 40 | 195 | 253 | 28 | 156 |
-| Ours Q4/BF16 | 127 | 40 | 40 | 39 | 195 | 250 | 33 | 154 |
-| Ours Q4/FP8 | 128 | 40 | 40 | 39 | 195 | 252 | 35 | 153 |
-| Ours Q8/BF16 | 131 | 40 | 39 | 40 | 196 | 249 | 29 | 154 |
-| Mia Zig Q8/BF16 | 131 | 40 | 39 | 40 | 196 | 249 | 29 | 154 |
-
-## Original Mia bench2: long prompts
-
-Cache disabled. Counts are actual prompt tokens. The original benchmark reports prompt tokens divided by client TTFT; this includes first-token overhead and is not native GPU prefill duration. Request-specific nonces and finite single samples are retained.
-
-| Profile | 16K tokens | TTFT s | Tokens/TTFT tok/s | 64K tokens | TTFT s | Tokens/TTFT tok/s |
-|---|---:|---:|---:|---:|---:|---:|
-| Ours BF16/BF16 | 15978 | 7.891 | 2024.9 | 63750 | 31.285 | 2037.7 |
-| Ours Q4/BF16 | 16163 | 8.170 | 1978.3 | 64723 | 32.220 | 2008.8 |
-| Ours Q4/FP8 | 15901 | 7.977 | 1993.3 | 63817 | 31.776 | 2008.3 |
-| Ours Q8/BF16 | 15923 | 8.002 | 1990.0 | 63997 | 31.622 | 2023.8 |
-| Mia Zig Q8/BF16 | 16046 | 8.980 | 1786.9 | 64596 | 33.867 | 1907.4 |
-
-## Original Mia bench2: mixed and paired requests
-
-A roughly50K-token prefill runs alongside one or three decoders. The gap column is the worst per-stream p95 and maximum content-arrival gaps reported by the original harness, in milliseconds. The paired case uses roughly30K-token prompts. These are observed client latencies, not additive GPU stage timings. Complete counts and per-stream data are in measurements.json.
-
-| Profile | 50K +1 decoder TTFT s | 50K +3 decoders TTFT s | Worst p95 gap ms | Worst maximum gap ms | 30K alone TTFT s | 30K pair TTFT s |
-|---|---:|---:|---:|---:|---:|---|
-| Ours BF16/BF16 | 36.76 | 36.99 | 1062 | 1298 | 15.14 | 30.11 / 17.09 |
-| Ours Q4/BF16 | 37.97 | 38.28 | 1067 | 1302 | 15.51 | 16.39 / 31.08 |
-| Ours Q4/FP8 | 37.09 | 37.39 | 1062 | 1285 | 15.11 | 16.10 / 30.46 |
-| Ours Q8/BF16 | 37.14 | 37.45 | 1068 | 1306 | 15.21 | 16.06 / 30.59 |
-| Mia Zig Q8/BF16 | 44.07 | 44.37 | 77 | 2610 | 16.39 | 33.56 / 16.38 |
-
-The compared sources use2048 prompt rows per busy pass in our build and4096 in Mia. Mia's lower p95 coexists with a larger maximum pause, while our long-prefill TTFT is shorter. These whole-configuration observations do not isolate the causal contribution of chunk size; neither percentile alone establishes universally better responsiveness.
-
-
-<!-- END CURRENT MEASUREMENTS -->
-
-The five rows compare our four EXL3 options with source-unmodified Mia Zig.
-Mia uses EXL3/Q8/BF16 and paged context; ours uses nonpaged context. Both use an eight-request limit
-for the current acc.py/acc8.py and balanced speed results. The older bench2 long/mixed results retain
-Mia’s original four-request limit; those workloads use at most four concurrent requests.
-The original benchmark clients are unchanged on both runtimes.
-A sum of separately timed stream rates can include queued waves; it is not automatically whole-wave
-capacity. The original metric remains visible, with the common-window result for the same requests
-reported separately. All timed request cache hits were checked; NVMe is disabled for speed runs.
-
-`benchmarks/mia/acc.py`, `acc8.py` and `bench2.py` preserve the original client source. The balanced
-400-token diagnostic is secondary. Full requests, raw SSE, per-category scores, executable hashes
-and finite-repeat limits belong in the accompanying machine-readable results and ledger. Timing
-results are from the stated hardware and settings, not a universal performance guarantee.
-
 ## Serving configuration
 
 The release provides hash-pinned ARM64 runtime assets and `recipe.json`. Download/extract the
@@ -238,6 +93,84 @@ Use model/context settings within the documented memory fit. Context and paralle
 same UMA capacity; eight active lanes do not promise eight simultaneously full192K contexts.
 The launcher accepts up to 1,048,576 tokens. TP4's completed long-context measurements reach
 192K. Available memory and the active lane count determine which larger settings can start.
+
+## Quality and performance
+
+Our TP4 speed measurements use TensorFold `c829c30e`. The Mia row uses its original Zig engine `80be4d68`. The decode runs use the switched setup at traffic class 104, an eight-request limit, 196,608-token context, FP8 KV, and both prompt-cache tiers off. The quality tables identify the revisions used for scoring.
+
+### Original Mia Zig benchmark
+
+C1 shows per-stream decode rates. C4, C6, and C8 show whole-wave throughput. All rates are in tok/s.
+
+| Profile | C1 prose | C1 code | C4 prose | C6 prose | C8 prose | Quality /959 | Small code / structured |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Ours BF16/BF16 | 54.37 | 77.91 | 128.85 | 153.51 | 169.99 | 881 | 8/8 · 5/8 |
+| Ours Q4/BF16 | 76.93 | 91.99 | 154.19 | 178.31 | 197.27 | 878 | 8/8 · 7/8 |
+| Ours Q4/FP8 | 80.17 | 96.13 | 152.11 | 183.88 | 200.71 | 882 | 8/8 · 7/8 |
+| Ours Q8/BF16 | 72.60 | 93.75 | 144.95 | 168.43 | 192.79 | 878 | 8/8 · 5/8 |
+| Mia Zig Q8/BF16 | 63.54 | 85.16 | 129.69 | 162.56 | 175.63 | 878 | 8/8 · 5/8 |
+
+### Balanced benchmark
+
+The same fixed prompts run twice at each concurrency, with 400 completion tokens per request. Rates use the common client-clock window.
+
+| Profile | C1 tok/s | C4 tok/s | C8 tok/s |
+| --- | ---: | ---: | ---: |
+| Ours BF16/BF16 | 70.38 | 120.59 | 159.48 |
+| Ours Q4/BF16 | 93.09 | 138.66 | 173.88 |
+| Ours Q4/FP8 | 96.08 | 143.22 | 178.57 |
+| Ours Q8/BF16 | 90.73 | 141.60 | 182.10 |
+| Mia Zig Q8/BF16 | 80.40 | 128.70 | 166.24 |
+
+### Whole-wave throughput
+
+| Profile | C4 tok/s | C6 tok/s | C8 tok/s |
+| --- | ---: | ---: | ---: |
+| Ours BF16/BF16 | 128.85 | 153.51 | 169.99 |
+| Ours Q4/BF16 | 154.19 | 178.31 | 197.27 |
+| Ours Q4/FP8 | 152.11 | 183.88 | 200.71 |
+| Ours Q8/BF16 | 144.95 | 168.43 | 192.79 |
+| Mia Zig Q8/BF16 | 129.69 | 162.56 | 175.63 |
+
+### Quality by category
+
+Each row uses the same 959-case inventory.
+
+| Profile | Engine | Full /959 | qa /150 | reason /40 | arith /40 | track /40 | gsm8k /200 | mmlu /285 | follow /40 | legacy_humaneval_chat /164 |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Ours BF16/BF16 | `1e3ba2cf` | 881 | 129 | 40 | 40 | 40 | 195 | 253 | 28 | 156 |
+| Ours Q4/BF16 | `1e3ba2cf` | 878 | 127 | 40 | 40 | 39 | 195 | 250 | 33 | 154 |
+| Ours Q4/FP8 | `1e3ba2cf` | 882 | 128 | 40 | 40 | 39 | 195 | 252 | 35 | 153 |
+| Ours Q8/BF16 | `1e3ba2cf` | 878 | 131 | 40 | 39 | 40 | 196 | 249 | 29 | 154 |
+| Mia Zig Q8/BF16 | `80be4d68` | 878 | 131 | 40 | 39 | 40 | 196 | 249 | 29 | 154 |
+
+### Original Mia bench2 long prompts
+
+Each cell uses the measured prompt length and client time to first token. The client generates a different prompt per length.
+
+Mia’s recorded bench2 run used a four-request limit and 8 GiB of RAM prompt cache. These workloads used up to four requests and logged zero cached tokens.
+
+| Profile | 16K tokens | TTFT s | Prompt tok/s | 64K tokens | TTFT s | Prompt tok/s |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Ours BF16/BF16 | 15882 | 7.909 | 2008.2 | 63533 | 31.101 | 2042.8 |
+| Ours Q4/BF16 | 16041 | 8.052 | 1992.2 | 64361 | 31.819 | 2022.7 |
+| Ours Q4/FP8 | 16093 | 8.098 | 1987.4 | 64369 | 31.871 | 2019.6 |
+| Ours Q8/BF16 | 16026 | 7.973 | 2010.0 | 64347 | 31.537 | 2040.4 |
+| Mia Zig Q8/BF16 | 16046 | 8.980 | 1786.9 | 64596 | 33.867 | 1907.4 |
+
+### Original Mia bench2 mixed and paired requests
+
+A roughly 50K-token prefill runs beside one or three decoders. Gaps are the worst per-stream values. The paired prompts are roughly 30K tokens each.
+
+| Profile | 50K +1 decoder TTFT s | 50K +3 decoders TTFT s | Worst p95 gap ms | Worst maximum gap ms | 30K alone TTFT s | 30K pair TTFT s |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Ours BF16/BF16 | 36.61 | 36.83 | 1054 | 1286 | 14.93 | 29.93 / 15.76 |
+| Ours Q4/BF16 | 36.89 | 37.40 | 1057 | 1314 | 15.14 | 16.06 / 30.36 |
+| Ours Q4/FP8 | 37.03 | 37.77 | 1070 | 1302 | 15.20 | 17.40 / 30.55 |
+| Ours Q8/BF16 | 36.71 | 37.07 | 1054 | 1340 | 15.09 | 17.20 / 30.39 |
+| Mia Zig Q8/BF16 | 44.07 | 44.37 | 77 | 2610 | 16.39 | 33.56 / 16.38 |
+
+[Measurement record](measurements.json)
 
 ## RAM and NVMe prompt-cache tiers
 
