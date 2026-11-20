@@ -594,7 +594,7 @@ test "GLM snapshots: with the engine's own sequence on pages too, a prefix's siz
     }
 }
 
-test "GLM snapshots: TF_KV_SHARE's adapter reads GLM's decls as the store it replaced: the 2,048 grid, a lookahead of 1" {
+test "GLM snapshots: the adapter uses GLM's 2,048 grid, one lookahead token and deferred warming" {
     const r = adapter.cacheRules(glm.native);
-    try std.testing.expect(r.planned and r.grid == 2048 and r.lookahead == 1 and r.min_prompt == 0 and r.warm == .off and !r.fork);
+    try std.testing.expect(r.planned and r.grid == 2048 and r.lookahead == 1 and r.min_prompt == 0 and r.warm == .waits and !r.fork);
 }

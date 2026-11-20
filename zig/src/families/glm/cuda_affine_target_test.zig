@@ -20,7 +20,7 @@ test "affine target: strict OFF, scope and rank fingerprint" {
     const off = try ranks.Settings.read(Env.get, &problem);
     Env.mode = "0";
     try t.expect(std.meta.eql(off, try ranks.Settings.read(Env.get, &problem)));
-    for ([_][]const u8{ "", "true", "01", " 1", "2" }) |bad| {
+    for ([_][]const u8{ "true", "01", " 1", "2" }) |bad| {
         Env.mode = bad;
         try t.expectError(error.BadSetting, ranks.Settings.read(Env.get, &problem));
     }

@@ -189,7 +189,7 @@ fn fixture(gpu: check.Gpu, m: *const glm.forward.Modules, stream: cuda.Stream, r
 }
 
 fn qualify(gpu: check.Gpu, widths: []const usize) !void {
-    var m = try glm.forward.Modules.load(gpu.d, gpu.ctx, false);
+    var m = try glm.forward.Modules.load(gpu.d, gpu.ctx, null);
     defer m.deinit();
     var s = try cuda.Stream.init(gpu.d, false);
     defer s.deinit();

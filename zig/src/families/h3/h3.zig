@@ -1,8 +1,7 @@
 //! MiniMax H3 / FastH3's transformer on Metal in the checkpoint's bf16: one denoising forward over the packed rows.
 const std = @import("std");
 const mtl = @import("metal");
-const st = @import("safetensors");
-const sources = @import("kernel_sources");
+const st = @import("core").safetensors;
 const tensors = @import("tensors.zig");
 const kernels = @import("h3_kernels");
 const block = @import("block.zig");
@@ -130,9 +129,9 @@ pub const Model = struct {
     }
 
     /// `checkpoint_dir`: the FastH3 transformer folder of `shards` files. `case`: tools/zig/h3_case.py's output.
-    pub fn load(gpa: std.mem.Allocator, checkpoint_dir: []const u8, shards: usize, case: *Tensors, options: Options) !*Model {
+    pub fn load(gpa: std.mem.Allocator, io: std.Io, checkpoint_dir: []const u8, shards: usize, case: *Tensors, options: Options) !*Model {
         const device = try mtl.Device.init();
-        if (!device.tensorUnits()) return error.NeedsTensorUnits;
+        if (!@import("source.zig").available(device)) return error.NeedsTensorUnits;
         const self = try gpa.create(Model);
         self.gpa = gpa;
         self.device = device;
@@ -144,6 +143,7 @@ pub const Model = struct {
         self.spent = @splat(0);
         self.checkpoint = try Checkpoint.open(gpa, device, checkpoint_dir, shards);
         const ck = &self.checkpoint;
+        try ck.readAhead(gpa, io);
         self.base = ck.entry("blocks.0.attn.qkv_proj.weight") != null;
         const prefix = if (self.base) "blocks" else "transformer_blocks";
         const to_q = ck.entry(if (self.base) "blocks.0.attn.qkv_proj.weight" else "transformer_blocks.0.attn.to_q.weight") orelse return error.MissingTensor;
@@ -163,13 +163,7 @@ pub const Model = struct {
         const heads = self.heads;
         const times = admitted.times;
 
-        // the kernels take the model's sizes as compile-time values
-        const source = try std.fmt.allocPrint(gpa, "#define H3_HEADS {d}\n#define H3_SLOTS {d}\n#define H3_TILES {d}\n{s}\n{s}", .{ heads, self.slots(), self.tiles, options.defines, kernels.source });
-        defer gpa.free(source);
-        // MLX's bf16 GEMM (the prefill kernels' gemm_nax) ahead of the family's own kernels; nax.h inlined
-        const gemm = try std.mem.replaceOwned(u8, gpa, gemmSource(), "#include \"../nax.h\"", sources.nax);
-        defer gpa.free(gemm);
-        const all = try std.mem.concat(gpa, u8, &.{ gemm, source });
+        const all = try @import("source.zig").library(gpa, heads, self.slots(), self.tiles, options.defines);
         defer gpa.free(all);
         const lib = try mtl.Library.fromSource(device, all, mtl.CompileOptions.mlx());
         defer lib.deinit();
@@ -388,9 +382,3 @@ pub const Model = struct {
         return .{ .wall = mtl.clock.seconds() - started, .gpu = gpu };
     }
 };
-
-/// The prefill kernels' gemm_nax source, which the block's products use.
-fn gemmSource() []const u8 {
-    inline for (sources.prefill) |f| if (comptime std.mem.eql(u8, f.name, "gemm_nax")) return f.text;
-    @compileError("no gemm_nax source");
-}

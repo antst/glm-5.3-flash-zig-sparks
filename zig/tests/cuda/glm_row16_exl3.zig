@@ -215,7 +215,7 @@ fn qualify(gpu: Gpu, widths: []const usize) !void {
     defer pm.unload();
     var k = try glm.exl3.Kernels.load(gpu.d);
     defer k.unload();
-    var ek = try glm.experts.Kernels.load(gpu.d, pm, @intCast(try gpu.ctx.attribute(.multiprocessor_count)), false);
+    var ek = try glm.experts.Kernels.load(gpu.d, pm, @intCast(try gpu.ctx.attribute(.multiprocessor_count)), null);
     defer ek.unload();
     defer cuda.completion.drain(gpu.d, stream, "row16 EXL3 buffer/module teardown");
     for ([_]bool{ true, false }) |one| {

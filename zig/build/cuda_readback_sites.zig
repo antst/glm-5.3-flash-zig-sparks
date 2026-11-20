@@ -2,6 +2,22 @@
 pub const Site = struct { path: []const u8, source: []const u8, ordinal: usize, setup: []const u8, at: []const u8, out: []const u8 };
 pub const sites = [_]Site{
     .{
+        .path = "zig/src/families/glm/cuda_q4_ffn_q8.zig",
+        .source = @embedFile("../src/families/glm/cuda_q4_ffn_q8.zig"),
+        .ordinal = 1,
+        .setup = "const self = .{ .d = &rig.d, .host = .{ .items = rig.dest(u16, 64) } }; const l = .{ .field = &rig.src };",
+        .at = "l.field.*",
+        .out = "std.mem.sliceAsBytes(self.host.items)",
+    },
+    .{
+        .path = "zig/src/families/glm/cuda_q8_correlated_owner.zig",
+        .source = @embedFile("../src/families/glm/cuda_q8_correlated_owner.zig"),
+        .ordinal = 1,
+        .setup = "const self = .{ .d = &rig.d }; const at = rig.src; var counts: [4]u32 = undefined;",
+        .at = "at",
+        .out = "std.mem.asBytes(&counts)",
+    },
+    .{
         .path = "zig/src/families/flashnext/cuda_batch_head.zig",
         .source = @embedFile("../src/families/flashnext/cuda_batch_head.zig"),
         .ordinal = 1,
@@ -424,6 +440,14 @@ pub const sites = [_]Site{
         .setup = "const r = .{ .gpu = .{ .d = &rig.d } }; const n: usize = 77; const out = rig.dest(u8, n); const ptr = rig.src;",
         .at = "ptr",
         .out = "std.mem.sliceAsBytes(out)[0..n]",
+    },
+    .{
+        .path = "zig/tests/cuda/audio_check.zig",
+        .source = @embedFile("../tests/cuda/audio_check.zig"),
+        .ordinal = 1,
+        .setup = "const c = .{ .d = &rig.d }; const raw = rig.dest(u8, 46); const at = rig.src;",
+        .at = "at",
+        .out = "raw",
     },
     .{
         .path = "zig/tests/cuda/radio_tests.zig",

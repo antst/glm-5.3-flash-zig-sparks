@@ -28,8 +28,8 @@ fn bind(s: *const smp.Sampler) void {
 fn reference(s: *smp.Sampler, stream: cuda.Stream, ex: @import("cuda_forward.zig").Exchange, rows: usize, host: []u16) !void {
     F.rows = rows;
     F.reset();
-    try s.gather(stream, ex, F.spans, &.{.{ .rank = F.rank, .logits = @intFromPtr(F.shards[F.rank].ptr) }}, rows, s.full.ptr);
-    try t.expectEqual(F.spans.len * rows, F.n);
+    try s.gather(stream, ex, F.spans, &.{.{ .rank = F.rank, .logits = @intFromPtr(F.shards[F.rank].ptr) }}, rows, s.stage.ptr, s.full.ptr);
+    try t.expectEqual(F.spans.len * 2, F.n);
     try stream.synchronize();
     @memcpy(host, @as([*]const u16, @ptrFromInt(s.full.ptr))[0..host.len]);
     F.expected = host;
@@ -187,13 +187,15 @@ test "sample batching: old gather still accepts128 external rows even when sampl
     try s.enableBatch(stream, &spans, F.rank);
     var external = try cuda.DeviceBuffer.alloc(&d, 128 * 14 * 2);
     defer external.free();
+    var stage = try cuda.DeviceBuffer.alloc(&d, 128 * 14 * 2);
+    defer stage.free();
     F.full = external.ptr;
+    F.stage = stage.ptr;
     F.rows = 128;
     F.reset();
     const ex: @import("cuda_forward.zig").Exchange = .{ .nccl = .{ .lib = &lib, .comm = null } };
-    try s.gather(stream, ex, &spans, &.{.{ .rank = F.rank, .logits = @intFromPtr(F.shards[F.rank].ptr) }}, 128, external.ptr);
-    try t.expectEqual(@as(usize, 512), F.n);
-    for (F.calls[0..F.n]) |kind| try t.expectEqual(rec.Kind.broadcast, kind);
+    try s.gather(stream, ex, &spans, &.{.{ .rank = F.rank, .logits = @intFromPtr(F.shards[F.rank].ptr) }}, 128, stage.ptr, external.ptr);
+    try t.expectEqualSlices(rec.Kind, &.{ .broadcast, .broadcast, .broadcast, .broadcast, .place, .place, .place, .place }, F.calls[0..F.n]);
     try stream.synchronize();
     for (spans, 0..) |span, q| for (0..128) |row| {
         const full: [*]const u16 = @ptrFromInt(external.ptr);
@@ -223,15 +225,16 @@ test "sample batching: disabled sampled draw and enabled local exchange retain t
     F.first = 123;
     var out: [3]u32 = undefined;
     try s.draw(stream, ex, &spans, &.{.{ .rank = F.rank, .logits = @intFromPtr(F.shards[F.rank].ptr) }}, 3, F.first, F.rule, &out);
-    try t.expectEqual(@as(usize, 17), F.n);
-    for (F.calls[0..12]) |kind| try t.expectEqual(rec.Kind.broadcast, kind);
+    try t.expectEqual(@as(usize, 13), F.n);
+    for (F.calls[0..4]) |kind| try t.expectEqual(rec.Kind.broadcast, kind);
+    for (F.calls[4..8]) |kind| try t.expectEqual(rec.Kind.place, kind);
     try t.expectEqual(@as(usize, 0), F.raw + F.borrowed);
     try s.enableBatch(stream, &spans, F.rank);
     F.reset();
     var mine: [4]smp.Local = undefined;
     for (&mine, 0..) |*l, q| l.* = .{ .rank = q, .logits = @intFromPtr(F.shards[q].ptr) };
     try s.draw(stream, .local, &spans, &mine, 3, F.first, F.rule, &out);
-    try t.expectEqualSlices(rec.Kind, &.{ .rule, .meta, .draw, .sync, .download }, F.calls[0..F.n]);
+    try t.expectEqualSlices(rec.Kind, &.{ .place, .place, .place, .place, .rule, .meta, .draw, .sync, .download }, F.calls[0..F.n]);
     try t.expectEqual(@as(usize, 0), F.raw + F.borrowed);
 }
 

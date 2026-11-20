@@ -148,7 +148,7 @@ test "DFlash policy: strict optin immutable floor and all-rank fingerprint ignor
     const on = try ranks.Settings.read(Env.get, &problem);
     try std.testing.expect(on.dflash_confidence_only);
     try std.testing.expectEqual(@as(f64, 0.7), on.dflash_confidence_floor);
-    for ([_][]const u8{ "", "NaN", "inf", "-0.1", "1.1", "oops" }) |bad| {
+    for ([_][]const u8{ "NaN", "inf", "-0.1", "1.1", "oops" }) |bad| {
         Env.floor = bad;
         try std.testing.expectError(error.BadSetting, ranks.Settings.read(Env.get, &problem));
     }
@@ -175,5 +175,5 @@ test "DFlash policy: strict optin immutable floor and all-rank fingerprint ignor
     const floor_mismatch = ranks.mismatch(&.{ make(0, on), make(1, lower) }).?;
     try std.testing.expectEqual(FP.Field.dflash_confidence_floor, floor_mismatch.field);
     try std.testing.expect(ranks.mismatch(&.{ make(0, lower), make(1, lower) }) == null);
-    try std.testing.expectEqual(@as(u32, 65), make(0, on).layout);
+    try std.testing.expectEqual(@as(u32, 85), make(0, on).layout);
 }

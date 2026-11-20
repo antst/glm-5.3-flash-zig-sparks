@@ -106,6 +106,7 @@ const Fake = struct {
     fn driver() cuda.Driver {
         var d: cuda.Driver = undefined;
         d.api.cuLaunchKernel = launch;
+        d.api.cuLaunchKernelEx = @import("cuda_pdl.zig").forwardEx(launch);
         d.api.cuStreamSynchronize = sync;
         d.api.cuCtxGetDevice = device;
         d.api.cuDeviceGetAttribute = attribute;

@@ -1,6 +1,7 @@
 //! GLM's bf16 linears on tensor cores (glm_mm): weights tiled once at load, any row count, row-stable K slices.
 const std = @import("std");
 const cuda = @import("cuda");
+const cuda_pdl = @import("cuda_pdl.zig");
 
 /// A linear's tiles: bf16 pairs (glm_mm_tile16), or `bits`-bit codes (glm_mm_tile4/6/8) with fp16 scales at `s`.
 pub const Tiled = struct { w: u64, n: usize, k: usize, s: u64 = 0, bits: u8 = 16, bias: u64 = 0, npad: usize = 0 };
@@ -32,7 +33,7 @@ pub const Packed = struct {
             if (p.ptrs[mid] < w) lo = mid + 1 else hi = mid;
         }
         if (lo == p.ptrs.len or p.ptrs[lo] != w) return .{ .w = w, .n = n, .k = k };
-        if (p.affine) {
+        if (p.affine and (p.bits.len == 0 or p.bits[lo] == 4)) {
             const sizes = @import("cuda_q4.zig").bytes(n, k);
             return .{ .w = w, .n = n, .k = k, .s = w + sizes[0], .bias = w + sizes[0] + sizes[1], .npad = @import("cuda_q4.zig").npadOf(n), .bits = 4 };
         }
@@ -67,7 +68,7 @@ pub const Kernels = struct {
             k.tile_packed[wi] = try m.function(std.fmt.comptimePrint("glm_mm_tile{d}", .{b}));
         }
         try k.prompt.allowDynamicShared(smem(128));
-        if (std.c.getenv("TF_GLM_PDL")) |v| k.pdl = !std.mem.eql(u8, std.mem.span(v), "0");
+        k.pdl = cuda_pdl.on();
         return k;
     }
 };
@@ -105,6 +106,15 @@ pub fn partBytes(m: usize, w: Tiled) usize {
 
 /// x [m][k] (`ldx` apart) by `w` -> out [m][n] (`wide`: fp32); `one`: prompt blocks at any rows, sums per row alike.
 pub fn matmul(k: *const Kernels, s: cuda.Stream, x: u64, ldx: usize, w: Tiled, out: u64, part: u64, m: usize, wide: bool, one: bool) !void {
+    return matmulMode(k, s, x, ldx, w, out, part, m, wide, one, false);
+}
+
+pub fn matmulOneSlice(k: *const Kernels, s: cuda.Stream, x: u64, ldx: usize, w: Tiled, out: u64, part: u64, m: usize, wide: bool, one: bool) !void {
+    if (w.bits != 16 or w.bias != 0 or w.s != 0) return error.SingleSliceBf16Only;
+    return matmulMode(k, s, x, ldx, w, out, part, m, wide, one, true);
+}
+
+fn matmulMode(k: *const Kernels, s: cuda.Stream, x: u64, ldx: usize, w: Tiled, out: u64, part: u64, m: usize, wide: bool, one: bool, single: bool) !void {
     if (w.k % 64 != 0 or w.n % 8 != 0 or x % 16 != 0 or ldx % 8 != 0) return error.BadShape;
     if (w.bias != 0) {
         const affine = k.affine orelse return error.AffineTargetNotEnabled;
@@ -118,7 +128,7 @@ pub fn matmul(k: *const Kernels, s: cuda.Stream, x: u64, ldx: usize, w: Tiled, o
         const rows = if (big) m - done else @min(m - done, 64);
         const i: usize = if (big) 3 else if (rows <= 16) 0 else if (rows <= 32) 1 else 2;
         const bm = bucket(i);
-        const sk = if (big) 1 else splitK(w.n, w.k); // a prompt's blocks share each weight tile in L2: no slices
+        const sk = if (big or single) 1 else splitK(w.n, w.k); // a prompt's blocks share each weight tile in L2: no slices
         const o = out + done * w.n * @as(usize, if (wide) 4 else 2);
         var a: cuda.Args = .{};
         a.add(x + done * ldx * 2);
@@ -135,10 +145,10 @@ pub fn matmul(k: *const Kernels, s: cuda.Stream, x: u64, ldx: usize, w: Tiled, o
         const cols: u32 = @intCast((w.n + 63) / 64);
         const row_blocks: u32 = @intCast((rows + bm - 1) / bm);
         if (big and wi == 0) {
-            try cuda.launch.launch(k.prompt, .{ .grid = .{ .x = row_blocks, .y = cols }, .block = .{ .x = 256 }, .shared = smem(128), .pdl = k.pdl }, s, &a);
+            try cuda.launch.launch(k.prompt, .{ .grid = .{ .x = row_blocks, .y = cols }, .block = .{ .x = 256 }, .shared = smem(128), .pdl = if (single) false else k.pdl }, s, &a);
         } else { // packed prompts take the 128-row bucket's blocks, one slice
             const f = if (wi == 0) k.by_rows[i] else k.packed_rows[wi - 1][i];
-            try cuda.launch.launch(f, .{ .grid = .{ .x = cols, .y = row_blocks, .z = @intCast(sk) }, .block = .{ .x = if (bm <= 32) 128 else 256 }, .shared = sharedBytes(w.bits, bm), .pdl = k.pdl }, s, &a);
+            try cuda.launch.launch(f, .{ .grid = .{ .x = cols, .y = row_blocks, .z = @intCast(sk) }, .block = .{ .x = if (bm <= 32) 128 else 256 }, .shared = sharedBytes(w.bits, bm), .pdl = if (single) false else k.pdl }, s, &a);
         }
         if (sk > 1) {
             const total = rows * w.n;
@@ -148,7 +158,7 @@ pub fn matmul(k: *const Kernels, s: cuda.Stream, x: u64, ldx: usize, w: Tiled, o
             r.add(@as(c_longlong, @intCast(total)));
             r.add(@as(c_int, @intCast(sk)));
             r.add(@as(c_int, @intFromBool(wide)));
-            try cuda.launch.launch(k.reduce, .{ .grid = .{ .x = @intCast((total + 255) / 256) }, .block = .{ .x = 256 } }, s, &r);
+            try cuda.launch.launch(k.reduce, .{ .grid = .{ .x = @intCast((total + 255) / 256) }, .block = .{ .x = 256 }, .pdl = k.pdl }, s, &r);
         }
         done += rows;
     }
@@ -166,7 +176,7 @@ pub fn tilePacked(k: *const Kernels, s: cuda.Stream, bits: u8, src: u64, ss: u64
     a.add(ds);
     a.add(@as(c_int, @intCast(n)));
     a.add(@as(c_int, @intCast(kk)));
-    try cuda.launch.launch(k.tile_packed[wi - 1], .{ .grid = .{ .x = @intCast((chunks + 255) / 256) }, .block = .{ .x = 256 } }, s, &a);
+    try cuda.launch.launch(k.tile_packed[wi - 1], .{ .grid = .{ .x = @intCast((chunks + 255) / 256) }, .block = .{ .x = 256 }, .pdl = k.pdl }, s, &a);
 }
 
 /// A row-major bf16 [n][k] linear at `src` tiled into `dst` (as many bytes).
@@ -177,7 +187,7 @@ pub fn tile(k: *const Kernels, s: cuda.Stream, src: u64, dst: u64, n: usize, kk:
     a.add(dst);
     a.add(@as(c_int, @intCast(n)));
     a.add(@as(c_int, @intCast(kk)));
-    try cuda.launch.launch(k.tile, .{ .grid = .{ .x = @intCast((chunks + 255) / 256) }, .block = .{ .x = 256 } }, s, &a);
+    try cuda.launch.launch(k.tile, .{ .grid = .{ .x = @intCast((chunks + 255) / 256) }, .block = .{ .x = 256 }, .pdl = k.pdl }, s, &a);
 }
 
 test "K slices as the shapes take them" {

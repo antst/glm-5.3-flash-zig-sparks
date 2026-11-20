@@ -200,7 +200,7 @@ pub const Gather = struct {
         }
         var names: [verbs.max_hcas][64]u8 = undefined;
         var lens: [verbs.max_hcas]usize = undefined;
-        g.n_hca = try verbs.hcaNames(io, gpa, &names, &lens);
+        g.n_hca = try verbs.hcaNames(std.c.getenv("TF_ROCE_HCA") orelse std.c.getenv("NCCL_IB_HCA"), &names, &lens);
         g.region = try memory.HostBuffer.allocMapped(d, g.layout.total);
         errdefer g.region.free();
         @memset(g.region.bytes, 0);
@@ -252,7 +252,8 @@ pub const Gather = struct {
         }
         hca.mtu = std.mem.readInt(u32, port.bytes[8..12], .little);
         hca.lid = std.mem.readInt(u16, port.bytes[34..36], .little);
-        hca.gid_index = try verbs.gidIndex(io, gpa, name);
+        const gid_set = @import("sys").getenv("TF_ROCE_GID_INDEX") != null; // set: the index named, else the table searched
+        hca.gid_index = try verbs.gidIndex(io, gpa, name, gid_set);
         if (a.ibv_query_gid(hca.ctx.?, port_num, hca.gid_index, &hca.gid) != 0) return error.HcaFailed;
         hca.pd = a.ibv_alloc_pd(hca.ctx.?) orelse return error.HcaFailed;
         hca.mr = a.ibv_reg_mr(hca.pd.?, g.region.bytes.ptr, g.region.bytes.len, verbs.access_local_write | verbs.access_remote_write) orelse {

@@ -129,7 +129,7 @@ test "latent MMA: cached strict setting and rank agreement precede model load" {
     const off = try ranks.Settings.read(Env.get, &problem);
     Env.value = "0";
     try std.testing.expect(std.meta.eql(off, try ranks.Settings.read(Env.get, &problem)));
-    for ([_][]const u8{ "", "true", "01", " 1", "+1" }) |bad| {
+    for ([_][]const u8{ "true", "01", " 1", "+1" }) |bad| {
         Env.value = bad;
         try std.testing.expectError(error.BadSetting, ranks.Settings.read(Env.get, &problem));
     }
@@ -140,7 +140,7 @@ test "latent MMA: cached strict setting and rank agreement precede model load" {
     const FP = ranks.Fingerprint;
     const a = FP.of(4, 0, off, 4096, true, @splat(0), @splat(0), @splat(0));
     const b = FP.of(4, 1, on, 4096, true, @splat(0), @splat(0), @splat(0));
-    try std.testing.expectEqual(@as(u32, 65), a.layout);
+    try std.testing.expectEqual(@as(u32, 85), a.layout);
     try std.testing.expectEqual(FP.Field.absorb_mma, ranks.mismatch(&.{ a, b }).?.field);
     try std.testing.expectEqualStrings("TF_GLM_ABSORB_MMA", @import("cuda_rank_names.zig").explain(FP.Field.absorb_mma));
 }

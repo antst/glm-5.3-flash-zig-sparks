@@ -14,12 +14,25 @@ pub fn tableLen(capacity: usize) usize {
     return (capacity + state.page_rows - 1) / state.page_rows;
 }
 
-/// What a stream of engine `e` holds: its fixed part and table (and `extra`, its other buffers), 13,056 bytes a token.
+/// A stream's fixed part and table, plus the live pages' bytes per token.
 pub fn layout(gpa: std.mem.Allocator, e: *const Engine, extra: u64) !kv.Layout {
-    const fixed = try state.State.pagedBytes(gpa, &e.w, e.capacity, tableLen(e.capacity));
+    const fixed = try state.State.pagedBytesOf(gpa, &e.w, e.capacity, tableLen(e.capacity), hasHead(e));
     // TF_GLM_KV_HOST: a page costs the device only its pooled keys (the pages themselves are in host memory)
-    const page = if (kv_host.onHost()) state.pkPageBytes(&e.w) else state.pageBytes(&e.w);
+    const page = if (kv_host.onHost()) state.pkPageBytes(&e.w) else pageBytes(e);
+    if (page == 0) return error.NoPagedCaches;
     return .{ .fixed_bytes = fixed + extra, .token_bytes = page / state.page_rows, .page_tokens = state.page_rows, .snap_bytes = 0 };
+}
+
+fn hasHead(e: *const Engine) bool {
+    return !e.settings.kv8 or (e.mtp and !@import("cuda_dflash_head_mode.zig").omitted(e));
+}
+
+pub fn pageBytes(e: *const Engine) u64 {
+    return state.pageBytesOf(&e.w, e.settings.kv8, hasHead(e));
+}
+
+fn sequence(e: *const Engine, position: state.Paged) !fw.State {
+    return fw.State.initPagedFormat(e.gpa, e.d, &e.w, e.capacity, position, e.settings.kv8, hasHead(e));
 }
 
 /// TF_KV_SHARE: a kept state's slot (`e.share_pages`: its prefix's pages left to the store), at the window's last mark.
@@ -38,7 +51,7 @@ pub fn ownSequence(e: *Engine) !void {
     if (e.seqs.items[0] != null) return error.SlotTaken;
     const q = try e.gpa.create(types.Seq);
     errdefer e.gpa.destroy(q);
-    q.* = .{ .st = try fw.State.initPaged(e.gpa, e.d, &e.w, e.capacity, on(e, 0, state.pageBytes(&e.w))) };
+    q.* = .{ .st = try sequence(e, on(e, 0, pageBytes(e))) };
     e.seqs.items[0] = q;
     e.cur = q;
     e.slot = 0;
@@ -117,7 +130,7 @@ pub const Pages = struct {
             if (q.* != null) return error.SlotTaken; // attach comes before any stream
             const s = try e.gpa.create(types.Seq);
             errdefer e.gpa.destroy(s);
-            s.* = .{ .st = try fw.State.initPaged(e.gpa, e.d, &e.w, e.capacity, at) };
+            s.* = .{ .st = try sequence(e, at) };
             q.* = s;
             made += 1;
         }
@@ -169,7 +182,8 @@ pub const Pages = struct {
 
     /// Whether a request's pages fit now and a paged sequence is free for it.
     pub fn fits(p: *const Pages, prompt: usize, max_tokens: usize) bool {
-        for (p.used) |u| if (!u) return p.pool.fits(need(p.layout, prompt, max_tokens));
+        const n = need(p.layout, prompt, max_tokens);
+        for (p.used) |u| if (!u) return n > p.pool.total() or p.pool.fits(n);
         return false;
     }
 
@@ -190,6 +204,7 @@ pub const Pages = struct {
         if (!p.paged(slot) or p.used[slot]) return error.SlotTaken;
         const n = need(p.layout, prompt, max_tokens);
         if (n > tableLen(p.e.capacity) or adopted.len > n) return error.PromptTooLong;
+        if (n > p.pool.total()) return error.PoolTooSmall;
         const l = &p.leases[slot];
         try p.pool.promise(l, n - adopted.len);
         errdefer p.pool.finish(l);

@@ -6,8 +6,23 @@ const Config = @import("config.zig").Config;
 const cache = @import("cuda_dsa_block.zig");
 const sparse = @import("cuda_sparse.zig");
 
+const walk = @import("core").state_walk.Device;
+
+/// TF_GLM_KV_LIVE_HALF=1 (checked by cuda_ranks): a keep holds the live KDA half alone; a disk image must name it.
+pub fn liveHalfEnabled() bool {
+    return std.mem.eql(u8, @import("profile").lookup("TF_GLM_KV_LIVE_HALF") orelse return false, "1");
+}
+
+/// The half a plan keeps: `on` with every KDA layer on the same half gives that half; otherwise both (null).
+pub fn halfOf(cur: []const u1, layers: usize, on: bool) ?u1 {
+    if (!on or layers == 0 or cur.len != layers) return null;
+    const h = cur[0];
+    for (cur) |b| if (b != h) return null;
+    return h;
+}
+
 /// `len` bytes from `live`, or on a paged sequence's pages `span` bytes a page `page` bytes apart, from byte `from`.
-pub const Part = struct { live: u64, len: usize, span: usize = 0, page: u64 = 0, from: usize = 0 };
+pub const Part = walk.Part;
 pub const Plan = struct {
     parts: [6 * (@import("config.zig").max_layers + 1) + 4]Part = undefined,
     count: usize = 0,
@@ -15,6 +30,7 @@ pub const Plan = struct {
     ids: []const u32 = &.{}, // a paged sequence's pages in row order
     sizing: bool = false, // `size`: the rows counted, not read, so no page need be mapped
     shared: usize = 0, // a paged sequence's first pages a page-sharing store holds: their rows stay on them
+    half: ?u1 = null, // TF_GLM_KV_LIVE_HALF: the KDA half the plan carries (null: both, the arena head whole)
 
     /// The state at `at`; past `shared` pages only, on a paged sequence whose first pages the store holds.
     pub fn init(st: *const State, c: *const Config, at: usize, head: ?usize, shared: usize) !Plan {
@@ -24,6 +40,15 @@ pub const Plan = struct {
     /// The immutable saved parities choose each layer's bank; the destination slot may now hold different ones.
     pub fn initWith(st: *const State, c: *const Config, at: usize, head: ?usize, shared: usize, cur: []const u1, live: bool) !Plan {
         return make(st, c, at, head, shared, false, cur, live);
+    }
+
+    /// A diagnostic plan with the same parity on every recurrent layer.
+    pub fn withHalf(st: *const State, c: *const Config, at: usize, head: ?usize, shared: usize, half: ?u1) !Plan {
+        const h = half orelse return init(st, c, at, head, shared);
+        var cur: [@import("config.zig").max_layers]u1 = undefined;
+        if (st.kda_layers > cur.len) return error.SnapshotShape;
+        @memset(cur[0..st.kda_layers], h);
+        return initWith(st, c, at, head, shared, cur[0..st.kda_layers], true);
     }
 
     /// A prefix's bytes at `at`, rows to `capacity` counted held or not (a paged sequence holds its request's alone).
@@ -42,7 +67,7 @@ pub const Plan = struct {
         if (at > st.capacity or st.caches.len > @import("config.zig").max_layers) return error.SnapshotShape;
         if (st.rings.len != 2 * (st.caches.len + 1)) return error.SnapshotShape;
         if (shared > 0 and (st.table == 0 or shared * page_rows > at)) return error.SnapshotShape; // pages below `at` only
-        var p: Plan = .{ .ids = st.pages, .sizing = sizing, .shared = shared };
+        var p: Plan = .{ .ids = st.pages, .sizing = sizing, .shared = shared, .half = halfOf(cur, st.kda_layers, live) };
         // a paged sequence's caches are its pages: its fields up to them end at its first ring
         const first = if (st.table != 0) st.rings[0] else if (st.caches.len > 0) st.caches[0].lc else st.mtp_caches.lc;
         if (first < st.arena.buf.ptr) return error.SnapshotShape;
@@ -78,11 +103,12 @@ pub const Plan = struct {
     }
 
     fn rows(p: *Plan, st: *const State, c: *const Config, x: cache.Caches, j: usize, at: usize) !void {
-        const latent = try std.math.mul(usize, at, @as(usize, c.kv_lora) * @as(usize, if (x.ls == 0) 2 else 1));
+        const latent_row = @as(usize, c.kv_lora) * @as(usize, if (x.ls == 0) 2 else 1);
+        const latent = try std.math.mul(usize, at, latent_row);
         const ring = try std.math.mul(usize, @min(at, st.ring_rows), st.ring_row);
         const pooled = try std.math.mul(usize, @min(at / sparse.pool + 2, x.pk_rows), @as(usize, c.i_dim) * 2);
-        try p.addCache(st, x, x.lc, latent, page_rows * @as(usize, c.kv_lora) * 2, x.ps);
-        if (x.ls != 0) try p.add(st, x.ls, try std.math.mul(usize, at, @sizeOf(f32)));
+        try p.addCache(st, x, x.lc, latent, page_rows * latent_row, x.ps);
+        if (x.ls != 0) try p.addCache(st, x, x.ls, try std.math.mul(usize, at, @sizeOf(f32)), page_rows * @sizeOf(f32), x.ps);
         try p.add(st, st.rings[2 * j], ring);
         try p.add(st, st.rings[2 * j + 1], ring);
         try p.addCache(st, x, x.pk, pooled, page_rows / sparse.pool * @as(usize, c.i_dim) * 2, if (x.pks != 0) x.pks else x.ps);
@@ -101,10 +127,7 @@ pub const Plan = struct {
 
     /// Where a part's bytes from `done` on sit, as many as lie in a row there.
     pub fn piece(p: *const Plan, part: Part, done: usize) Part {
-        if (part.span == 0) return .{ .live = part.live + done, .len = part.len - done };
-        const at = part.from + done;
-        const off = at % part.span;
-        return .{ .live = part.live + @as(u64, p.ids[at / part.span]) * part.page + off, .len = @min(part.span - off, part.len - done) };
+        return walk.piece(p.ids, part, done);
     }
 
     fn add(p: *Plan, st: *const State, live: u64, len: usize) !void {

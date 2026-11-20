@@ -54,18 +54,18 @@ test "KDA adaptive strict cached mode, scope and rank agreement" {
     try std.testing.expectEqual(@as(u32, 8), legacy.kda_min_streams);
     Env.mode = "0";
     try std.testing.expect(std.meta.eql(legacy, try ranks.Settings.read(Env.get, &problem)));
-    for ([_][]const u8{ "", "2", "true", "01" }) |bad| {
+    for ([_][]const u8{ "2", "true", "01" }) |bad| {
         Env.mode = bad;
         try std.testing.expectError(error.BadSetting, ranks.Settings.read(Env.get, &problem));
     }
     Env.mode = "1";
-    for ([_][]const u8{ "", "0", "1", "3", "9", "04", "+8", "8 " }) |bad| {
+    for ([_][]const u8{ "0", "1", "3", "9", "04", "+8", "8 " }) |bad| {
         Env.least = bad;
         try std.testing.expectError(error.BadSetting, ranks.Settings.read(Env.get, &problem));
     }
     const FP = ranks.Fingerprint;
     const original = FP.of(4, 0, legacy, 4096, true, @splat(0), @splat(0), @splat(0));
-    try std.testing.expectEqual(@as(u32, 65), original.layout);
+    try std.testing.expectEqual(@as(u32, 85), original.layout);
     for ([_][]const u8{ "2", "4", "8" }, [_]u32{ 2, 4, 8 }) |text, least| {
         Env.least = text;
         const settings = try ranks.Settings.read(Env.get, &problem);

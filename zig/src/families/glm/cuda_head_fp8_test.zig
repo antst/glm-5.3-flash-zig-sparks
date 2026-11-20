@@ -18,7 +18,7 @@ test "head FP8: strict cached format, precision scopes and complete fingerprint"
     Env.value = "0";
     try t.expect(std.meta.eql(off, try ranks.Settings.read(Env.get, &problem)));
     try affine.require(off, 1, true);
-    for ([_][]const u8{ "", "true", "01", "+1", " 1" }) |bad| {
+    for ([_][]const u8{ "true", "01", "+1", " 1" }) |bad| {
         Env.value = bad;
         try t.expectError(error.BadSetting, ranks.Settings.read(Env.get, &problem));
     }
@@ -39,7 +39,7 @@ test "head FP8: strict cached format, precision scopes and complete fingerprint"
     const FP = ranks.Fingerprint;
     const a = FP.of(4, 0, legacy, 4096, true, @splat(0), @splat(0), @splat(0));
     const b = FP.of(4, 1, on, 4096, true, @splat(0), @splat(0), @splat(0));
-    try t.expectEqual(@as(u32, 65), a.layout);
+    try t.expectEqual(@as(u32, 85), a.layout);
     try t.expectEqual(FP.Field.q4_head_fp8, ranks.mismatch(&.{ a, b }).?.field);
     try t.expectEqualStrings("TF_GLM_Q4_HEAD_FP8", @import("cuda_rank_names.zig").explain(FP.Field.q4_head_fp8));
     on.q4_head_fp8 = false;

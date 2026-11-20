@@ -8,6 +8,13 @@ const heat = @import("heat");
 const l2pf = @import("cuda_l2pf.zig");
 const wireOpens = @import("cuda_rank_options.zig").wireOpens;
 pub const Settings = struct {
+    q8_correlated: @import("cuda_q8_correlated_options.zig").Choice = .{},
+    q8_activation: bool = false,
+    q4_activation: bool = false,
+    q4_recurrent_bf16: u8 = 0,
+    q4_bf16_families: u8 = 0,
+    q4_ffn_q8: @import("cuda_q4_ffn_q8.zig").Choice = .{},
+    calibration_sha: [32]u8 = @splat(0),
     absorb_mma: bool = false,
     kv8: bool = false, // --kv-cache fp8, supplied by the native options rather than an environment override
     pages: bool = false, // TF_KV_PAGES as `open` resolves it (with the world and --kv-cache): every sequence on pages
@@ -26,10 +33,12 @@ pub const Settings = struct {
     kv_live_half: bool = false,
     dflash_only_head: bool = false,
     nvfp4_fact: bool = false,
-    dsel: bool = false, // TF_GLM_DSEL: upstream multi-CTA decode selection, agreed before startup
+    dsel: bool = false,
+    dscore: bool = false, // decode pool selection and tiled decode scores
     index_split: u32 = 2048, // TF_GLM_INDEX_SPLIT: from this position on, rank 0 splits a prompt chunk's indexer rows (0: never)
     heat: ?heat.Bands = null, // TF_HEAT_HIGH and TF_HEAT_LOW (upstream's names): a prompt chunk waits on every rank's hottest zone
     layers: u32 = 0, // TF_GLM_LAYERS: the first this many layers only, a thin model for one-GPU checks (0: all)
+    q8_mse: bool = false,
     q4_affine_mse: bool = false,
     q4_head_fp8: bool = false,
     q4_python_prompt: bool = false,
@@ -67,8 +76,27 @@ pub const Settings = struct {
     kv_host: u8 = 0, // TF_GLM_KV_HOST=1: KV pages in host memory (1); with TF_GLM_KV_HOST_SHARED=1, one copy a host (2)
     kv_host_gib: f64 = 0, // TF_GLM_KV_HOST_GIB: the host pages' GiB (0: one full window)
     l2pf: l2pf.Options = .{}, // TF_GLM_L2PF and its knobs: a decode window's next weights read into L2 beside it
-    pub fn read(get: *const fn ([:0]const u8) ?[]const u8, problem: *[]const u8) !Settings {
+    /// The settings `get` gives, blank text as unset; `problem` names a value that is not one of the choices.
+    pub fn read(comptime get: *const fn ([:0]const u8) ?[]const u8, problem: *[]const u8) !Settings {
+        return readSet(&struct {
+            fn set(name: [:0]const u8) ?[]const u8 {
+                const v = get(name) orelse return null;
+                return if (std.mem.trim(u8, v, " \t\r\n").len == 0) null else v; // environment.parse's blank
+            }
+        }.set, problem);
+    }
+
+    /// `read` from a lookup with no blank text, so every name below and in l2pf's reader is unset when blank.
+    fn readSet(get: *const fn ([:0]const u8) ?[]const u8, problem: *[]const u8) !Settings {
         var s: Settings = .{};
+        s.q4_activation = try @import("cuda_q4_activation_options.zig").read(get, problem);
+        s.q4_recurrent_bf16 = try @import("cuda_q4_recurrent.zig").read(get, problem);
+        s.q4_bf16_families = try @import("cuda_q4_precision_families.zig").read(get, problem);
+        s.q4_ffn_q8 = try @import("cuda_q4_ffn_q8.zig").read(get, problem);
+        const act = try @import("cuda_q8_activation_options.zig").readFor(get, problem, s.q4_activation);
+        s.q8_correlated = try @import("cuda_q8_correlated_options.zig").read(get, problem);
+        s.q8_activation, s.calibration_sha = .{ act.on, act.sha };
+        s.q8_mse = try @import("cuda_dense16.zig").flag(get("TF_GLM_Q8_MSE"), problem, "TF_GLM_Q8_MSE: 0 or 1");
         s.absorb_mma = try @import("cuda_dense16.zig").flag(get("TF_GLM_ABSORB_MMA"), problem, "TF_GLM_ABSORB_MMA: 0 or 1");
         s.warm_turns = try @import("cuda_dense16.zig").flag(get("TF_GLM_WARM_TURNS"), problem, "TF_GLM_WARM_TURNS: 0 or 1");
         s.kv_live_half = try @import("cuda_dense16.zig").flag(get("TF_GLM_KV_LIVE_HALF"), problem, "TF_GLM_KV_LIVE_HALF: 0 or 1");
@@ -76,6 +104,7 @@ pub const Settings = struct {
         s.nvfp4_fact = try @import("cuda_dense16.zig").flag(get("TF_GLM_NVFP4_FACT"), problem, "TF_GLM_NVFP4_FACT: 0 or 1");
         s.exl3_prompt_whole = try @import("cuda_dense16.zig").flag(get("TF_GLM_EXL3_PROMPT_WHOLE"), problem, "TF_GLM_EXL3_PROMPT_WHOLE: 0 or 1");
         s.dsel = try @import("cuda_dense16.zig").flag(get("TF_GLM_DSEL"), problem, "TF_GLM_DSEL: 0 or 1");
+        s.dscore = try @import("cuda_dense16.zig").flag(get("TF_GLM_DSCORES"), problem, "TF_GLM_DSCORES: 0 or 1");
         s.q4_head_fp8 = try @import("cuda_dense16.zig").flag(get("TF_GLM_Q4_HEAD_FP8"), problem, "TF_GLM_Q4_HEAD_FP8: 0 or 1");
         s.q4_affine_mse = try @import("cuda_dense16.zig").flag(get("TF_GLM_Q4_AFFINE_MSE"), problem, "TF_GLM_Q4_AFFINE_MSE: 0 or 1");
         s.q4_python_prompt = try @import("cuda_dense16.zig").flag(get("TF_GLM_Q4_PYTHON_PROMPT"), problem, "TF_GLM_Q4_PYTHON_PROMPT: 0 or 1");
@@ -186,6 +215,7 @@ pub const Settings = struct {
                 return error.BadSetting;
             }
         }
+        if (get("TF_ROCE")) |v| s.roce_wide = std.mem.eql(u8, v, "1");
         if (get("TF_GLM_CHUNK_SOLO")) |v| {
             if (std.mem.eql(u8, v, "4096")) s.solo = true else if (std.mem.eql(u8, v, "2048")) s.solo = false else {
                 problem.* = "TF_GLM_CHUNK_SOLO: 2048 or 4096";
@@ -280,236 +310,15 @@ pub const Settings = struct {
         return s;
     }
 };
-/// The most ranks a world holds: rank 0's greedy pick gathers every rank's top-1 into one host array of this size.
 pub const max_world = 16;
-/// A setting by name (null when unset): a registered switch through the profile registry, the rest as before.
-pub fn environment(name: [:0]const u8) ?[]const u8 { return @import("profile").lookup(name); }
-/// Whether the group brings up its own RoCE path: not where TF_GLM_ROCE_MULTI=1 lends fabric/tp's wire (3+ ranks).
-pub fn ownRoce(s: Settings, world: usize) bool { return !(s.roce_multi and world >= 3); }
-pub const Fingerprint = extern struct {
-    layout: u32 = 65,
-    world: u32,
-    rank: u32,
-    kv8: u32 = 0,
-    pages: u32 = 0, // TF_KV_PAGES: the engine's own sequence is made on pages at init, so every rank pages alike
-    prompt_fixed_k: u32,
-    kda_segments: u32 = 0,
-    kda_min_streams: u32 = 8,
-    tiled: u32,
-    split: u32, // TF_GLM_PREFILL_REDUCE: 0 gather, 1 split, 2 ring
-    kda_wide: u32,
-    kda_pad: u32 = 0, // TF_GLM_KDA_PAD: every rank's KDA input rows carry one width
-    pieces: u32,
-    pair: u32, // TF_GLM_PROMPT_PAIR: rank 0's paired steps need the second chunk's buffers on every rank
-    layers: u32, // TF_GLM_LAYERS (0: all)
-    mtp: u32, // 1: the MTP head loads and runs (drafts on); 2: and DFlash2 (--drafter), whose rounds gather
-    vision: u32 = 0, // --vision's image tokens (0: off): rank 0 sends image rows every rank must hold
-    video_tokens: u32 = 0,
-    max_images: u32 = 0,
-    max_videos: u32 = 0,
-    max_frames: u32 = 0,
-    roce_multi: u32 = 0, // TF_GLM_ROCE_MULTI: every rank opens the borrowed wire or none does (a lone rank would wait on it)
-    roce_wide: u32 = 0, // TF_ROCE=1: the PR2205 fast wire
-    prewarm_sequence_slots: u32 = 0,
-    retain_sequence_slots: u32 = 0,
-    warm_turns: u32 = 0,
-    verify_rows: u32 = 8,
-    copy_policy_75c: u32 = 0,
-    first_copy_tokens: u32 = 3,
-    sample_batch: u32 = 0,
-    greedy_shared: u32 = 0,
-    exl3_fused_decode: u32 = 0,
-    admission_us: u32 = 0,
-    ffn_warm: u32 = 0,
-    ffn_graphs: u32 = 0,
-    nvfp4_ffn_graphs: u32 = 0,
-    dense_rows16: u32 = 0,
-    dense_segments: u32 = 0,
-    exl3_prompt_whole: u32 = 0,
-    kv_live_half: u32 = 0,
-    dflash_only_head: u32 = 0,
-    nvfp4_fact: u32 = 0,
-    dsel: u32 = 0,
-    greedy_batch: u32 = 0, // every rank batches the same verify draws or none does
-    verify_graphs: u32 = 0,
-    dflash_ingest_graphs: u32 = 0,
-    dflash_native_graph: u32 = 0,
-    dflash_graphs: u32 = 0,
-    dflash_confidence_only: u32 = 0,
-    dflash_confidence_floor: f64 = 0,
-    dflash_reference: u32 = 0,
-    dflash_edge_06: u32 = 0,
-    dflash_attn_tp4: u32 = 0,
-    dflash_mlp_wide: u32 = 0,
-    kv_host: u32 = 0, // TF_GLM_KV_HOST(_SHARED): every rank sizes the pool alike and maps the shared file, or none does
-    solo: u32 = 0, // TF_GLM_CHUNK_SOLO: rank 0's solo passes need the wider prompt buffers on every rank
-    l2pf: [4]u32 = @splat(0), // TF_GLM_L2PF's words: every rank prefetches alike, so none waits on a slower one's windows
-    q4_affine_mse: u32 = 0,
-    q4_head_fp8: u32 = 0,
-    q4_python_prompt: u32 = 0,
-    q4_python_splits: u32 = 0,
-    bits: u32 = 16 << 8 | 16, // TF_GLM_DENSE_BITS << 8 | TF_GLM_HEAD_BITS: every rank's matmuls read the same codes
-    capacity: u64, // tokens a sequence holds
-    heat_high: f64, // the heat bands in degrees (0 and 0: off): every rank must wait alike
-    heat_low: f64,
-    kv_host_gib: f64 = 0, // TF_GLM_KV_HOST_GIB: each rank's row marks span the host pages rank 0 counts
-    config: [32]u8, // sha256 of config.json
-    program: [32]u8, // sha256 of this executable
-    checkpoint: [64]u8, // hex digest of the checkpoint's metadata and every shard byte, through the digest cache
-    absorb_mma: u32 = 0,
-    pub const Field = enum {
-        layout,
-        rank,
-        world,
-        kv8,
-        pages,
-        prompt_fixed_k,
-        kda_segments,
-        kda_min_streams,
-        tiled,
-        split,
-        kda_wide,
-        kda_pad,
-        pieces,
-        pair,
-        layers,
-        mtp,
-        vision,
-        video_tokens,
-        max_images,
-        max_videos,
-        max_frames,
-        roce_multi,
-        roce_wide,
-        prewarm_sequence_slots,
-        retain_sequence_slots,
-        warm_turns,
-        verify_rows,
-        copy_policy_75c,
-        first_copy_tokens,
-        sample_batch,
-        greedy_shared,
-        exl3_fused_decode,
-        admission_us,
-        ffn_warm,
-        ffn_graphs,
-        nvfp4_ffn_graphs,
-        dense_rows16,
-        dense_segments,
-        exl3_prompt_whole,
-        kv_live_half,
-        dflash_only_head,
-        nvfp4_fact,
-        dsel,
-        greedy_batch,
-        verify_graphs,
-        dflash_ingest_graphs,
-        dflash_native_graph,
-        dflash_graphs,
-        dflash_confidence_only,
-        dflash_confidence_floor,
-        dflash_reference,
-        dflash_edge_06,
-        dflash_attn_tp4,
-        dflash_mlp_wide,
-        kv_host,
-        solo,
-        l2pf,
-        q4_affine_mse,
-        q4_head_fp8,
-        q4_python_prompt,
-        q4_python_splits,
-        bits,
-        capacity,
-        heat_high,
-        heat_low,
-        kv_host_gib,
-        config,
-        program,
-        checkpoint,
-        absorb_mma,
-    };
-    pub fn of(
-        world: usize,
-        rank: usize,
-        s: Settings,
-        capacity: usize,
-        mtp: bool,
-        config: [32]u8,
-        program: [32]u8,
-        checkpoint_digest: [32]u8,
-    ) Fingerprint {
-        const f: Fingerprint = .{
-            .kv8 = @intFromBool(s.kv8),
-            .pages = @intFromBool(s.pages),
-            .world = @intCast(world),
-            .rank = @intCast(rank),
-            .prompt_fixed_k = @intFromBool(s.prompt_fixed_k),
-            .kda_segments = @intFromBool(s.kda_segments),
-            .kda_min_streams = s.kda_min_streams,
-            .tiled = @intFromBool(s.tiled),
-            .split = if (!s.split) 0 else if (s.ring) 2 else 1,
-            .kda_wide = @intFromBool(s.kda_wide),
-            .kda_pad = @intFromBool(s.kda_pad),
-            .pieces = s.pieces,
-            .pair = @intFromBool(s.pair),
-            .layers = s.layers,
-            .mtp = @intFromBool(mtp),
-            .roce_multi = @intFromBool(s.roce_multi),
-            .roce_wide = @intFromBool(s.roce_wide and world >= 3), // two ranks ask by default, so a lone TF_ROCE=1 there is no difference
-            .prewarm_sequence_slots = @intFromBool(s.prewarm_sequence_slots),
-            .retain_sequence_slots = @intFromBool(s.retain_sequence_slots),
-            .warm_turns = @intFromBool(s.warm_turns),
-            .verify_rows = s.verify_rows,
-            .copy_policy_75c = @intFromBool(s.copy_policy_75c),
-            .first_copy_tokens = s.first_copy_tokens,
-            .sample_batch = @intFromBool(s.sample_batch),
-            .greedy_shared = @intFromBool(s.greedy_shared),
-            .exl3_fused_decode = @intFromBool(s.exl3_fused_decode),
-            .admission_us = s.admission_us,
-            .ffn_warm = @intFromBool(s.ffn_warm),
-            .ffn_graphs = @intFromBool(s.ffn_graphs),
-            .nvfp4_ffn_graphs = @intFromBool(s.nvfp4_ffn_graphs),
-            .dense_rows16 = @intFromBool(s.dense_rows16),
-            .dense_segments = @intFromBool(s.dense_segments),
-            .exl3_prompt_whole = @intFromBool(s.exl3_prompt_whole),
-            .kv_live_half = @intFromBool(s.kv_live_half),
-            .dflash_only_head = @intFromBool(s.dflash_only_head),
-            .nvfp4_fact = @intFromBool(s.nvfp4_fact),
-            .dsel = @intFromBool(s.dsel),
-            .greedy_batch = @intFromBool(s.greedy_batch),
-            .verify_graphs = @intFromBool(s.verify_graphs),
-            .dflash_ingest_graphs = @intFromBool(s.dflash_ingest_graphs),
-            .dflash_native_graph = @intFromBool(s.dflash_native_graph),
-            .dflash_graphs = @intFromBool(s.dflash_graphs),
-            .dflash_confidence_only = @intFromBool(s.dflash_confidence_only),
-            .dflash_confidence_floor = if (s.dflash_confidence_only) s.dflash_confidence_floor else 0,
-            .dflash_reference = @intFromBool(s.dflash_reference),
-            .dflash_edge_06 = @intFromBool(s.dflash_edge_06),
-            .dflash_attn_tp4 = @intFromBool(s.dflash_attn_tp4),
-            .dflash_mlp_wide = @intFromBool(s.dflash_mlp_wide and world >= 3),
-            .kv_host = s.kv_host,
-            .kv_host_gib = s.kv_host_gib,
-            .solo = @intFromBool(s.solo),
-            .l2pf = s.l2pf.words(),
-            .q4_head_fp8 = @intFromBool(s.q4_head_fp8),
-            .absorb_mma = @intFromBool(s.absorb_mma),
-            .q4_python_prompt = @intFromBool(s.q4_python_prompt),
-            .q4_python_splits = @intFromBool(s.q4_python_splits),
-            .q4_affine_mse = @intFromBool(s.q4_affine_mse),
-            .bits = @as(u32, s.dense_bits) << 8 | s.head_bits,
-            .capacity = capacity,
-            .heat_high = if (s.heat) |b| b.high_c else 0,
-            .heat_low = if (s.heat) |b| b.low_c else 0,
-            .config = config,
-            .program = program,
-            .checkpoint = std.fmt.bytesToHex(checkpoint_digest, .lower),
-        };
-        return f;
-    }
-};
+pub fn environment(name: [:0]const u8) ?[]const u8 {
+    return @import("profile").lookup(name);
+}
+pub fn ownRoce(s: Settings, world: usize) bool {
+    return !(s.roce_multi and world >= 3);
+}
+pub const Fingerprint = @import("cuda_rank_fingerprint.zig").Fingerprint;
 pub const Mismatch = struct { field: Fingerprint.Field, rank: usize };
-/// The first field where rank `r`'s fingerprint differs from rank 0's (or holds the wrong rank), null when all agree.
 pub fn mismatch(all: []const Fingerprint) ?Mismatch {
     for (all, 0..) |f, r| {
         if (f.layout != all[0].layout) return .{ .field = .layout, .rank = r };
@@ -522,35 +331,9 @@ pub fn mismatch(all: []const Fingerprint) ?Mismatch {
     }
     return null;
 }
-pub fn hashFile(gpa: std.mem.Allocator, io: std.Io, path: []const u8) ![32]u8 {
-    const bytes = try std.Io.Dir.cwd().readFileAlloc(io, path, gpa, .limited(1 << 30));
-    defer gpa.free(bytes);
-    return hashBytes(bytes);
-}
-pub fn hashBytes(bytes: []const u8) [32]u8 {
-    var out: [32]u8 = undefined;
-    std.crypto.hash.sha2.Sha256.hash(bytes, &out, .{});
-    return out;
-}
-pub fn gather(
-    comptime T: type,
-    d: *const cuda.Driver,
-    lib: *const cuda.nccl.Library,
-    comm: cuda.nccl.Comm,
-    stream: cuda.Stream,
-    rank: usize,
-    mine: T,
-    out: []T,
-) !void {
-    const size = @sizeOf(T);
-    var dev = try cuda.DeviceBuffer.alloc(d, size * out.len);
-    defer dev.free();
-    try dev.uploadAsync(rank * size, std.mem.asBytes(&mine), stream.handle);
-    const gathered = lib.api.ncclAllGather(dev.ptr + rank * size, dev.ptr, size, .u8, comm, stream.handle);
-    try lib.check(gathered, "ncclAllGather");
-    try stream.synchronize();
-    try dev.download(0, std.mem.sliceAsBytes(out));
-}
+pub const hashFile = @import("cuda_rank_identity.zig").hashFile;
+pub const hashBytes = @import("cuda_rank_options.zig").hashBytes;
+pub const gather = @import("cuda_rank_gather.zig").gather;
 /// All-gathers `mine` over `comm`; any disagreement is error.RankMismatch on every rank, printing what differs.
 pub fn agree(
     d: *const cuda.Driver,
@@ -594,6 +377,4 @@ fn unreachablePeer(rank: usize, peer: usize) error{SplitUnreachable} {
 const explain = @import("cuda_rank_names.zig").explain;
 pub const mediaFingerprint = @import("cuda_rank_names.zig").mediaFingerprint;
 /// The checkpoint digest a rank sends: its metadata and every shard byte, read again only for a file that changed.
-pub fn artifact(gpa: std.mem.Allocator, io: std.Io, dir: []const u8) ![32]u8 {
-    return @import("core").checkpoint_identity.fullIdentity(gpa, io, dir);
-}
+pub const artifact = @import("cuda_rank_identity.zig").artifact;

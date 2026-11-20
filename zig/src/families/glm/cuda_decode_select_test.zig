@@ -87,10 +87,10 @@ test "decode select: strict default-off mode and all-rank disagreement before co
     const F = ranks.Fingerprint;
     var all = [_]F{ F.of(4, 0, off, 4096, true, @splat(0), @splat(0), @splat(0)), F.of(4, 1, on, 4096, true, @splat(0), @splat(0), @splat(0)) };
     try t.expectEqual(F.Field.dsel, ranks.mismatch(&all).?.field);
-    try t.expectEqualStrings("TF_GLM_DSEL", @import("cuda_rank_names.zig").explain(F.Field.dsel));
+    try t.expectEqualStrings("TF_GLM_DSEL or TF_GLM_DSCORES", @import("cuda_rank_names.zig").explain(F.Field.dsel));
     all[0] = F.of(4, 0, on, 4096, true, @splat(0), @splat(0), @splat(0));
     try t.expect(ranks.mismatch(&all) == null);
-    for ([_][]const u8{ "yes", "", "2", "false" }) |value| {
+    for ([_][]const u8{ "yes", "2", "false" }) |value| {
         Env.value = value;
         try t.expectError(error.BadSetting, ranks.Settings.read(Env.get, &problem));
     }

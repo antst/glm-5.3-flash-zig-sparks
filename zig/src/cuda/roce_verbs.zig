@@ -126,10 +126,8 @@ pub fn opsCall(comptime T: type, ctx: *Context, offset: usize) T {
 }
 
 /// The HCAs to stripe over, at most two: TF_ROCE_HCA, else NCCL_IB_HCA without "=^" prefixes or ":port" suffixes.
-pub fn hcaNames(io: std.Io, gpa: std.mem.Allocator, names: *[max_hcas][64]u8, lens: *[max_hcas]usize) !u32 {
-    _ = io;
-    _ = gpa;
-    const raw = std.c.getenv("TF_ROCE_HCA") orelse std.c.getenv("NCCL_IB_HCA") orelse return error.NoHca;
+pub fn hcaNames(given: ?[*:0]const u8, names: *[max_hcas][64]u8, lens: *[max_hcas]usize) !u32 {
+    const raw = given orelse return error.NoHca;
     var n: u32 = 0;
     var it = std.mem.tokenizeScalar(u8, std.mem.span(raw), ',');
     while (it.next()) |w| {
@@ -146,8 +144,8 @@ pub fn hcaNames(io: std.Io, gpa: std.mem.Allocator, names: *[max_hcas][64]u8, le
 }
 
 /// The HCA's RoCE v2 IPv4 GID (TF_ROCE_GID_INDEX overrides): its index differs between hosts' tables.
-pub fn gidIndex(io: std.Io, gpa: std.mem.Allocator, name: []const u8) !c_int {
-    if (@import("sys").getenv("TF_ROCE_GID_INDEX") != null) return @import("sys").environment.read(c_int, "TF_ROCE_GID_INDEX", 0);
+pub fn gidIndex(io: std.Io, gpa: std.mem.Allocator, name: []const u8, set: bool) !c_int {
+    if (set) return @import("sys").environment.read(c_int, "TF_ROCE_GID_INDEX", 0);
     const cwd = std.Io.Dir.cwd();
     var i: c_int = 0;
     while (i < 16) : (i += 1) {

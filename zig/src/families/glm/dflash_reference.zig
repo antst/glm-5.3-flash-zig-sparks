@@ -6,8 +6,9 @@ const df = @import("dflash.zig");
 pub fn scope(s: anytype, world: usize, has_drafter: bool, bits: u8) !void {
     if (!s.dflash_reference) return;
     const heads_ok = (world == 4 and s.dflash_attn_tp4) or (world == 2 and !s.dflash_attn_tp4);
+    const pages_ok = !s.pages or (world == 2 and s.kv8 and s.dflash_only_head);
     if (!heads_ok or !has_drafter or bits != 4 or !s.dflash_mlp_wide or
-        !s.dflash_confidence_only or s.pages or s.kv_host != 0 or s.verify_graphs or
+        !s.dflash_confidence_only or !pages_ok or s.kv_host != 0 or s.verify_graphs or
         !@import("cuda_target_precision.zig").supported(s))
         return error.DrafterReferenceScope;
 }
@@ -37,6 +38,7 @@ pub fn configure(gpa: std.mem.Allocator, io: std.Io, e: anytype, dr: *df.Drafter
         dr.module.unload();
         dr.module = module;
         dr.k = kernels;
+        dr.pdl = false;
         std.log.info("GLM_DFLASH_REFERENCE rank={d} active=true world=2 attention=replicated confidence_beta=2", .{dr.rank});
         return;
     }
@@ -48,6 +50,7 @@ pub fn configure(gpa: std.mem.Allocator, io: std.Io, e: anytype, dr: *df.Drafter
     dr.module.unload();
     dr.module = module;
     dr.k = kernels;
+    dr.pdl = false;
     dr.attention.?.kernels = attention;
     dr.python_attention = local;
     if (e.settings.dense_bits == 16) {
@@ -121,4 +124,11 @@ test "drafter reference: strict default, fingerprint disagreement and initial sc
     try scope(s, 4, true, 4);
     s.dense_bits = 6;
     try std.testing.expectError(error.DrafterReferenceScope, scope(s, 4, true, 4));
+    s.dflash_attn_tp4 = false;
+    s.dense_bits = 8;
+    s.pages = true;
+    s.kv8 = true;
+    try std.testing.expectError(error.DrafterReferenceScope, scope(s, 2, true, 4));
+    s.dflash_only_head = true;
+    try scope(s, 2, true, 4);
 }

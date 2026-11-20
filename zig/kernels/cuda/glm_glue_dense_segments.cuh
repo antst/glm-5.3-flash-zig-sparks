@@ -1,5 +1,6 @@
 // Dense nonpaged shared windows: reuse each sequence's chunk math with a row descriptor.
 #pragma once
+#include "glm_pdl.cuh"
 #include "glm_glue_attn.cuh"
 
 namespace glm_dense_segments {
@@ -28,12 +29,14 @@ __device__ __forceinline__ void chunks(const Row* table, const __nv_bfloat16* qa
 extern "C" __global__ void __launch_bounds__(256)
 tf_glm_dense_seg_chunks_16_v1(const glm_dense_segments::Row* table, const __nv_bfloat16* qa,
                              float* po, float* pm, float* pl, long long rows, long long heads, float scale) {
+    glm_pdl::enter();
   glm_dense_segments::chunks<false>(table, qa, po, pm, pl, rows, heads, scale);
 }
 
 extern "C" __global__ void __launch_bounds__(256)
 tf_glm_dense_seg_chunks_16_fp8_v1(const glm_dense_segments::Row* table, const __nv_bfloat16* qa,
                                  float* po, float* pm, float* pl, long long rows, long long heads, float scale) {
+    glm_pdl::enter();
   glm_dense_segments::chunks<true>(table, qa, po, pm, pl, rows, heads, scale);
 }
 
@@ -41,6 +44,7 @@ tf_glm_dense_seg_chunks_16_fp8_v1(const glm_dense_segments::Row* table, const __
 extern "C" __global__ void __launch_bounds__(128)
 tf_glm_dense_seg_merge_v1(const glm_dense_segments::Row* table, const float* po, const float* pm,
                          const float* pl, __nv_bfloat16* out, long long rows, long long heads) {
+    glm_pdl::enter();
   constexpr int LW = glm_attn::LW;
   const int64_t r = blockIdx.x, h = blockIdx.y;
   const int nch = table[r].chunks;

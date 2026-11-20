@@ -1,6 +1,7 @@
 //! DFlash2's device passes: the context ingest (taps through fc into the rings) and the block (embed to candidates).
 const std = @import("std");
 const cuda = @import("cuda");
+const cuda_pdl = @import("cuda_pdl.zig");
 const glue = @import("cuda_glue.zig");
 const mm = @import("cuda_mm.zig");
 const q4 = @import("cuda_q4.zig");
@@ -9,8 +10,8 @@ const Drafter = df.Drafter;
 const D = df.D;
 const BLOCK = df.BLOCK;
 
-fn go(f: cuda.Function, grid: cuda.Dim3, threads: u32, e: anytype, a: *cuda.Args) !void {
-    try cuda.launch.launch(f, .{ .grid = grid, .block = .{ .x = threads } }, e.stream, a);
+fn go(dr: *const Drafter, f: cuda.Function, grid: cuda.Dim3, threads: u32, e: anytype, a: *cuda.Args) !void {
+    try cuda_pdl.launchIf(dr.pdl, f, .{ .grid = grid, .block = .{ .x = threads } }, e.stream, a);
 }
 
 fn set(e: anytype) glue.Set {
@@ -33,7 +34,7 @@ fn linWithSums(dr: *const Drafter, e: anytype, x: u64, w: df.Lin, out: u64, m: u
                 a.add(@as(i32, @intCast(q.k)));
                 a.add(@as(i32, @intCast(q.k)));
                 a.add(sums);
-                try go(dr.k.gsum, .{ .x = @intCast(m) }, 128, e, &a);
+                try go(dr, dr.k.gsum, .{ .x = @intCast(m) }, 128, e, &a);
             }
             var r0: usize = 0;
             while (r0 < m) : (r0 += 64) {
@@ -87,7 +88,7 @@ pub fn ingestPass(dr: *Drafter, e: anytype, N: usize) !void {
         a.add(@as(i32, @intCast(li)));
         a.add(df.EPS);
         a.add(df.THETA);
-        try go(dr.k.ctx_kv, .{ .x = @intCast(N), .y = 8 }, 64, e, &a);
+        try go(dr, dr.k.ctx_kv, .{ .x = @intCast(N), .y = 8 }, 64, e, &a);
     }
 }
 
@@ -99,7 +100,7 @@ fn conv(dr: *const Drafter, e: anytype, z: u64, which: i32, base: u64, out: u64,
     a.add(base);
     a.add(out);
     a.add(@as(i32, @intFromBool(add)));
-    try go(dr.k.conv, .{ .x = @intCast(M), .y = D / 1024 }, 256, e, &a);
+    try go(dr, dr.k.conv, .{ .x = @intCast(M), .y = D / 1024 }, 256, e, &a);
 }
 
 /// The block pass for `S` streams (tables uploaded): embed, 5 layers, norm, each rank's 16 best a row, gathered.
@@ -158,7 +159,7 @@ fn beforeAttention(dr: *Drafter, e: anytype, S: usize, li: usize) !void {
         a.add(dr.q);
         a.add(dr.kb);
         a.add(dr.vb);
-        try go(if (local) |v| v.kernels.block_qkv else dr.k.block_qkv, .{ .x = @intCast(M), .y = @intCast(qh + kvh) }, 64, e, &a);
+        try go(dr, if (local) |v| v.kernels.block_qkv else dr.k.block_qkv, .{ .x = @intCast(M), .y = @intCast(qh + kvh) }, 64, e, &a);
     }
     if (dr.python_attention) |p| {
         try p.run(dr, e, S, li);
@@ -169,10 +170,10 @@ fn beforeAttention(dr: *Drafter, e: anytype, S: usize, li: usize) !void {
         a.add(df.SCALE);
         for ([_]u64{ dr.pm, dr.pl, dr.pacc }) |p| a.add(p);
         if (local) |v| a.add(@as(i32, @intCast(v.plan.kv0 / df.HD)));
-        try go(if (local) |v| v.kernels.attn_part else dr.k.attn_part, .{ .x = @intCast(S), .y = @intCast(kvh), .z = df.CH }, 256, e, &a);
+        try go(dr, if (local) |v| v.kernels.attn_part else dr.k.attn_part, .{ .x = @intCast(S), .y = @intCast(kvh), .z = df.CH }, 256, e, &a);
         var b: cuda.Args = .{};
         for ([_]u64{ dr.pm, dr.pl, dr.pacc, dr.att }) |p| b.add(p);
-        try go(if (local) |v| v.kernels.attn_merge else dr.k.attn_merge, .{ .x = @intCast(M), .y = @intCast(qh) }, df.HD, e, &b);
+        try go(dr, if (local) |v| v.kernels.attn_merge else dr.k.attn_merge, .{ .x = @intCast(M), .y = @intCast(qh) }, df.HD, e, &b);
     }
     if (local != null) {
         const bytes = M * D * 4;
@@ -201,7 +202,7 @@ fn beforeMlp(dr: *Drafter, e: anytype, S: usize, li: usize) !void {
         a.add(dr.gu);
         a.add(dr.act);
         a.add(@as(i32, @intCast(dr.ff)));
-        try go(dr.k.swiglu, .{ .x = @intCast(M), .y = @intCast((dr.ff + 1023) / 1024) }, 256, e, &a);
+        try go(dr, dr.k.swiglu, .{ .x = @intCast(M), .y = @intCast((dr.ff + 1023) / 1024) }, 256, e, &a);
     }
     if (dr.split) {
         const bytes = M * D * 4;
@@ -227,7 +228,7 @@ fn sum(dr: *Drafter, e: anytype, S: usize) !void {
     a.add(dr.a);
     a.add(@as(i32, @intCast(M)));
     a.add(@as(i32, @intCast(dr.world)));
-    try go(dr.k.sumn, .{ .x = @intCast(M), .y = D / 1024 }, 256, e, &a);
+    try go(dr, dr.k.sumn, .{ .x = @intCast(M), .y = D / 1024 }, 256, e, &a);
 }
 
 fn candidates(dr: *Drafter, e: anytype, S: usize) !void {
@@ -249,13 +250,13 @@ fn candidates(dr: *Drafter, e: anytype, S: usize) !void {
         a.add(@as(i32, @intCast(e.share.vocab.lo)));
         a.add(dr.pv);
         a.add(dr.pi);
-        try go(dr.k.top16_part, .{ .x = @intCast(M), .y = @intCast(chunks) }, 256, e, &a);
+        try go(dr, dr.k.top16_part, .{ .x = @intCast(M), .y = @intCast(chunks) }, 256, e, &a);
         var b: cuda.Args = .{};
         b.add(dr.pv);
         b.add(dr.pi);
         b.add(@as(i32, @intCast(chunks)));
         b.add(dr.gtk + e.share.rank * nw * 4);
-        try go(dr.k.top16_merge, .{ .x = @intCast(M) }, 256, e, &b);
+        try go(dr, dr.k.top16_merge, .{ .x = @intCast(M) }, 256, e, &b);
     }
 }
 

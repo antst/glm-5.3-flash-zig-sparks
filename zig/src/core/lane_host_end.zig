@@ -4,6 +4,7 @@ const fill = @import("lane_host_fill.zig");
 const lane_halt = @import("lane_halt.zig");
 const lane_stream = @import("lane_stream.zig");
 const recalls = @import("lane_host_recall.zig");
+const load = @import("lane_host_load.zig");
 const LaneHost = @import("lane_host.zig").LaneHost;
 const Job = LaneHost.Job;
 
@@ -30,6 +31,7 @@ pub fn takeCancels(h: *LaneHost) void {
         h.unlock();
         if (found) |job| {
             if (job.fill_began and job.prefilled == null and !job.stream.finished) if (h.core.backend.vtable.cancel_prefill) |keep_prefix| {
+                @import("lane_host_load.zig").calling(h, job);
                 keep_prefix(h.core.backend.ptr, &job.stream) catch |err| {
                     _ = dropFailed(h, job, err);
                     continue;
@@ -54,6 +56,7 @@ pub fn failed(h: *const LaneHost, err: anyerror) void {
 /// A request the backend failed: the failure hook hears the error and the request ends with the backend's words.
 pub fn dropFailed(h: *LaneHost, job: *Job, err: anyerror) bool {
     failed(h, err);
+    load.failed(h, .backend_prompt);
     return h.drop(job, h.words(err));
 }
 
@@ -67,7 +70,7 @@ pub fn deliverPending(h: *LaneHost) void {
     }
 }
 
-/// Fail this round's live streams and stranded prompt finals; retain other jobs for their own next step.
+/// A failed round takes the live streams (paused among them) and its unrun finals' prompts; the rest keep their places.
 pub fn failRound(h: *LaneHost, err: anyerror) void {
     failed(h, err);
     std.log.warn("lane host: a round failed ({s}): the round's streams fail", .{@errorName(err)});
@@ -86,7 +89,7 @@ pub fn failRound(h: *LaneHost, err: anyerror) void {
             }
         };
         if (!in_round) {
-            // A planned final that never ran must end here rather than retain its lane forever.
+            // the planner has this prompt decoding and offers it to no later plan: fail it, not strand its lane
             if (job.started and !job.stream.finished and plannedToEnd(h, job)) {
                 endFailed(h, job, @errorName(err));
                 continue;
@@ -101,7 +104,7 @@ pub fn failRound(h: *LaneHost, err: anyerror) void {
     }
 }
 
-/// Whether a final or last prompt piece was planned but never ran, including a damaged restore.
+/// Whether the plan carried the prompt to its end: its final is listed, or a piece ends at the prompt's last row.
 fn plannedToEnd(h: *const LaneHost, job: *const Job) bool {
     const key = @intFromPtr(job);
     for (h.finals.items) |at| if (at == key) return true;
@@ -123,10 +126,11 @@ pub fn failAll(h: *LaneHost, message: []const u8) void {
     for (jobs.items) |job| endFailed(h, job, message);
 }
 
-/// Unfill a failed job, discard its unfinished stream if started, and finish with the backend's message.
+/// Ends a failed job: off the filling list, its stream discarded unless already finished.
 fn endFailed(h: *LaneHost, job: *Job, message: []const u8) void {
     h.lock();
     fill.unfill(h, job);
+    h.load.failures[@backingInt(load.Failure.backend_round)] += 1;
     h.unlock();
     if (job.started and !job.stream.finished) h.core.discard(&job.stream);
     h.finish(job, .failed, message);
@@ -166,11 +170,11 @@ pub fn requeue(h: *LaneHost, job: *Job) bool {
         h.queued.insert(h.gpa, 0, job) catch break :blk false;
         break :blk true;
     };
-    @import("lane_host_load.zig").ended(job); // before the teardown: this attempt's time leaves with it
+    load.ended(job); // before the teardown: this attempt's time leaves with it
     if (waits) {
         h.load.requeued += 1;
         h.memory_lanes = others; // under the lock: a publish reads it
-    }
+    } else if (others == 0) h.load.failures[@backingInt(load.Failure.lane_memory_alone)] += 1;
     h.unlock();
     if (!waits) {
         h.finish(job, .failed, if (others > 0) "out of memory" else alone_words);
@@ -185,6 +189,7 @@ pub fn requeue(h: *LaneHost, job: *Job) bool {
     job.started = false;
     job.fill_began = false;
     job.reached = 0;
+    job.cache_promise = .{};
     job.entry = null; // looked up again at its next admission
     h.gpa.free(job.marks);
     job.marks = &.{};

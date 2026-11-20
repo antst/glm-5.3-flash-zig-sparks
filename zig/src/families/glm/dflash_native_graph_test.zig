@@ -150,7 +150,7 @@ test "DFlash graphs: native strict flag and dependencies are agreed in fingerpri
     const FP = ranks.Fingerprint;
     const a = FP.of(4, 0, off, 4096, true, @splat(0), @splat(0), @splat(0));
     const b = FP.of(4, 1, on, 4096, true, @splat(0), @splat(0), @splat(0));
-    try std.testing.expectEqual(@as(u32, 65), a.layout);
+    try std.testing.expectEqual(@as(u32, 85), a.layout);
     try std.testing.expectEqual(FP.Field.dflash_native_graph, ranks.mismatch(&.{ a, b }).?.field);
     Env.deps = false;
     try std.testing.expectError(error.BadSetting, ranks.Settings.read(Env.get, &problem));
@@ -158,7 +158,7 @@ test "DFlash graphs: native strict flag and dependencies are agreed in fingerpri
     Env.cache = "0";
     try std.testing.expectError(error.BadSetting, ranks.Settings.read(Env.get, &problem));
     Env.cache = null;
-    for ([_][]const u8{ "yes", "", "2" }) |v| {
+    for ([_][]const u8{ "yes", "2" }) |v| {
         Env.value = v;
         try std.testing.expectError(error.BadSetting, ranks.Settings.read(Env.get, &problem));
     }

@@ -1,4 +1,4 @@
-//! DFlash2 drafts (--drafter): incoai/GLM-5.3-Flash-DFlash2 (CC BY-NC-ND 4.0, read unmodified), after z-lab (MIT).
+//! DFlash2 drafts (--drafter): incoai/GLM-5.3-Flash-DFlash2 (Apache-2.0, read unmodified), after z-lab (MIT).
 const std = @import("std");
 const cuda = @import("cuda");
 const mm = @import("cuda_mm.zig");
@@ -42,9 +42,8 @@ pub fn tapRows(prompt_rows: usize) usize {
 }
 
 /// TF_GLM_DRAFT_CONFIDENCE: where a DFlash2 chain's chance product stops it (glm_cuda's 0.7).
-pub fn confidence() f64 {
-    const v = std.c.getenv("TF_GLM_DRAFT_CONFIDENCE") orelse return 0.7;
-    return std.fmt.parseFloat(f64, std.mem.span(v)) catch 0.7;
+pub fn confidence() !f64 {
+    return @import("sys").environment.read(f64, "TF_GLM_DRAFT_CONFIDENCE", 0.7);
 }
 
 /// The drafter MLP split: two ranks as before; wider only by explicit policy, with 256-aligned shares of FF.
@@ -108,6 +107,8 @@ pub const Run = struct { ring: u64, taps: u64, n: usize, pos0: i64 };
 
 /// Every rank runs the ingest and the block pass on its half of the MLP and head; rank 0 selects the drafts.
 pub const Drafter = struct {
+    checkpoint_digest: [32]u8 = @splat(0), // the loaded artifact, for the window-price cache key
+    bits: u8 = 0, // the loader's actual linear precision
     gpa: std.mem.Allocator,
     d: *const cuda.Driver,
     module: cuda.Module,
@@ -127,6 +128,7 @@ pub const Drafter = struct {
     rank: usize,
     world: usize,
     edge_06: bool = false, // selector CPU score only; immutable after load, agreed in Settings
+    pdl: bool = true, // true only for embedded kernels with the dependency wait
     compat: u8 = 0, // Explicit diagnostic only: Q4 down, BF16 selector projection, Python selector.
     temp: f64 = 1.0, // the selector's softmax temperature for the drafts' chances
     tap_rows: usize = MAX_CTX, // taps_prefill's rows (tapRows of the engine's prompt buffers)
@@ -220,7 +222,7 @@ pub const Drafter = struct {
 
     /// Where a forward's taps go: a prompt chunk's rows or a verify's.
     pub fn taps(dr: *const Drafter, chunk: bool) taps_mod.Taps {
-        return .{ .f = dr.k.tap, .out = if (chunk) dr.taps_prefill else dr.taps_step };
+        return .{ .f = dr.k.tap, .out = if (chunk) dr.taps_prefill else dr.taps_step, .pdl = dr.pdl };
     }
 
     fn slot(dr: *Drafter, i: u32) !*Slot {

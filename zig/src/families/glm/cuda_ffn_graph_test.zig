@@ -171,7 +171,7 @@ test "FFN graphs: strict default-off settings and fingerprint agreement" {
     const a = ranks.Fingerprint.of(4, 0, off, 4096, true, @splat(0), @splat(0), @splat(0));
     const z = ranks.Fingerprint.of(4, 1, on, 4096, true, @splat(0), @splat(0), @splat(0));
     try t.expectEqual(ranks.Fingerprint.Field.ffn_graphs, ranks.mismatch(&.{ a, z }).?.field);
-    for ([_][]const u8{ "", "true", "2", "1 " }) |v| {
+    for ([_][]const u8{ "true", "2", "1 " }) |v| {
         Env.value = v;
         try t.expectError(error.BadSetting, ranks.Settings.read(Env.get, &problem));
     }

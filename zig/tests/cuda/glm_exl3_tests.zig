@@ -5,6 +5,7 @@ const core = @import("core");
 const glm = @import("glm_cuda");
 const check = @import("check.zig");
 const qr = @import("quant_ref_tests.zig");
+const compact_prompt = @import("glm_exl3_compact.zig");
 const Gpu = check.Gpu;
 
 const fmt = core.exl3_format;
@@ -105,32 +106,45 @@ const Run = struct { ey: u64, rows: usize };
 
 /// The family's dispatch on `x` (bf16 [rows][D]) and `pk`: ey [rows][slots][D] fp32, the shared slot left as filled.
 fn run(r: *Rig, k: *const glm.exl3.Kernels, ek: *const glm.experts.Kernels, s: Set, x: []const u16, pk: []const i32, rows: usize, prompt: bool) !Run {
-    return runShape(r, k, ek, s, x, pk, rows, prompt, D, N);
+    return runMode(r, k, ek, s, x, pk, rows, prompt, false, null);
+}
+
+fn runMode(r: *Rig, k: *const glm.exl3.Kernels, ek: *const glm.experts.Kernels, s: Set, x: []const u16, pk: []const i32, rows: usize, prompt: bool, legacy: bool, sentinel: ?u32) !Run {
+    return runShapeMode(r, k, ek, s, x, pk, rows, prompt, D, N, legacy, sentinel);
 }
 
 fn runShape(r: *Rig, k: *const glm.exl3.Kernels, ek: *const glm.experts.Kernels, s: Set, x: []const u16, pk: []const i32, rows: usize, prompt: bool, dims: usize, width: usize) !Run {
-    const P = rows * glm.exl3.top_k;
+    return runShapeMode(r, k, ek, s, x, pk, rows, prompt, dims, width, false, null);
+}
+
+fn runShapeMode(r: *Rig, k: *const glm.exl3.Kernels, ek: *const glm.experts.Kernels, s: Set, x: []const u16, pk: []const i32, rows: usize, prompt: bool, dims: usize, width: usize, legacy: bool, sentinel: ?u32) !Run {
+    const P = rows * slots;
     const tile: usize = if (prompt) glm.experts.staged_tile else glm.experts.tile;
     const wide = P > cuda.grouped.small;
     const plan: cuda.grouped.Plan = .{
         .members = try r.zeros(P * 4),
-        .items = try r.zeros(cuda.grouped.maxItems(P, E, tile) * 12),
+        .items = try r.zeros(cuda.grouped.maxItems(P, E + 1, tile) * 12),
         .counts = try r.zeros(8),
         .rank = try r.zeros((if (wide) P else 1) * 4),
-        .hist = try r.zeros((if (wide) (P + 1023) / 1024 * E else 1) * 4),
+        .hist = try r.zeros((if (wide) (P + 1023) / 1024 * (E + 1) else 1) * 4),
     };
-    const sz = glm.exl3.scratchBytes(rows, dims, width, prompt, s.shx);
+    const sz: [4]usize = if (legacy) .{ compact_prompt.scratchBytes(rows, dims, width, s.shx), 4, 4, 4 } else glm.exl3.scratchBytes(rows, dims, width, prompt, s.shx);
     const sc: glm.exl3.Scratch = .{ .picks = try r.zeros(sz[0]), .xg = try r.zeros(sz[1]), .xu = try r.zeros(sz[2]), .z = try r.zeros(sz[3]) };
     const nbytes = rows * slots * dims * 4;
     const guarded = try r.a.alloc(u8, nbytes + 512);
     @memset(guarded, 0x5a);
     @memset(guarded[256..][0..nbytes], 0);
+    if (sentinel) |word| for (0..nbytes / @sizeOf(u32)) |i| {
+        std.mem.writeInt(u32, guarded[256 + i * 4 ..][0..4], word, .little);
+    };
     const guard_base = try r.dev(guarded);
     const ey = guard_base + 256;
     const xd = try r.zeros(P * width * 2);
     const xp = try r.dev(std.mem.sliceAsBytes(x));
     const pp = try r.dev(std.mem.sliceAsBytes(pk));
-    try glm.exl3.run(k, ek, r.s, s.experts(), sc, plan, xp, dims, pp, slots, rows, E, dims, width, limit, prompt, ey, xd);
+    if (legacy) {
+        try compact_prompt.run(k, ek, r.s, s.experts(), sc, plan, xp, dims, pp, slots, rows, E, dims, width, limit, ey);
+    } else try glm.exl3.run(k, ek, r.s, s.experts(), sc, plan, xp, dims, pp, slots, rows, E, dims, width, limit, prompt, ey, xd);
     try r.s.synchronize();
     try check.sameBytes("EXL3 input unchanged", std.mem.sliceAsBytes(x), try r.back(xp, x.len * 2));
     try check.sameBytes("EXL3 picks unchanged", std.mem.sliceAsBytes(pk), try r.back(pp, pk.len * 4));
@@ -138,6 +152,28 @@ fn runShape(r: *Rig, k: *const glm.exl3.Kernels, ek: *const glm.experts.Kernels,
     try check.sameBytes("EXL3 leading guard", guarded[0..256], guards[0..256]);
     try check.sameBytes("EXL3 trailing guard", guarded[0..256], guards[nbytes + 256 ..]);
     return .{ .ey = ey, .rows = rows };
+}
+
+/// Every routed FP32 word against the compact 1,024-row prompt caller; the shared writer alone owns the ninth slot.
+fn largeBytes(r: *Rig, k: *const glm.exl3.Kernels, ek: *const glm.experts.Kernels, s: Set) !void {
+    const sentinel: u32 = 0x4b123456;
+    for ([_]usize{ 2054, 4102 }) |rows| {
+        const x = try r.bfs(rows * D, 1.0);
+        const pk = try picks(r, rows);
+        const direct = try runMode(r, k, ek, s, x, pk, rows, true, false, sentinel);
+        const legacy = try runMode(r, k, ek, s, x, pk, rows, true, true, sentinel);
+        const got = try r.back(direct.ey, rows * slots * D * 4);
+        const want = try r.back(legacy.ey, rows * slots * D * 4);
+        for (0..rows) |m| {
+            const at = m * slots * D * 4;
+            try check.expect(std.mem.eql(u8, got[at..][0 .. 8 * D * 4], want[at..][0 .. 8 * D * 4]), "glm-exl3 prompt: row {d}/{d}, slots 0-7 equal the 1024-call path (shared rotation {})", .{ m, rows, s.shx });
+            for (0..D) |j| {
+                const off = at + (8 * D + j) * 4;
+                try check.expect(std.mem.readInt(u32, got[off..][0..4], .little) == sentinel and std.mem.readInt(u32, want[off..][0..4], .little) == sentinel, "glm-exl3 prompt: row {d}/{d} shared slot column {d} keeps its sentinel", .{ m, rows, j });
+            }
+        }
+        std.debug.print("GLM EXL3 DIRECT BYTES PASS rows={d} shared_rotation={} routed_words={d} shared_sentinel_words={d}\n", .{ rows, s.shx, rows * 8 * D, rows * D });
+    }
 }
 
 /// The kernels' SwiGLU: gate and up rounded to bf16 and limited, silu to bf16, the product to bf16.
@@ -220,10 +256,11 @@ pub fn run_(gpu: Gpu) !void {
     defer pm.unload();
     var k = try glm.exl3.Kernels.load(gpu.d);
     defer k.unload();
-    var ek = try glm.experts.Kernels.load(gpu.d, pm, @intCast(try gpu.ctx.attribute(.multiprocessor_count)), false);
+    var ek = try glm.experts.Kernels.load(gpu.d, pm, @intCast(try gpu.ctx.attribute(.multiprocessor_count)), null);
     defer ek.unload();
     for ([_]bool{ true, false }) |one| {
         const s = try weights(&r, one);
+        try largeBytes(&r, &k, &ek, s);
         for ([_]usize{ 1, 3, 8 }) |rows| { // decode windows
             const x = try r.bfs(rows * D, 1.0);
             const pk = try picks(&r, rows);
@@ -292,7 +329,7 @@ fn fusedWidth(gpu: Gpu, path: []const u8, width: usize) !void {
     try glm.exl3.loadFusedDecode(gpu.gpa, gpu.io, gpu.d, path, &candidate);
     var calls: u64 = 0;
     candidate.decode_calls = &calls;
-    var ek = try glm.experts.Kernels.load(gpu.d, pm, @intCast(try gpu.ctx.attribute(.multiprocessor_count)), false);
+    var ek = try glm.experts.Kernels.load(gpu.d, pm, @intCast(try gpu.ctx.attribute(.multiprocessor_count)), null);
     defer ek.unload();
     var prng = std.Random.DefaultPrng.init(197);
     for ([_]bool{ true, false }) |one| {
@@ -326,8 +363,7 @@ fn fusedWidth(gpu: Gpu, path: []const u8, width: usize) !void {
                 for (0..rows) |r| for (0..(slots - 1) * dims) |col| {
                     const index = (r * slots * dims + col) * 4;
                     const value: f32 = @bitCast(std.mem.readInt(u32, got[index..][0..4], .little));
-                    try check.expect(if (nonfinite and r < 3) std.math.isNan(value) else std.math.isFinite(value),
-                        "EXL3 fused decode wrote expected finite/nonfinite routed rows", .{});
+                    try check.expect(if (nonfinite and r < 3) std.math.isNan(value) else std.math.isFinite(value), "EXL3 fused decode wrote expected finite/nonfinite routed rows", .{});
                 };
                 freeAfter(&rig, mark);
             }
@@ -356,7 +392,7 @@ pub fn whole(gpu: Gpu, path: []const u8) !void {
     try glm.exl3.loadWhole(gpu.gpa, gpu.io, gpu.d, path, &candidate);
     var calls: u64 = 0;
     candidate.whole_calls = &calls;
-    var ek = try glm.experts.Kernels.load(gpu.d, pm, @intCast(try gpu.ctx.attribute(.multiprocessor_count)), false);
+    var ek = try glm.experts.Kernels.load(gpu.d, pm, @intCast(try gpu.ctx.attribute(.multiprocessor_count)), null);
     defer ek.unload();
     for ([_]cuda.Function{ candidate.whole.?.kernels.rotate, candidate.whole.?.kernels.gateup, candidate.whole.?.kernels.down }, [_]u32{ 32, 256, 256 }) |f, threads| {
         const limits = core.contract.limits;

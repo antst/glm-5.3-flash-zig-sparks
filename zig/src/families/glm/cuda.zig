@@ -4,12 +4,19 @@ pub const experts = @import("cuda_experts.zig");
 pub const exl3 = @import("cuda_exl3.zig");
 pub const vision = @import("cuda_vision.zig");
 pub const mm = @import("cuda_mm.zig");
+pub const q8_activation = @import("cuda_q8_activation.zig");
+pub const q8_mse = @import("cuda_q8_mse.zig");
+pub const q8_moments = @import("cuda_q8_moments.zig");
+pub const q8_activation_options = @import("cuda_q8_activation_options.zig");
+pub const q4_activation_options = @import("cuda_q4_activation_options.zig");
+pub const affine_activation = @import("cuda_affine_activation.zig");
+pub const q4_activation_reference = @import("cuda_q4_activation_reference.zig");
 pub const vision_config = @import("vision_config.zig");
 pub const image_core = @import("image_core.zig");
 /// An image's bytes to the tower's patches, as the Metal family prepares them (core's decoder).
 pub const image = image_core.For(@import("core").picture);
 pub const glue = @import("cuda_glue.zig");
-pub const kda = @import("cuda_kda.zig");
+pub const kda = @import("cuda").kda;
 pub const kda_segments = @import("cuda_kda_segments.zig");
 pub const kda_options = @import("cuda_kda_options.zig");
 pub const b16 = @import("cuda_b16.zig");
@@ -47,6 +54,7 @@ pub const open_owner = @import("cuda_open_owner.zig");
 pub const images = @import("cuda_images.zig");
 pub const follow = @import("cuda_follow.zig");
 pub const lanes = @import("cuda_lanes.zig");
+pub const lane_costs = @import("cuda_lane_costs.zig");
 pub const native = @import("cuda_native.zig");
 pub const comm1107 = @import("cuda_comm1107.zig");
 pub const copy_75c = @import("cuda_copy_75c.zig");
@@ -54,6 +62,8 @@ pub const snapshots = @import("cuda_snapshots.zig");
 pub const dflash_head_mode = @import("cuda_dflash_head_mode.zig");
 pub const mtp_load = @import("cuda_mtp_load.zig");
 pub const kv_host = @import("cuda_kv_host.zig");
+pub const pdl = @import("cuda_pdl.zig");
+
 pub const disk_image = @import("cuda_disk_image.zig");
 pub const disk_ranks = @import("cuda_disk_ranks.zig");
 pub const nvme_image = @import("cuda_nvme_image.zig");
@@ -63,6 +73,7 @@ pub const nvme_progress = @import("cuda_nvme_progress.zig");
 pub const nvme_wire = @import("cuda_nvme_wire.zig");
 
 test {
+    _ = lane_costs;
     _ = @import("cuda_target_precision_test.zig");
     _ = @import("cuda_formats_csf0_test.zig");
     _ = @import("cuda_tile.zig");
@@ -70,17 +81,26 @@ test {
     _ = kv8_ref;
     _ = @import("cuda_prof.zig");
     _ = @import("cuda_load_owner.zig");
+    _ = @import("cuda_thin_bytes.zig");
     _ = @import("cuda_images_interleave_test.zig");
     _ = @import("cuda_pages_test.zig");
+    _ = @import("cuda_snapshot_layout_test.zig");
     _ = @import("cuda_ranks_test.zig");
+    _ = @import("cuda_ranks_roce_test.zig");
+    _ = @import("cuda_env.zig");
     _ = @import("cuda_rank_policy_test.zig");
     _ = @import("cuda_admission_test.zig");
     _ = @import("cuda_dflash_policy_test.zig");
     _ = @import("cuda_copy_75c_test.zig");
     _ = @import("dflash_select_test.zig");
     _ = @import("cuda_taps_tp_test.zig");
+    _ = @import("cuda_pdl.zig");
+    _ = @import("cuda_resolve_test.zig");
+    _ = @import("cuda_boundary.zig");
     _ = @import("cuda_roce_multi.zig");
     _ = @import("cuda_lanes_test.zig");
+    _ = @import("cuda_prompt_cuts.zig");
+    _ = @import("cuda_request_starts_test.zig");
     _ = @import("dflash_load.zig");
     _ = prompt_solo;
     _ = @import("cuda_l2pf.zig");
@@ -191,3 +211,28 @@ test {
     _ = @import("cuda_nvfp4_mode_test.zig");
     _ = @import("cuda_warm_turns_test.zig");
 }
+
+pub const q4_recurrent = @import("cuda_q4_recurrent.zig");
+
+pub const q4_control_input = @import("cuda_q4_control_input.zig");
+
+test {
+    _ = @import("cuda_q4_control_input_test.zig");
+}
+
+test {
+    _ = q4_recurrent;
+}
+
+pub const q4_precision_families = @import("cuda_q4_precision_families.zig");
+test {
+    _ = @import("cuda_q4_precision_families_test.zig");
+}
+pub const q8_correlated = @import("cuda_q8_correlated.zig");
+pub const q8_correlated_reference = @import("cuda_q8_correlated_reference.zig");
+pub const q8_correlated_options = @import("cuda_q8_correlated_options.zig");
+pub const q8_correlated_owner = @import("cuda_q8_correlated_owner.zig");
+pub const q8_correlation_input = @import("cuda_q8_correlation_input.zig");
+pub const q4_ffn_q8 = @import("cuda_q4_ffn_q8.zig");
+pub const packed_tags = @import("cuda_packed_tags.zig");
+pub const tile_affine = @import("cuda_tile_affine.zig");

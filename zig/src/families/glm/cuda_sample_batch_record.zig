@@ -3,8 +3,8 @@ const std = @import("std");
 const cuda = @import("cuda");
 const smp = @import("cuda_sampler.zig");
 pub const Span = @import("cuda_shard.zig").Span;
-pub const Kind = enum { pack, gather, unpack, rule, meta, draw, sync, check, download, broadcast };
-pub const Fail = enum { none, pack, gather, unpack, rule, meta, draw, sync, check, download, fill };
+pub const Kind = enum { pack, gather, unpack, place, rule, meta, draw, sync, check, download, broadcast };
+pub const Fail = enum { none, pack, gather, unpack, place, rule, meta, draw, sync, check, download, fill };
 pub const stream_at: cuda.abi.Stream = @ptrFromInt(0x1234);
 const draw_at: cuda.abi.Function = @ptrFromInt(0x5678);
 const t = std.testing;
@@ -30,6 +30,7 @@ pub const Fake = struct {
     pub var pad: u64 = 0;
     pub var got: u64 = 0;
     pub var full: u64 = 0;
+    pub var stage: u64 = 0;
     pub var rule_at: u64 = 0;
     pub var meta_at: u64 = 0;
     pub var tok: u64 = 0;
@@ -100,7 +101,9 @@ pub const Fake = struct {
     }
     fn copy2D(m: *const cuda.abi.Memcpy2D, s: cuda.abi.Stream) callconv(.c) cuda.abi.Result {
         const packing = m.dst == pad;
-        const kind: Kind = if (packing) .pack else .unpack;
+        const destination = spans[spans.len - 1].hi;
+        const unpacking = !packing and m.src >= got and m.src < got + spans.len * rows * width * 2;
+        const kind: Kind = if (packing) .pack else if (unpacking) .unpack else .place;
         std.debug.assert(s == stream_at and m.src_type == 2 and m.dst_type == 2);
         std.debug.assert(m.src_x == 0 and m.src_y == 0 and m.dst_x == 0 and m.dst_y == 0);
         std.debug.assert(m.src_host == null and m.dst_host == null and m.src_array == null and m.dst_array == null);
@@ -108,11 +111,19 @@ pub const Fake = struct {
         if (packing) {
             std.debug.assert(m.src == @intFromPtr(shards[rank].ptr) and m.src_pitch == spans[rank].len() * 2);
             std.debug.assert(m.width == m.src_pitch and m.dst_pitch == width * 2);
-        } else {
+        } else if (unpacking) {
             const q = (m.src - got) / (rows * width * 2);
             std.debug.assert(q < spans.len and m.src == got + q * rows * width * 2);
             std.debug.assert(m.dst == full + spans[q].lo * 2 and m.dst_pitch == spans[spans.len - 1].hi * 2);
             std.debug.assert(m.src_pitch == width * 2 and m.width == spans[q].len() * 2);
+        } else {
+            const lo = (m.dst - full) / 2;
+            const q = for (spans, 0..) |span, rank_| {
+                if (span.lo == lo) break rank_;
+            } else unreachable;
+            std.debug.assert(m.src == stage + rows * lo * 2 or m.src == @intFromPtr(shards[q].ptr));
+            std.debug.assert(m.src_pitch == spans[q].len() * 2 and m.width == m.src_pitch);
+            std.debug.assert(m.dst_pitch == destination * 2);
         }
         note(kind);
         pending = true;
@@ -155,9 +166,9 @@ pub const Fake = struct {
     fn noop(_: *anyopaque) void {}
     fn broadcast(_: u64, dst: u64, count: usize, ty: cuda.nccl.DataType, q_: c_int, _: cuda.nccl.Comm, s: cuda.abi.Stream) callconv(.c) cuda.nccl.Result {
         const q: usize = @intCast(q_);
-        std.debug.assert(s == stream_at and ty == .bf16 and count == spans[q].len());
-        const row = (dst - full - spans[q].lo * 2) / (spans[spans.len - 1].hi * 2);
-        @memcpy(bytes(dst, count * 2), std.mem.sliceAsBytes(shards[q][row * count ..][0..count]));
+        std.debug.assert(s == stream_at and ty == .bf16 and count == rows * spans[q].len());
+        std.debug.assert(dst == stage + rows * spans[q].lo * 2);
+        @memcpy(bytes(dst, count * 2), std.mem.sliceAsBytes(shards[q][0..count]));
         note(.broadcast);
         pending = true;
         return 0;
@@ -280,6 +291,8 @@ pub const Fake = struct {
     pub fn sampler(d: *const cuda.Driver, vocab: usize) !smp.Sampler {
         var full_ = try cuda.DeviceBuffer.alloc(d, cap * vocab * 2);
         errdefer full_.free();
+        var stage_ = try cuda.DeviceBuffer.alloc(d, smp.stagingBytes(vocab, cap));
+        errdefer stage_.free();
         var r = try cuda.DeviceBuffer.alloc(d, 32);
         errdefer r.free();
         var m = try cuda.DeviceBuffer.alloc(d, 16);
@@ -288,10 +301,13 @@ pub const Fake = struct {
         errdefer tok_.free();
         const prob_ = try cuda.DeviceBuffer.alloc(d, cap * 4);
         full = full_.ptr;
+        stage = stage_.ptr;
+        got = 0;
+        pad = 0;
         rule_at = r.ptr;
         meta_at = m.ptr;
         tok = tok_.ptr;
         prob = prob_.ptr;
-        return .{ .d = d, .module = .{ .d = d, .handle = null }, .tf_draw = .{ .d = d, .handle = draw_at }, .tf_logprob_rows = undefined, .tf_grammar_mask = undefined, .vocab = vocab, .rows = cap, .full = full_, .rule = r, .meta = m, .tok = tok_, .prob = prob_ };
+        return .{ .d = d, .module = .{ .d = d, .handle = null }, .tf_draw = .{ .d = d, .handle = draw_at }, .tf_logprob_rows = undefined, .tf_grammar_mask = undefined, .vocab = vocab, .rows = cap, .full = full_, .stage = stage_, .rule = r, .meta = m, .tok = tok_, .prob = prob_ };
     }
 };

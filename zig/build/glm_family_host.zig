@@ -20,7 +20,46 @@ pub fn steps(b: *std.Build, cuda: *std.Build.Module, glm: *std.Build.Module, mod
         .dependOn(&b.addRunArtifact(b.addTest(.{ .root_module = glm, .filters = &.{"head FP8:"} })).step);
     b.step("test-glm-decode-select-host", "Multi-CTA decode selection bounds and startup scope")
         .dependOn(&b.addRunArtifact(b.addTest(.{ .root_module = glm, .filters = &.{"decode select:"} })).step);
+    b.step("test-glm-q8-mse-host", "Startup Q8 scale refinement, packed error and agreement without devices")
+        .dependOn(&b.addRunArtifact(b.addTest(.{ .root_module = glm, .filters = &.{"Q8 MSE:"} })).step);
+    b.step("test-glm-q4-control-input-host", "Actual BF16 recurrent input tail loader, dispatch and buffer ownership")
+        .dependOn(&b.addRunArtifact(b.addTest(.{ .root_module = glm, .filters = &.{"Q4 input control:"} })).step);
+    b.step("test-glm-q4-full-recurrent-host", "Actual architectural input/control classification and full BF16 tile/copy/drain")
+        .dependOn(&b.addRunArtifact(b.addTest(.{ .root_module = glm, .filters = &.{"Q4 recurrent BF16:"} })).step);
+    b.step("test-glm-q4-families-host", "Cached architectural BF16 family selection, inventory and actual retained routes")
+        .dependOn(&b.addRunArtifact(b.addTest(.{ .root_module = glm, .filters = &.{"Q4 precision families:"} })).step);
+    const recurrent = b.createModule(.{ .root_source_file = b.path("zig/glm_q4_recurrent_host.zig"), .target = b.graph.host, .optimize = .debug, .link_libc = true, .imports = &.{.{ .name = "glm", .module = glm }} });
+    b.step("test-glm-q4-recurrent-host", "Architectural BF16 retention, actual tile ABI and rank agreement")
+        .dependOn(&b.addRunArtifact(b.addTest(.{ .root_module = recurrent })).step);
     const host = b.graph.host;
+    const exl3 = b.createModule(.{ .root_source_file = b.path("zig/glm_exl3_prompt_host.zig"), .target = host, .optimize = .debug, .link_libc = true, .imports = &.{ .{ .name = "glm", .module = glm }, .{ .name = "cuda", .module = cuda } } });
+    const exl3_run = b.addRunArtifact(b.addTest(.{ .root_module = exl3, .filters = &.{"GLM EXL3 prompt:"} }));
+    b.step("test-glm-exl3-prompt-host", "Actual EXL3 whole prompt calls, shared-slot ABI and scratch without a GPU").dependOn(&exl3_run.step);
+    step.dependOn(&exl3_run.step);
+    inline for (.{ .{ "test-glm-link-transport-host", "zig/glm_link_transport_host.zig" }, .{ "test-glm-kv-uncached-host", "zig/glm_kv_uncached_host.zig" }, .{ "test-glm-lane-costs-host", "zig/glm_lane_costs_host.zig" } }) |entry| {
+        const checks = b.addRunArtifact(b.addTest(.{ .root_module = b.createModule(.{
+            .root_source_file = b.path(entry[1]),
+            .target = host,
+            .optimize = .debug,
+            .link_libc = true,
+            .imports = &.{ .{ .name = "glm", .module = glm }, .{ .name = "cuda", .module = cuda } },
+        }) }));
+        b.step(entry[0], "GLM startup prices, transport and uncached KV through recording calls").dependOn(&checks.step);
+        step.dependOn(&checks.step);
+    }
+    b.step("test-glm-relay-host", "GLM relay options before device setup").dependOn(&b.addRunArtifact(b.addTest(.{ .root_module = glm, .filters = &.{"GLM relay integration:"} })).step);
+    const activation = b.createModule(.{ .root_source_file = b.path("zig/glm_q8_activation_host.zig"), .target = host, .optimize = .debug, .link_libc = true, .imports = &.{.{ .name = "glm", .module = glm }} });
+    b.step("test-glm-q8-activation-host", "Independent weighted Q8 pack error and calibration identity controls")
+        .dependOn(&b.addRunArtifact(b.addTest(.{ .root_module = activation })).step);
+    const correlated = b.createModule(.{ .root_source_file = b.path("zig/glm_q8_correlated_host.zig"), .target = host, .optimize = .debug, .link_libc = true, .imports = &.{ .{ .name = "cuda", .module = cuda }, .{ .name = "glm", .module = glm } } });
+    b.step("test-glm-q8-correlated-host", "Correlated Q8 startup ownership, calibration identity and actual launch")
+        .dependOn(&b.addRunArtifact(b.addTest(.{ .root_module = correlated })).step);
+    const q4_activation = b.createModule(.{ .root_source_file = b.path("zig/glm_q4_activation_host.zig"), .target = host, .optimize = .debug, .link_libc = true, .imports = &.{ .{ .name = "cuda", .module = cuda }, .{ .name = "glm", .module = glm } } });
+    b.step("test-glm-q4-activation-host", "Weighted affine reference, mode agreement and actual startup ABI")
+        .dependOn(&b.addRunArtifact(b.addTest(.{ .root_module = q4_activation })).step);
+    const ffn_q8 = b.createModule(.{ .root_source_file = b.path("zig/glm_q4_ffn_q8_host.zig"), .target = host, .optimize = .debug, .link_libc = true, .imports = &.{ .{ .name = "cuda", .module = cuda }, .{ .name = "glm", .module = glm } } });
+    b.step("test-glm-q4-ffn-q8-host", "Mixed FFN Q8 startup identity, architectural selection and shared scratch")
+        .dependOn(&b.addRunArtifact(b.addTest(.{ .root_module = ffn_q8 })).step);
     const target_q4 = b.createModule(.{ .root_source_file = b.path("zig/glm_target_q4_host.zig"), .target = host, .optimize = .debug, .link_libc = true, .imports = &.{ .{ .name = "cuda", .module = cuda }, .{ .name = "core", .module = mods.core }, .{ .name = "glm_cuda", .module = glm } } });
     b.step("test-glm-target-q4-host", "Target Q4 references, graph entrypoint and live-resource declarations")
         .dependOn(&b.addRunArtifact(b.addTest(.{ .root_module = target_q4, .filters = &.{"target Q4"} })).step);
@@ -62,10 +101,19 @@ pub fn steps(b: *std.Build, cuda: *std.Build.Module, glm: *std.Build.Module, mod
     const warm_run = b.addRunArtifact(b.addTest(.{ .root_module = warm, .filters = &.{"GLM warm peers:"} }));
     b.step("test-glm-warm-peers-host", "Selected GLM warm-up peers and NCCL posting failures without devices").dependOn(&warm_run.step);
     step.dependOn(&warm_run.step);
+    const kda = b.step("test-kda-host", "Shared KDA launch ABI against its frozen predecessor, without CUDA execution");
+    kda.dependOn(&b.addRunArtifact(b.addTest(.{ .root_module = cuda, .filters = &.{"shared KDA:"} })).step);
+    const kda_header = b.createModule(.{ .root_source_file = b.path("zig/kda_header_host.zig"), .target = host, .optimize = .debug, .imports = &.{.{ .name = "cuda", .module = cuda }} });
+    const kda_header_run = b.addRunArtifact(b.addTest(.{ .root_module = kda_header }));
+    kda.dependOn(&kda_header_run.step);
+    step.dependOn(&kda_header_run.step);
     const startup = b.createModule(.{ .root_source_file = b.path("zig/src/families/glm/cuda_start_test.zig"), .target = host, .optimize = .debug });
     const startup_run = b.addRunArtifact(b.addTest(.{ .root_module = startup }));
     b.step("test-glm-startup-host", "Page refusals propagate through rank liveness before engine construction").dependOn(&startup_run.step);
     step.dependOn(&startup_run.step);
+    const thin_run = b.addRunArtifact(b.addTest(.{ .root_module = glm, .filters = &.{"GLM thin weights:"} }));
+    b.step("test-glm-thin-weights-host", "TF_GLM_LAYERS's admission bytes by tensor from synthetic shard headers").dependOn(&thin_run.step);
+    step.dependOn(&thin_run.step);
     b.step("test-glm-tp3-host", "Uneven KDA head shares through actual projection and load planning, without devices").dependOn(&b.addRunArtifact(b.addTest(.{ .root_module = glm, .filters = &.{"GLM TP3:"} })).step);
     // TF_GLM_INDEX_CUDA: the launch rules, and (its own slower step) glm_index_*.cuh as host C++ against plain models
     const index_run = b.addRunArtifact(b.addTest(.{ .root_module = glm, .filters = &.{"GLM index:"} }));
@@ -147,6 +195,8 @@ pub fn steps(b: *std.Build, cuda: *std.Build.Module, glm: *std.Build.Module, mod
         .dependOn(&b.addRunArtifact(b.addTest(.{ .root_module = api, .filters = &.{ "prompt", "snapshot index", "cache", "rows:", "tier:" } })).step);
     step.dependOn(&snapshots_run.step);
     b.step("test-glm-prompt-settings-host", "Actual opt-in settings and rank agreement on the CPU").dependOn(&b.addRunArtifact(b.addTest(.{ .root_module = glm, .filters = &.{"prompt K experiment"} })).step);
+    const request_starts = b.addRunArtifact(b.addTest(.{ .root_module = glm, .filters = &.{"glm request starts:"} }));
+    b.step("test-glm-request-starts-host", "GLM message-start prompt cuts and the shared-KV startup refusal without devices").dependOn(&request_starts.step);
     b.step("test-glm-greedy-batch-host", "Greedy verification record batching without a GPU").dependOn(&b.addRunArtifact(b.addTest(.{ .root_module = glm, .filters = &.{"greedy batching:"} })).step);
     b.step("test-glm-dense-segments-host", "Dense shared MLA table and scratch checks without a GPU")
         .dependOn(&b.addRunArtifact(b.addTest(.{ .root_module = glm, .filters = &.{ "dense segment", "dense H32:", "FFN warm wide" } })).step);

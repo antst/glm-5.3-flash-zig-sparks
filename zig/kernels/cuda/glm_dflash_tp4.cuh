@@ -1,3 +1,4 @@
+#include "glm_pdl.cuh"
 // Private unqualified TP4 operators; context rings retain their full eight-KV-head row layout.
 namespace {
 constexpr int TP_QH = 8;
@@ -7,6 +8,7 @@ constexpr int TP_KVW = 2 * HD;
 extern "C" __global__ void df_block_qkv_tp4_v1(const __nv_bfloat16* __restrict__ qkv, int ldq, const __nv_bfloat16* __restrict__ qn,
                                         const __nv_bfloat16* __restrict__ kn, const int* __restrict__ pos, float eps, float theta,
                                         __nv_bfloat16* __restrict__ q, __nv_bfloat16* __restrict__ kb, __nv_bfloat16* __restrict__ vb) {
+    glm_pdl::enter();
     __shared__ float red[2];
     const int r = blockIdx.x, h = blockIdx.y;
     const __nv_bfloat16* row = qkv + (long long)r * ldq;
@@ -26,6 +28,7 @@ extern "C" __global__ void __launch_bounds__(256) df_attn_part_tp4_v1(const __nv
         const __nv_bfloat16* __restrict__ vb, const uint64_t* __restrict__ rings, const long long* __restrict__ starts,
         const long long* __restrict__ froms, int layer, float scale, float* __restrict__ pm, float* __restrict__ pl,
         float* __restrict__ pacc, int kh0) {
+    glm_pdl::enter();
     const int s = blockIdx.x, kh = blockIdx.y, c = blockIdx.z;
     const int j = threadIdx.x >> 5, lane = threadIdx.x & 31;
     const int r = s * BLOCK + j;
@@ -85,6 +88,7 @@ extern "C" __global__ void __launch_bounds__(256) df_attn_part_tp4_v1(const __nv
 
 extern "C" __global__ void df_attn_merge_tp4_v1(const float* __restrict__ pm, const float* __restrict__ pl, const float* __restrict__ pacc,
                                          __nv_bfloat16* __restrict__ o) {
+    glm_pdl::enter();
     const int r = blockIdx.x, h = blockIdx.y, d = threadIdx.x;
     const long long base = ((long long)r * TP_QH + h) * CH;
     float m = -INFINITY;

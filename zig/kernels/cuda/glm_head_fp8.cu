@@ -1,3 +1,4 @@
+#include "glm_pdl.cuh"
 #include <cuda_bf16.h>
 #include <cuda_fp8.h>
 #include <stdint.h>
@@ -5,6 +6,7 @@
 
 extern "C" __global__ void tf_glm_head_fp8_quant_g64_v1(
     const __nv_bfloat16 *src, int64_t groups, uint8_t *codes, float *scales, uint32_t *invalid) {
+    glm_pdl::enter();
     int lane = threadIdx.x & 31;
     int64_t g = int64_t(blockIdx.x) * 4 + threadIdx.x / 32;
     if (g >= groups) return;
@@ -34,6 +36,7 @@ extern "C" __global__ void tf_glm_head_fp8_quant_g64_v1(
 // The FP8 lane uses one independently computed FP32 scale per output and 64 inputs.
 extern "C" __global__ void tf_glm_head_fp8_scales_g64_v1(
     const float *src, float *out, int n, int k, int npad) {
+    glm_pdl::enter();
     int64_t at = int64_t(blockIdx.x) * blockDim.x + threadIdx.x;
     int kg = k / 64;
     int64_t total = int64_t(npad) * kg;

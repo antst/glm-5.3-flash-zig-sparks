@@ -1,4 +1,5 @@
 #pragma once
+#include "glm_pdl.cuh"
 
 namespace glm_kda_segments {
 struct Segment {
@@ -13,6 +14,7 @@ extern "C" __global__ void __launch_bounds__(512)
 tf_glm_kda_seg_prep_v1(const glm_kda_segments::Segment* table, int count, int H,
                       int p_stride, int b_off, const __nv_bfloat16* A, int a_stride,
                       const float* cw, const float* a_log, const float* dt_bias, float lower, float* q) {
+    glm_pdl::enter();
   if (blockIdx.z >= count) return;
   const auto d = table[blockIdx.z];
   if (blockIdx.x >= d.rows) return;  // uniform CTA gate before the original body's barriers
@@ -26,6 +28,7 @@ tf_glm_kda_seg_prep_v1(const glm_kda_segments::Segment* table, int count, int H,
 extern "C" __global__ void __launch_bounds__(128)
 tf_glm_kda_seg_step_w4_v1(const glm_kda_segments::Segment* table, int count, int H,
                       const float* q, __nv_bfloat16* y) {
+    glm_pdl::enter();
   if (blockIdx.z >= count) return;
   const auto d = table[blockIdx.z];
   step_kernel_body<4, 16>(H, reinterpret_cast<const float*>(d.state_in),
@@ -39,6 +42,7 @@ extern "C" __global__ void __launch_bounds__(128)
 tf_glm_kda_seg_out_v1(const glm_kda_segments::Segment* table, int count, int H,
                      const __nv_bfloat16* y, const __nv_bfloat16* G, int g_stride,
                      const __nv_bfloat16* norm_w, float eps, __nv_bfloat16* out) {
+    glm_pdl::enter();
   if (blockIdx.z >= count) return;
   const auto d = table[blockIdx.z];
   if (blockIdx.x >= d.rows) return;

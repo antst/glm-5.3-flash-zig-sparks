@@ -26,7 +26,7 @@ test "FFN graphs: NVFP4 strict default-off and rank mismatch" {
     const b = ranks.Fingerprint.of(4, 1, on, 4096, true, hash, hash, hash);
     try t.expectEqual(ranks.Fingerprint.Field.nvfp4_ffn_graphs, ranks.mismatch(&.{ a, b }).?.field);
     try t.expectEqualStrings("TF_GLM_NVFP4_FFN_GRAPHS", @import("cuda_rank_names.zig").explain(ranks.Fingerprint.Field.nvfp4_ffn_graphs));
-    for ([_][]const u8{ "", "true", "2", "1 " }) |value| {
+    for ([_][]const u8{ "true", "2", "1 " }) |value| {
         Env.value = value;
         try t.expectError(error.BadSetting, ranks.Settings.read(Env.get, &problem));
     }

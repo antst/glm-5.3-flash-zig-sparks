@@ -2,6 +2,7 @@
 const std = @import("std");
 const json = @import("json");
 const ids = @import("ids.zig");
+const reply_code = @import("reply_code.zig");
 const reply_text = @import("reply_text.zig");
 const tool_closers = @import("tool_closers.zig");
 const tool_dsml = @import("tool_dsml.zig");
@@ -16,8 +17,18 @@ pub const deltas = tool_streaming.deltas;
 pub const wrapCalls = tool_streaming.wrapCalls;
 const Error = tool_dsml.Error;
 const Call = tool_dsml.Call;
-const Envelope = struct { start: usize, end: usize, payload: []const u8, complete: bool = true };
-pub const Parsed = struct { content: []const u8, calls: ?[]Value, rejected_envelopes: usize = 0 };
+pub const Envelope = struct { start: usize, end: usize, payload: []const u8, complete: bool = true };
+
+pub const Parsed = struct {
+    content: []const u8,
+    calls: ?[]Value,
+    rejected_envelopes: usize = 0,
+    kept_unoffered: usize = 0,
+    kept_malformed: usize = 0,
+    /// The names the model wrote for kept calls that named an unoffered tool: eight at most, 64 bytes each.
+    unoffered_names: []const []const u8 = &.{},
+};
+
 fn findCI(hay: []const u8, needle: []const u8, from: usize) ?usize {
     if (from > hay.len) return null;
     return std.ascii.findIgnoreCasePos(hay, from, needle);
@@ -34,61 +45,53 @@ const space = reply_text.isSpaceByte;
 fn allSpace(s: []const u8) bool {
     return strip(s).len == 0;
 }
-
 /// (start, end, payload) of each tool-call block in order; a block inside an earlier one is part of it.
-fn envelopes(a: Allocator, text: []const u8) Allocator.Error![]Envelope {
-    var found: std.ArrayList(Envelope) = .empty;
-    var pos: usize = 0;
-    var dsml = tool_dsml.findOpen(text, 0); // the DSML opener at or after `pos`, searched again only once `pos` passes it
-    while (findCI(text, "<tool_call>", pos)) |s| {
-        if (dsml != null and dsml.?.at < pos) dsml = tool_dsml.findOpen(text, pos);
-        if (dsml) |outer| if (outer.at < s) {
-            pos = tool_dsml.blockEnd(text, outer) orelse break;
-            continue;
-        };
-        const e = findCI(text, "</tool_call>", s + 11) orelse break;
-        try found.append(a, .{ .start = s, .end = e + 12, .payload = strip(text[s + 11 .. e]) });
-        pos = e + 12;
-    }
-    pos = 0;
-    var closers: tool_closers.Closers = .{ .text = text };
-    while (std.mem.indexOfScalarPos(u8, text, pos, '<')) |s| {
-        pos = s + 1;
-        var j = s + 1;
-        if (j >= text.len or !(std.ascii.isAlphabetic(text[j]) or text[j] == '_')) continue;
-        j += 1;
-        while (j < text.len and tool_closers.nameByte(text[j])) j += 1;
-        if (!std.ascii.startsWithIgnoreCase(text[j..], ":tool_call>")) continue;
-        const e = (try closers.next(a, text[s + 1 .. j], j + 11)) orelse continue;
-        const end = e + j - s + 12; // ``</NAME:tool_call>``
-        try found.append(a, .{ .start = s, .end = end, .payload = strip(text[j + 11 .. e]) });
-        pos = end;
-    }
-    pos = 0;
-    while (find(text, "<|tool_call>", pos)) |s| {
-        const e = find(text, "<tool_call|>", s + 12) orelse break;
-        try found.append(a, .{ .start = s, .end = e + 12, .payload = strip(text[s + 12 .. e]) });
-        pos = e + 12;
-    }
-    pos = 0;
-    while (tool_dsml.findOpen(text, pos)) |o| {
-        const e = tool_dsml.blockEnd(text, o);
-        const end = e orelse text.len;
-        try found.append(a, .{ .start = o.at, .end = end, .payload = text[o.at..end], .complete = e != null });
-        pos = end;
-    }
-    std.mem.sort(Envelope, found.items, {}, struct {
-        fn less(_: void, x: Envelope, y: Envelope) bool {
-            if (x.start != y.start) return x.start < y.start;
-            if (x.end != y.end) return x.end < y.end;
-            return std.mem.order(u8, x.payload, y.payload) == .lt;
-        }
-    }.less);
+pub fn envelopes(a: Allocator, text: []const u8) Allocator.Error![]Envelope {
     var kept: std.ArrayList(Envelope) = .empty;
-    for (found.items) |env| if (kept.items.len == 0 or env.start >= kept.items[kept.items.len - 1].end) try kept.append(a, env);
+    var pos: usize = 0;
+    var code: reply_code.Scanner = .{};
+    var closers: tool_closers.Closers = .{ .text = text };
+    var no_tc = false;
+    var no_gemma = false;
+    while (std.mem.indexOfScalarPos(u8, text, pos, '<')) |s| {
+        if (code.check(text, s, true) == .skip) {
+            pos = code.skip_end;
+            continue;
+        }
+        const env: ?Envelope = blk: {
+            if (tool_dsml.openedBy(text[s..])) |sp| {
+                const e = tool_dsml.blockEnd(text, .{ .at = s, .spelling = sp });
+                const end = e orelse text.len;
+                break :blk .{ .start = s, .end = end, .payload = text[s..end], .complete = e != null };
+            }
+            if (!no_tc and std.ascii.startsWithIgnoreCase(text[s..], "<tool_call>")) {
+                if (findCI(text, "</tool_call>", s + 11)) |e| {
+                    break :blk .{ .start = s, .end = e + 12, .payload = strip(text[s + 11 .. e]) };
+                }
+                no_tc = true;
+            }
+            if (!no_gemma and std.mem.startsWith(u8, text[s..], "<|tool_call>")) {
+                if (find(text, "<tool_call|>", s + 12)) |e| {
+                    break :blk .{ .start = s, .end = e + 12, .payload = strip(text[s + 12 .. e]) };
+                }
+                no_gemma = true;
+            }
+            var j = s + 1;
+            if (j >= text.len or !(std.ascii.isAlphabetic(text[j]) or text[j] == '_')) break :blk null;
+            j += 1;
+            while (j < text.len and tool_closers.nameByte(text[j])) j += 1;
+            if (!std.ascii.startsWithIgnoreCase(text[j..], ":tool_call>")) break :blk null;
+            const e = (try closers.next(a, text[s + 1 .. j], j + 11)) orelse break :blk null;
+            break :blk .{ .start = s, .end = e + j - s + 12, .payload = strip(text[j + 11 .. e]) };
+        };
+        if (env) |item| {
+            try kept.append(a, item);
+            pos = item.end;
+            code.jumpTo(pos);
+        } else pos = s + 1;
+    }
     return kept.items;
 }
-
 /// ``parse_tool_calls_from_content``: the reply's content and its calls (null when it makes none).
 pub fn parse(a: Allocator, text: []const u8, tools: []const Value, max_calls: ?usize) Allocator.Error!Parsed {
     if (tools.len == 0) return .{ .content = text, .calls = null };
@@ -103,8 +106,11 @@ pub fn parse(a: Allocator, text: []const u8, tools: []const Value, max_calls: ?u
     if (envs.len == 0) return .{ .content = text, .calls = null };
     var calls: std.ArrayList(Value) = .empty;
     var residue: std.ArrayList(u8) = .empty;
+    var kept_names: std.ArrayList([]const u8) = .empty;
     var cursor: usize = 0;
     var rejected: usize = 0;
+    var kept_unoffered: usize = 0;
+    var kept_malformed: usize = 0;
     for (envs) |env| {
         try residue.appendSlice(a, text[cursor..env.start]);
         cursor = env.end;
@@ -114,13 +120,14 @@ pub fn parse(a: Allocator, text: []const u8, tools: []const Value, max_calls: ?u
         }
         if (max_calls) |m| if (calls.items.len >= m) continue;
         var start = env.start;
-        var parsed = try offeredCalls(a, env.payload, &schemas, &known, max_calls != null);
+        var parsed = try parseCalls(a, env.payload, &schemas, max_calls != null);
+        var rejected_as = try rejection(a, parsed, &known);
         // Prose that quotes the opener ("Qwen's <tool_call>{}") ahead of a call begins the envelope, so the call does
         // not parse as its payload: the call is the last opener inside it (or one before that, when a value quotes
         // the opener too), and the quoting prose stays content.
         // An opener inside an unclosed value of the text before it (a JSON object still open, an <arg_value> or
         // <parameter=> not yet closed) is a quoted call inside a call the first closer cut: never the call.
-        if (parsed == null and std.ascii.startsWithIgnoreCase(text[env.start..], "<tool_call>")) {
+        if (rejected_as != .none and std.ascii.startsWithIgnoreCase(text[env.start..], "<tool_call>")) {
             const closer = env.end - "</tool_call>".len;
             var inner = lastOpener(text, env.start + "<tool_call>".len, closer);
             var tries: usize = 0;
@@ -128,27 +135,51 @@ pub fn parse(a: Allocator, text: []const u8, tools: []const Value, max_calls: ?u
                 tries += 1;
                 if (tries > inner_tries) break;
                 if (insideValue(text[env.start + "<tool_call>".len .. s])) continue;
-                parsed = try offeredCalls(a, strip(text[s + "<tool_call>".len .. closer]), &schemas, &known, max_calls != null);
-                if (parsed != null) {
+                const candidate = try parseCalls(a, strip(text[s + "<tool_call>".len .. closer]), &schemas, max_calls != null);
+                if (try rejection(a, candidate, &known) == .none) {
+                    parsed = candidate;
+                    rejected_as = .none;
                     start = s;
                     break;
                 }
             }
         }
-        const list = parsed orelse {
+        if (rejected_as != .none) {
             try residue.appendSlice(a, text[env.start..env.end]);
             rejected += 1;
+            if (rejected_as == .unoffered) {
+                kept_unoffered += 1;
+                for (parsed.?) |call| if ((try callName(a, call, &known)) == null) {
+                    try keepName(a, &kept_names, strip(call.name));
+                };
+            } else kept_malformed += 1;
             continue;
-        };
+        }
         try residue.appendSlice(a, text[env.start..start]);
-        for (list) |c| {
+        for (parsed.?) |c| {
             if (max_calls == null or calls.items.len < max_calls.?) try calls.append(a, try openaiCall(a, (try callName(a, c, &known)).?, c.arguments));
         }
     }
     try residue.appendSlice(a, text[cursor..]);
-    return .{ .content = strip(residue.items), .calls = if (calls.items.len > 0) calls.items else null, .rejected_envelopes = rejected };
+    return .{
+        .content = strip(residue.items),
+        .calls = if (calls.items.len > 0) calls.items else null,
+        .rejected_envelopes = rejected,
+        .kept_unoffered = kept_unoffered,
+        .kept_malformed = kept_malformed,
+        .unoffered_names = kept_names.items,
+    };
 }
 
+/// Keeps one unoffered name as the model wrote it: once, eight names at most, 64 UTF-8 bytes each.
+fn keepName(a: Allocator, names: *std.ArrayList([]const u8), raw: []const u8) Allocator.Error!void {
+    var end = @min(raw.len, 64);
+    while (end > 0 and end < raw.len and (raw[end] & 0xc0) == 0x80) end -= 1;
+    const name = raw[0..end];
+    if (name.len == 0 or names.items.len >= 8) return;
+    for (names.items) |kept| if (std.mem.eql(u8, kept, name)) return;
+    try names.append(a, name);
+}
 /// Openers inside a rejected envelope tried, from the last: a bound keeps a reply of quoted openers linear.
 const inner_tries = 4;
 
@@ -179,9 +210,9 @@ fn lastOpener(text: []const u8, from: usize, before: usize) ?usize {
     return last;
 }
 
-/// A payload's calls when it parses whole and each names an offered tool; null when it is not such a call.
-fn offeredCalls(a: Allocator, block: []const u8, schemas: *const tool_params.Schemas, known: *const std.StringArrayHashMapUnmanaged([]const u8), complete: bool) Allocator.Error!?[]Call {
-    const parsed: ?[]Call = blk: {
+/// A payload's calls when it parses whole, before checking the offered names.
+fn parseCalls(a: Allocator, block: []const u8, schemas: *const tool_params.Schemas, complete: bool) Allocator.Error!?[]Call {
+    return blk: {
         if (tool_dsml.whole(block)) |b| {
             break :blk tool_dsml.calls(a, b.inner, b.spelling) catch |e| switch (e) {
                 error.OutOfMemory => return error.OutOfMemory,
@@ -199,10 +230,13 @@ fn offeredCalls(a: Allocator, block: []const u8, schemas: *const tool_params.Sch
         }
         break :blk null;
     };
-    const list = parsed orelse return null;
-    if (list.len == 0) return null;
-    for (list) |c| if ((try callName(a, c, known)) == null) return null;
-    return list;
+}
+
+fn rejection(a: Allocator, calls: ?[]Call, known: *const std.StringArrayHashMapUnmanaged([]const u8)) Allocator.Error!enum { none, unoffered, malformed } {
+    const list = calls orelse return .malformed;
+    if (list.len == 0) return .malformed;
+    for (list) |c| if ((try callName(a, c, known)) == null) return .unoffered;
+    return .none;
 }
 
 /// What closes the call ``text`` ends inside (the model's end token came before its ``
@@ -219,14 +253,25 @@ pub fn closeCall(a: Allocator, text: []const u8, tools: []const Value) Allocator
 /// Where the reply's open call starts: the opener ``envelopes`` leaves without a closer, so one appended pairs with it.
 pub fn openCall(text: []const u8) ?usize {
     var pos: usize = 0;
+    var code: reply_code.Scanner = .{};
     var dsml = tool_dsml.findOpen(text, 0); // as in ``envelopes``
     return while (findCI(text, "<tool_call>", pos)) |s| {
         if (dsml != null and dsml.?.at < pos) dsml = tool_dsml.findOpen(text, pos);
         if (dsml) |outer| if (outer.at < s) {
+            if (code.check(text, outer.at, true) == .skip) {
+                pos = code.skip_end;
+                continue;
+            }
             pos = tool_dsml.blockEnd(text, outer) orelse return null;
+            code.jumpTo(pos);
             continue;
         };
+        if (code.check(text, s, true) == .skip) {
+            pos = code.skip_end;
+            continue;
+        }
         pos = (findCI(text, "</tool_call>", s + 11) orelse break s) + 12;
+        code.jumpTo(pos);
     } else null;
 }
 
@@ -424,44 +469,8 @@ fn parameterBlocks(a: Allocator, body: []const u8) Allocator.Error!Params {
     return .{ .items = items.items, .residue = residue.items };
 }
 
-const GlmTag = enum { key_open, key_close, value_open, value_close };
-const glm_tags = [_]struct { GlmTag, []const u8 }{ .{ .key_open, "<arg_key>" }, .{ .key_close, "</arg_key>" }, .{ .value_open, "<arg_value>" }, .{ .value_close, "</arg_value>" } };
-
-/// The next GLM argument tag at or after `from`: which, and where it starts and ends.
-fn nextGlmTag(block: []const u8, from: usize) ?struct { tag: GlmTag, start: usize, end: usize } {
-    var i = std.mem.indexOfScalarPos(u8, block, from, '<') orelse return null;
-    while (true) : (i = std.mem.indexOfScalarPos(u8, block, i + 1, '<') orelse return null) {
-        for (glm_tags) |t| if (std.mem.startsWith(u8, block[i..], t[1])) return .{ .tag = t[0], .start = i, .end = i + t[1].len };
-    }
-}
-
-/// A GLM call whose ``<arg_key>`` the model wrote as whitespace gets it back before the word ahead of each lone tag.
-pub fn repairGlmKeys(a: Allocator, block: []const u8) Allocator.Error![]const u8 {
-    if (std.mem.count(u8, block, "</arg_key>") <= std.mem.count(u8, block, "<arg_key>")) return block;
-    var out: std.ArrayList(u8) = .empty;
-    var copied: usize = 0;
-    var prev: ?GlmTag = null;
-    var prev_end: usize = 0;
-    var pos: usize = 0;
-    while (nextGlmTag(block, pos)) |t| : (pos = t.end) {
-        if (t.tag == .key_close and (prev == null or prev.? == .value_close)) {
-            const seg = prev_end; // 0 before the first tag: the call's name lives there
-            var e = t.start;
-            while (e > seg and space(block[e - 1])) e -= 1;
-            var w = e;
-            while (w > seg and !space(block[w - 1])) w -= 1;
-            // no word, or (before any tag) no name left ahead of the word: not a key we can put back
-            if (w == e or (prev == null and allSpace(block[seg..w]))) return block;
-            try out.appendSlice(a, block[copied..w]);
-            try out.appendSlice(a, "<arg_key>");
-            copied = w;
-        }
-        prev = t.tag;
-        prev_end = t.end;
-    }
-    try out.appendSlice(a, block[copied..]);
-    return out.items;
-}
+pub const repairGlmKeys = @import("tool_glm_keys.zig").repairGlmKeys;
+const valueKey = @import("tool_glm_keys.zig").valueKey;
 
 /// GLM's ``NAME<arg_key>K</arg_key><arg_value>V</arg_value>...``, values decoded as Qwen's (without Python spellings).
 fn glmCall(a: Allocator, written: []const u8, schemas: ?*const tool_params.Schemas, complete: bool) Error!?Call {
@@ -483,8 +492,8 @@ fn glmCall(a: Allocator, written: []const u8, schemas: ?*const tool_params.Schem
         if (key_end != null and key_end.?[0] < s + 9) key_end = valueKey(rest, s + 9);
         const k = key_end orelse continue;
         if (value_end != null and value_end.? < k[1]) value_end = find(rest, "</arg_value>", k[1]);
-        const ve = value_end orelse return null; // the value never closes: no call
-        if (find(rest, "<arg_key>", k[1])) |next| if (next < ve) return null;
+        const ve = value_end orelse return null; // the value never closes: no call (#2801)
+        if (find(rest, "<arg_key>", k[1])) |next| if (next < ve) return null; // nor for one that ran into the next pair
         try pairs.append(a, .{ .key = rest[s + 9 .. k[0]], .value = rest[k[1]..ve] });
         try residue.appendSlice(a, rest[kept..s]);
         kept = ve + 12;
@@ -499,17 +508,6 @@ fn glmCall(a: Allocator, written: []const u8, schemas: ?*const tool_params.Schem
         try arguments.put(a, key, try tool_params.decode(a, p.value, schema, false));
     }
     return .{ .name = name, .arguments = .{ .object = arguments } };
-}
-
-/// The first ``</arg_key>`` at or after `from` that an ``<arg_value>`` follows, and where that value starts.
-fn valueKey(rest: []const u8, from: usize) ?[2]usize {
-    var at = from;
-    while (find(rest, "</arg_key>", at)) |ke| : (at = ke + 1) {
-        var j = ke + 10;
-        while (j < rest.len and space(rest[j])) j += 1;
-        if (std.mem.startsWith(u8, rest[j..], "<arg_value>")) return .{ ke, j + 11 };
-    }
-    return null;
 }
 
 /// Gemma 4's ``call:NAME{key:value,...}`` (or bare ``:NAME{...}``): strings between ``<|"|>``, keys bare.

@@ -15,7 +15,7 @@ test "GLM warm turns: strict default off and immutable rank agreement" {
     try t.expect(!off.warm_turns);
     Env.value = "0";
     try t.expect(std.meta.eql(off, try ranks.Settings.read(Env.get, &problem)));
-    for ([_][]const u8{ "", "true", "01", "+1", " 1" }) |bad| {
+    for ([_][]const u8{ "true", "01", "+1", " 1" }) |bad| {
         Env.value = bad;
         try t.expectError(error.BadSetting, ranks.Settings.read(Env.get, &problem));
     }
@@ -25,7 +25,7 @@ test "GLM warm turns: strict default off and immutable rank agreement" {
     try t.expect(on.warm_turns and !(try ranks.Settings.read(Env.get, &problem)).warm_turns);
     const a = ranks.Fingerprint.of(4, 0, off, 196608, true, @splat(0), @splat(0), @splat(0));
     const b = ranks.Fingerprint.of(4, 1, on, 196608, true, @splat(0), @splat(0), @splat(0));
-    try t.expectEqual(@as(u32, 65), a.layout);
+    try t.expectEqual(@as(u32, 85), a.layout);
     try t.expectEqual(ranks.Fingerprint.Field.warm_turns, ranks.mismatch(&.{ a, b }).?.field);
     try t.expectEqualStrings("TF_GLM_WARM_TURNS", @import("cuda_rank_names.zig").explain(ranks.Fingerprint.Field.warm_turns));
 }

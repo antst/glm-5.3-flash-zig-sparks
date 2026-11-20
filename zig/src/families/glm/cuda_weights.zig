@@ -46,6 +46,7 @@ pub const Weights = struct {
     mtp: ?Mtp = null,
     draft_head: ?q4.Q4 = null, // DFlash-only mode owns this head; legacy MTP keeps its original member
     affine_target: bool = false,
+    mixed_ffn_q8: bool = false,
     exl3_prompt_whole: bool = false,
     exl3_shx: bool = true, // EXL3: every layer's gate and up share one input rotation (a prompt rotates each row once)
     buffers: std.ArrayList(cuda.DeviceBuffer) = .empty,

@@ -61,10 +61,13 @@ pub const LaneHost = struct {
     lone: ?api.Lone = null, // the backend's driver for a lone greedy stream; null: every stream in the lane core
     lone_job: ?*Job = null, // the job that driver holds now
     cache_status: ?api.Status.PromptCache = null, // published under mutex; HTTP threads never read the store
+    disk_status: ?api.Status.DiskCache = null, // published under mutex beside it
+    cache_at: i64 = 0, // wall-clock ms of the last full cache and disk copy (republished at 1 Hz at most)
     cache: ?*pc.Store = null, // kept prompt states (engine thread only); the backend restores and saves them
     recall: ?*lanes.recall_store.Store = null, // Recall's record: drafts from earlier requests (lane_host_recall.zig)
     decoded_rows: bool = false, // the backend prefills Request.decode_spans with decoded rows' arithmetic, cache or not
     health: ?api.HealthSource = null,
+    fsr: ?@import("engine_status.zig").FsrSource = null, // the backend's SSD-expert cache counts; null: Status.fsr stays null
     frame_key: ?*const fn (images: []const api.Image) u32 = null, // a family's image frame (0: text's), in the cache key
     memory: ?api.MemorySource = null, // the backend's memory counts; null: Engine.memory reports none
     explain: ?api.Explain = null, // the backend's words for a request it refuses; null: the error's name
@@ -86,7 +89,7 @@ pub const LaneHost = struct {
     decode_cap: bool = false, // --decode-share given by flag (the env never opts in): a chunk-invariant family may cap
     prefix: @import("lane_host_prefix.zig").Wait = .{}, // a request's wait for a cut another prompt is filling
     finals: std.ArrayList(usize) = .empty,
-    pressure: ?@import("memory_pressure.zig").Governor = null, // macOS memory pressure (lane_host_pressure.zig); null: off
+    pressure: ?@import("memory_pressure.zig").Governor = null, // OS memory pressure (lane_host_pressure.zig); null: off
     activity: ?@import("lane_activity.zig").Activity = null, // owned work scopes for a backend's watchdog; null: off
     failure: ?@import("lane_activity.zig").Failure = null, // hears a round's or request's error; null: off
     load: load.State = .{}, // this host's part of the server's load ledger (lane_host_load.zig)
@@ -109,8 +112,8 @@ pub const LaneHost = struct {
     }
 
     /// A paged family's pool counts in this host's ledger, the only test its promises pass (#1943); before `start`.
-    pub fn countPool(h: *LaneHost, pool: anytype) void {
-        ledger.count(h, pool);
+    pub fn countPool(h: *LaneHost, pool: anytype) error{PoolHasHost}!void {
+        return ledger.count(h, pool);
     }
 
     /// The pool counts on its own pages again (a host that never started).
@@ -156,6 +159,12 @@ pub const LaneHost = struct {
         // decisions' label scores only when the backend gives them, so the route refuses as before otherwise
         const vt = h.core.backend.vtable;
         return .{ .ctx = h, .vtable = if (vt.score != null and vt.decide != null) &decided_vtable else if (vt.score != null) &scored_vtable else &plain_vtable };
+    }
+
+    /// Advertise the cache capabilities: warm turns follow the store, so a cache-less start claims none.
+    pub fn advertiseCache(h: *LaneHost, store: ?*pc.Store) void {
+        h.info_.prompt_cache = store != null;
+        h.info_.warm_turns = store != null;
     }
 
     const plain_vtable: Engine.VTable = .{
@@ -305,6 +314,7 @@ pub const LaneHost = struct {
     }
 
     pub fn finish(h: *LaneHost, job: *Job, reason: Reason, message: []const u8) void {
+        if (reason == .cancelled) load.progress(h, job);
         h.lock();
         h.memory_lanes = null; // a lane may have freed: the next admission asks the backend for memory again
         ledger.release(h, job); // its stream's caches are already freed (reaped, discarded or released)
@@ -312,6 +322,7 @@ pub const LaneHost = struct {
         h.unlock();
         if (h.rounds) |rd| rd.vtable.left(rd.ctx, @intFromPtr(job));
         job.reported();
+        job.cache_promise = .{};
         h.gpa.free(job.marks);
         h.gpa.free(job.key);
         const s = &job.stream;
@@ -362,11 +373,13 @@ pub const LaneHost = struct {
         };
         if (ledger.never(h, h.queued.items[at])) { // past the whole budget alone: no release will ever make it fit
             const job = h.queued.orderedRemove(at);
+            h.load.failures[@backingInt(load.Failure.prompt_too_large)] += 1;
             h.unlock();
             h.finish(job, .failed, ledger.too_big);
             return .failed;
         }
         if (!ledger.promise(h, h.queued.items[at])) { // bytes before any stream: the job stays queued, nothing taken
+            h.queued.items[at].wait_reason = .ledger_bytes;
             h.unlock();
             return .none;
         }
@@ -444,6 +457,7 @@ pub const LaneHost = struct {
     }
 
     pub fn prefilled(h: *LaneHost, job: *Job, began: i96) void {
+        job.cache_promise = .{};
         if (job.prefilled != null) return;
         const done = std.Io.Clock.awake.now(h.io).toNanoseconds();
         job.fill_on.store(false, .release); // the pass reported: status readers stop counting this fill
@@ -590,4 +604,5 @@ test {
     _ = @import("lane_host_frame_test.zig");
     _ = @import("lane_host_tests.zig");
     _ = @import("lane_host_fetch.zig");
+    _ = @import("lane_host_cache_queue_test.zig");
 }

@@ -36,7 +36,7 @@ test "verify rows: strict startup width copy coupling cached values and rank agr
     try t.expectEqual(@as(u8, 16), on.verify_rows);
     try t.expectEqual(@as(u8, 15), on.first_copy_tokens);
     Env.copy = null;
-    for ([_][]const u8{ "", "0", "7", "9", "15", "17", "016", "+16", "16 " }) |bad| {
+    for ([_][]const u8{ "0", "7", "9", "15", "17", "016", "+16", "16 " }) |bad| {
         Env.rows = bad;
         try t.expectError(error.BadSetting, glm.ranks.Settings.read(Env.get, &problem));
     }
@@ -53,7 +53,7 @@ test "verify rows: strict startup width copy coupling cached values and rank agr
     const FP = glm.ranks.Fingerprint;
     const f0 = FP.of(4, 0, off, 4096, true, @splat(0), @splat(0), @splat(0));
     const f1 = FP.of(4, 1, on, 4096, true, @splat(0), @splat(0), @splat(0));
-    try t.expectEqual(@as(u32, 65), f0.layout);
+    try t.expectEqual(@as(u32, 85), f0.layout);
     try t.expectEqual(FP.Field.verify_rows, glm.ranks.mismatch(&.{ f0, f1 }).?.field);
     const wide_fp = FP.of(4, 1, wide32, 4096, true, @splat(0), @splat(0), @splat(0));
     const old_fp = FP.of(4, 0, on, 4096, true, @splat(0), @splat(0), @splat(0));
@@ -324,6 +324,7 @@ test "verify rows: actual State and Forward mixer save all three layers with32ro
     var d = rec.init();
     d.func_name = null;
     d.api.cuLaunchKernel = Fake.launch;
+    d.api.cuLaunchKernelEx = glm.pdl.forwardEx(Fake.launch);
     d.api.cuMemcpyDtoDAsync_v2 = Fake.copy;
     var fx: Fixture = undefined;
     try fx.init(&d, false);
@@ -367,6 +368,7 @@ test "verify rows: actual shared mixer copies each variable part into its own32r
     var d = rec.init();
     d.func_name = null;
     d.api.cuLaunchKernel = Fake.launch;
+    d.api.cuLaunchKernelEx = glm.pdl.forwardEx(Fake.launch);
     d.api.cuMemcpyDtoDAsync_v2 = Fake.copy;
     var fx: Fixture = undefined;
     try fx.init(&d, true);

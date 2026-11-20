@@ -133,7 +133,7 @@ test "DFlash edge: strict defaultOFF startup parse and all-rank disagreement are
     Env.value = "1";
     const on = try ranks.Settings.read(Env.get, &problem);
     try std.testing.expect(on.dflash_edge_06);
-    for ([_][]const u8{ "", "yes", "true", "0.6", "1.0", "2" }) |bad| {
+    for ([_][]const u8{ "yes", "true", "0.6", "1.0", "2" }) |bad| {
         Env.value = bad;
         try std.testing.expectError(error.BadSetting, ranks.Settings.read(Env.get, &problem));
         try std.testing.expectEqualStrings("TF_GLM_DFLASH_EDGE_06: 0 or 1", problem);
@@ -146,5 +146,5 @@ test "DFlash edge: strict defaultOFF startup parse and all-rank disagreement are
     try std.testing.expectEqual(ranks.Mismatch{ .field = .dflash_edge_06, .rank = 1 }, ranks.mismatch(&all).?);
     all[0] = FP.of(4, 0, on, 8192, true, @splat(0), @splat(0), @splat(0));
     try std.testing.expect(ranks.mismatch(&all) == null);
-    try std.testing.expectEqual(@as(u32, 65), all[0].layout);
+    try std.testing.expectEqual(@as(u32, 85), all[0].layout);
 }

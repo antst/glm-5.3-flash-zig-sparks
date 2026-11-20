@@ -117,6 +117,7 @@ pub const Experts = struct {
     prompt: prompt.Kernels = undefined,
     plan_rotate: Function = undefined,
     plan_finish: Function = undefined,
+    plan_finish_after: Function = undefined, // the same, the clamp on silu's output (experts.Layer.after: Ling)
     decode: ?Decode = null,
     decode_calls: ?*u64 = null,
     whole: ?Whole = null,
@@ -153,6 +154,7 @@ pub const Experts = struct {
         e.prompt = try prompt.Kernels.resolve(e.mod);
         e.plan_rotate = try e.mod.function("tf_exl3_plan_rotate");
         e.plan_finish = try e.mod.function("tf_exl3_plan_finish");
+        e.plan_finish_after = try e.mod.function("tf_exl3_plan_finish_after");
         e.group = try e.mod.function("tf_exl3_group");
         try e.group.allowDynamicShared(64 * 1024);
         e.rot_in = try e.mod.function("tf_exl3_experts_rot_in");

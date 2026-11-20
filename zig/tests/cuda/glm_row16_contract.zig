@@ -10,6 +10,8 @@ pub fn run(gpu: check.Gpu) !void {
 }
 
 pub fn command(gpu: check.Gpu, cmd: []const u8) !void {
+    if (@import("std").mem.eql(u8, cmd, "glm-paged-fp8")) return @import("glm_paged_fp8.zig").run(gpu);
+    if (@import("std").mem.eql(u8, cmd, "glm-dsa-decode-scores")) return @import("glm_dsa_decode_scores.zig").run(gpu);
     if (@import("std").mem.eql(u8, cmd, "glm-row16-contract")) return run(gpu);
     try @import("glm_row16_state.zig").run32(gpu);
     try @import("glm_row16_attn.zig").run32(gpu);

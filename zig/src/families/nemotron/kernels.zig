@@ -88,7 +88,7 @@ pub fn keyOf(i: usize) []const u8 {
 pub fn sourceHash() u64 {
     var h = std.hash.Wyhash.init(0x6e);
     inline for (sources.nemotron.all) |k| h.update(k.source);
-    for ([_][]const u8{ sources.nemotron_glue, sources.nemotron_experts, sources.nemotron_tree, sources.nemotron_round, sources.nemotron_head, sources.nemotron_sample, sources.nax, sources.core_row_projection, sources.packed_metallib }) |s| h.update(s);
+    for ([_][]const u8{ sources.nemotron_glue, sources.nemotron_experts, sources.nemotron_tree, sources.nemotron_round, sources.nemotron_head, sources.nemotron_sample, sources.nax, sources.core_row_projection, sources.core_row_projection_legacy, sources.packed_metallib }) |s| h.update(s);
     for (sources.prefill) |f| h.update(f.text);
     return h.final();
 }
@@ -157,7 +157,7 @@ const Job = struct {
 };
 
 /// The packed kernels' tensor-inline construct: macOS 26.3's runtime compiler refuses it, the offline one accepts it.
-const probe_source =
+pub const probe_source =
     \\#include <metal_stdlib>
     \\using namespace metal;
     \\kernel void tf_uint4b_probe(device uchar* out [[buffer(0)]], uint i [[thread_position_in_grid]]) {

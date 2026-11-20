@@ -1,4 +1,4 @@
-//! Lane planner pieces, failed rounds and unrun finals, learning and refusals.
+//! The lane host under a round planner: pieces, failed rounds' unrun finals, learning, refusal.
 const std = @import("std");
 const lanes = @import("lanes");
 const api = @import("engine_api.zig");
@@ -37,7 +37,7 @@ test "a round planner: prompts in pieces between the other streams' decode round
             const p = self(ctx);
             for (p.seqs.items) |x| if (!x.decoding) {
                 p.waits += 1;
-                return .wait;
+                return .{ .wait = .engine_busy };
             };
             p.seqs.append(gpa, .{ .key = ask.key, .n = ask.prompt.len }) catch return .refuse;
             return .admit;
@@ -249,7 +249,7 @@ test "under a round planner a learn request still steps while no request waits o
     const Idle = struct {
         fn none(_: *anyopaque) void {}
         fn admit(_: *anyopaque, _: api.Rounds.Ask, _: *[]const u8) api.Rounds.Verdict {
-            return .wait;
+            return .{ .wait = .engine_busy };
         }
         fn admitted(_: *anyopaque) anyerror!void {}
         fn key(_: *anyopaque, _: usize) void {}
@@ -392,14 +392,14 @@ test "a failed piece fails its request alone: its final of the same round does n
 }
 
 test "a failed round ends the prompts whose finals it never ran: their lanes free, a later request runs" {
-    // A prompt with an unrun final must not keep its lane forever outside the core's live set.
+    // the failed round returns before runFinals, and the planner has the prompt decoding: it must end here
     const log_level = std.testing.log_level;
     std.testing.log_level = .err;
     defer std.testing.log_level = log_level;
     const gpa = std.testing.allocator;
     var cfg = try lanes.Config.init(gpa, .{ .exact_width = 8, .hidden_rows = true }, 8, 7);
     defer cfg.deinit(gpa);
-    // Fail the third round while one stream decodes and another prompt has an unrun final.
+    // round three fails: the first request decodes, the second's last piece ran, its final planned (join_tail off)
     var target: lanes.fake.Fake = .{ .gpa = gpa, .fail_round = 3 };
     defer target.deinit();
     var clock: lanes.fake.FixedClock = .{};
@@ -416,7 +416,7 @@ test "a failed round ends the prompts whose finals it never ran: their lanes fre
         fn beginAdmit(_: *anyopaque) void {}
         fn admit(ctx: *anyopaque, ask: api.Rounds.Ask, _: *[]const u8) api.Rounds.Verdict {
             const p = self(ctx);
-            for (p.seqs.items) |x| if (!x.decoding) return .wait;
+            for (p.seqs.items) |x| if (!x.decoding) return .{ .wait = .engine_busy };
             p.seqs.append(gpa, .{ .key = ask.key, .n = ask.prompt.len }) catch return .refuse;
             return .admit;
         }

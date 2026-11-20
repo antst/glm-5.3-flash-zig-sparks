@@ -152,6 +152,7 @@ pub fn loadMode(gpa: std.mem.Allocator, io: std.Io, e: anytype, dir: []const u8,
     if (compat > 7 or (compat & 1 != 0 and bits != 4)) return error.BadDrafterCompatibility;
     if (bits != 0 and bits != 4) return error.BadDrafterBits;
     try checkConfig(gpa, io, dir);
+    const checkpoint_digest = try core.checkpoint_identity.fullIdentity(gpa, io, dir);
     const d = e.d;
     const head = e.w.draftHead(@import("cuda_dflash_head_mode.zig").omitted(e)) orelse return error.DrafterNeedsDraftHead;
     const path = try std.fs.path.join(gpa, &.{ dir, "model.safetensors" });
@@ -195,7 +196,7 @@ pub fn loadMode(gpa: std.mem.Allocator, io: std.Io, e: anytype, dir: []const u8,
     }
     const dr = try gpa.create(Drafter);
     errdefer gpa.destroy(dr);
-    dr.* = .{ .gpa = gpa, .d = d, .module = module, .k = try df.Kernels.load(module), .weights = wbuf, .split = split, .ff = ff, .rank = rank, .world = world, .tap_rows = df.tapRows(e.bp.rows) };
+    dr.* = .{ .checkpoint_digest = checkpoint_digest, .bits = bits, .gpa = gpa, .d = d, .module = module, .k = try df.Kernels.load(module), .weights = wbuf, .split = split, .ff = ff, .rank = rank, .world = world, .tap_rows = df.tapRows(e.bp.rows) };
     dr.edge_06 = e.settings.dflash_edge_06;
     dr.compat = compat;
     if (bits == 4) try q4.enableRows(&e.m.q4, e.m.mods[5]);
@@ -249,7 +250,7 @@ pub fn loadMode(gpa: std.mem.Allocator, io: std.Io, e: anytype, dir: []const u8,
     var tail: Tail = .{ .loader = &l, .head_n = head.n };
     const candidates = @import("dflash_candidates.zig").Layout.init(world, df.MAX_M, df.CW);
     try @import("dflash_load_owner.zig").acquire(gpa, dr, &tail, Tail, .{ .book = df.VOCAB * df.RANK, .ctx = df.MAX_CTX, .cand = candidates.host, .hidden = df.MAX_M * df.RANK });
-    if (std.c.getenv("TF_GLM_DFLASH2_LOG")) |v| dr.log = std.fmt.parseInt(u64, std.mem.span(v), 10) catch 0;
+    dr.log = try @import("sys").environment.read(u64, "TF_GLM_DFLASH2_LOG", dr.log);
     if (std.c.getenv("TF_GLM_DFLASH2_PROF") != null) dr.prof = io;
     std.log.info("rank {d}: GLM_DFLASH_EDGE_06 on={any} edge={d:.1}", .{
         rank, dr.edge_06, @as(f32, if (dr.edge_06) 0.6 else 1.0),

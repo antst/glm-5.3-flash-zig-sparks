@@ -55,7 +55,7 @@ test "TP2 direct: native graph parser retains missing dependency cache and stric
         try std.testing.expectError(error.BadSetting, ranks.Settings.read(Check.get, &problem));
     }
     Check.missing = "";
-    for ([_][]const u8{ "", "yes", "2", "01", "+1" }) |value| {
+    for ([_][]const u8{ "yes", "2", "01", "+1" }) |value| {
         Check.flag = value;
         try std.testing.expectError(error.BadSetting, ranks.Settings.read(Check.get, &problem));
     }

@@ -62,13 +62,13 @@ fn run(w: *World, rank: usize, world: usize, text: ?[]const u8, kv8: bool) !void
 }
 
 fn refusal(rank: usize) !void {
-    for ([_][]const u8{ "on", "all", "1" }) |mode| {
+    for ([_][]const u8{ "yes", "", " 0 " }) |mode| {
         var w: World = .{};
         const peer = 1 - rank;
         try run(&w, peer, 2, "auto", true);
         try std.testing.expect(w.waiting[peer]);
-        try std.testing.expectError(error.Fp8OnPages, run(&w, rank, 2, mode, true));
-        try std.testing.expectEqualStrings("Fp8OnPages", w.refused[peer] orelse "waiting for missing rank");
+        try std.testing.expectError(error.BadKvPages, run(&w, rank, 2, mode, true));
+        try std.testing.expectEqualStrings("BadKvPages", w.refused[peer] orelse "waiting for missing rank");
         try std.testing.expect(!w.waiting[peer]);
         try std.testing.expect(w.connected[rank] and w.connected[peer]);
         try std.testing.expect(!w.constructed[rank]);
@@ -78,24 +78,23 @@ fn refusal(rank: usize) !void {
     }
 }
 
-test "GLM startup: refusing rank zero promptly tells the waiting follower Fp8OnPages" {
+test "GLM startup: refusing rank zero promptly tells the waiting follower BadKvPages" {
     try refusal(0);
 }
 
-test "GLM startup: refusing follower promptly tells waiting rank zero Fp8OnPages" {
+test "GLM startup: refusing follower promptly tells waiting rank zero BadKvPages" {
     try refusal(1);
 }
 
 test "GLM startup: valid modes reach construction with every other setting intact" {
     for ([_]bool{ false, true }) |kv8| for ([_][]const u8{ "auto", "off", "0", "on", "all" }) |mode| {
-        if (kv8 and (std.mem.eql(u8, mode, "on") or std.mem.eql(u8, mode, "all"))) continue;
         var w: World = .{};
         try run(&w, 0, 2, mode, kv8);
         try std.testing.expect(w.connected[0]);
         try std.testing.expect(w.constructed[0]);
         try std.testing.expectEqual(try startup.paging(mode, 2, kv8), w.settings[0].?.pages);
         try std.testing.expectEqual(kv8, w.settings[0].?.kv8);
-        try std.testing.expectEqual(@as(u32, 38), w.settings[0].?.marker);
+        try std.testing.expectEqual(@as(u32, 37), w.settings[0].?.marker);
         try std.testing.expectEqual(@as(usize, 0), w.notifications);
     };
     var lone: World = .{};
@@ -132,9 +131,9 @@ test "GLM startup: legacy paging matrix preserves settings and reports each rank
         .{ .raw = "auto", .single = false, .multi = true, .fp8_refuses = false, .mode = "auto" },
         .{ .raw = "off", .single = false, .multi = false, .fp8_refuses = false, .mode = "off" },
         .{ .raw = "0", .single = false, .multi = false, .fp8_refuses = false, .mode = "off" },
-        .{ .raw = "on", .single = true, .multi = true, .fp8_refuses = true, .mode = "on" },
-        .{ .raw = "1", .single = true, .multi = true, .fp8_refuses = true, .mode = "on" },
-        .{ .raw = "all", .single = true, .multi = true, .fp8_refuses = true, .mode = "on" },
+        .{ .raw = "on", .single = true, .multi = true, .fp8_refuses = false, .mode = "on" },
+        .{ .raw = "1", .single = true, .multi = true, .fp8_refuses = false, .mode = "on" },
+        .{ .raw = "all", .single = true, .multi = true, .fp8_refuses = false, .mode = "on" },
         .{ .raw = "", .single = true, .multi = true, .fp8_refuses = true, .mode = "on" },
         .{ .raw = "false", .single = true, .multi = true, .fp8_refuses = true, .mode = "on" },
         .{ .raw = "AUTO", .single = true, .multi = true, .fp8_refuses = true, .mode = "on" },
@@ -147,13 +146,13 @@ test "GLM startup: legacy paging matrix preserves settings and reports each rank
         for (0..last_rank) |rank| {
             var w: World = .{ .expected_world = world };
             if (kv8 and c.fp8_refuses) {
-                try std.testing.expectError(error.Fp8OnPages, run(&w, rank, world, c.raw, kv8));
+                try std.testing.expectError(error.BadKvPages, run(&w, rank, world, c.raw, kv8));
                 try std.testing.expect(!w.constructed[rank]);
                 try std.testing.expectEqual(@as(usize, 0), w.reports);
                 try std.testing.expectEqual(@as(usize, 1), w.notifications);
                 continue;
             }
-            const pages = !kv8 and (if (world == 1) c.single else c.multi);
+            const pages = if (kv8) std.mem.eql(u8, c.mode, "on") else if (world == 1) c.single else c.multi;
             try run(&w, rank, world, c.raw, kv8);
             try std.testing.expectEqualDeep(Settings{ .kv8 = kv8, .pages = pages }, w.settings[rank].?);
             try std.testing.expectEqual(@as(usize, 1), w.reports);

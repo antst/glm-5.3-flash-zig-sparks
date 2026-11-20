@@ -55,6 +55,11 @@ pub fn bucket(rows: usize) usize {
     return @as(usize, 1) << @intCast(@max(4, bits));
 }
 
+/// Plan rows for `rows` real rows: exact on explicit exact plans or RDNA3.5 lane verify rounds, else bucket(rows).
+pub fn planRows(o: Ops, exact: bool, rows: usize) usize {
+    return if (exact or (o.window and o.l.affine.caps.generation == .rdna3_5)) rows else bucket(rows);
+}
+
 /// max_items(pairs, experts, min(TILE, LANE_ROWS)): an item a used expert plus one a tile of pairs past its first.
 pub fn capacity(pairs: usize, experts: usize) usize {
     return @min(pairs, experts) + pairs / @min(TILE, LANE_ROWS);
@@ -70,12 +75,18 @@ pub fn tileOf(rows: usize, window: bool) usize {
     return if (rows < BLOCK_FROM or window) LANE_ROWS else BLOCK_ROWS;
 }
 
+/// The average rows an expert of `experts` takes of `rows` tokens' `top_k` routed slots, rounded up; 0 without experts.
+pub fn expertRows(rows: usize, top_k: usize, experts: usize) u32 {
+    if (experts == 0) return 0;
+    return @intCast((rows * top_k + experts - 1) / experts);
+}
+
 /// `x` (rows, D) to (rows, D) in its dtype: the top-k experts plus the shared one; a tp rank returns its fp32 share.
 pub fn run(o: Ops, kind: Kind, r: Routed, x: Tensor, rows: usize, prefill: bool) ops.Error!Tensor {
     _ = prefill; // the affine experts' arithmetic does not depend on it (the plan's tile comes from tile_for)
     const ex = r.experts;
     const slots = r.top_k + 1;
-    const size = if (r.exact) rows else bucket(rows);
+    const size = planRows(o, r.exact, rows);
     const pairs = rows * slots;
     const cap = capacity(size * slots, r.rows);
     const logits = try o.arena.of(f32, rows * r.rows);
@@ -94,11 +105,12 @@ pub fn run(o: Ops, kind: Kind, r: Routed, x: Tensor, rows: usize, prefill: bool)
         tile = tileFor(o, rows);
         try o.moeRoute(local, pairs, r.rows, tile, members, items, cap);
         try o.moeForeignItems(items, cap, ex.count);
-        const both = try o.projectRouted(x, ex.fused, items, count, members, pairs, slots, @min(tile, rows));
+        const expert_rows = expertRows(rows, r.top_k, r.count());
+        const both = try o.projectRouted(x, ex.fused, items, count, members, pairs, slots, @min(tile, rows), expert_rows);
         const act = try o.arena.take(pairs * ex.width * kind.size());
         const act_t: Tensor = .{ .ptr = act, .kind = kind };
         try o.moeAct(both, act_t, pairs, ex.width, ex.limit);
-        const y = try o.projectRouted(act_t, ex.down, items, count, members, pairs, 1, @min(tile, rows));
+        const y = try o.projectRouted(act_t, ex.down, items, count, members, pairs, 1, @min(tile, rows), expert_rows);
         // the shared pair's id is another rank's here: its row reads zero, and rank 0 adds its own gate's branch
         try o.moeZeroForeign(y, local, ex.count, pairs, ex.dims);
         const share = try o.arena.of(f32, rows * ex.dims);
@@ -136,7 +148,7 @@ pub const Parts = struct { y: u64, wts: u64, slots: usize };
 pub fn parts(o: Ops, kind: Kind, r: Routed, x: Tensor, rows: usize) ops.Error!Parts {
     std.debug.assert(r.experts.shared == null);
     const slots = r.top_k + 1;
-    const size = if (r.exact) rows else bucket(rows);
+    const size = planRows(o, r.exact, rows);
     const cap = capacity(size * slots, r.rows);
     const logits = try o.arena.of(f32, rows * r.rows);
     const pick = try o.arena.of(i32, size * slots);
@@ -166,15 +178,16 @@ fn expertParts(o: Ops, kind: Kind, r: Routed, x: Tensor, rows: usize, logits: u6
     }
     // beside the stack the shared pair's id is the stack's first id past its experts: zero its item, never read its row
     if (ex.shared != null) try o.moeForeignItems(items, count, ex.count);
+    const expert_rows = expertRows(rows, r.top_k, r.count());
     // the gate and up's activation is the launch's epilogue when the tile takes the shape
     const act_t: Tensor = if (try o.projectRoutedAct(x, ex.fused, items, count, members, pairs, slots, @min(tile, rows), ex.limit)) |t| t else blk: {
-        const both = try o.projectRouted(x, ex.fused, items, count, members, pairs, slots, @min(tile, rows));
+        const both = try o.projectRouted(x, ex.fused, items, count, members, pairs, slots, @min(tile, rows), expert_rows);
         const act = try o.arena.take(pairs * ex.width * kind.size());
         const t: Tensor = .{ .ptr = act, .kind = kind };
         try o.moeAct(both, t, pairs, ex.width, ex.limit);
         break :blk t;
     };
-    const y = try o.projectRouted(act_t, ex.down, items, count, members, pairs, 1, @min(tile, rows));
+    const y = try o.projectRouted(act_t, ex.down, items, count, members, pairs, 1, @min(tile, rows), expert_rows);
     return .{ .y = y };
 }
 
@@ -196,4 +209,21 @@ test "the routed products take the decode tile below 64 rows and in a lane round
     try std.testing.expectEqual(@as(usize, BLOCK_ROWS), tileFor(o, 2048));
     try std.testing.expectEqual(@as(usize, LANE_ROWS), tileFor(round, BLOCK_FROM));
     try std.testing.expectEqual(@as(usize, LANE_ROWS), tileFor(round, 2048));
+}
+
+test "planRows keeps RDNA3.5 lane rounds exact while leaving non-RDNA3.5 and non-window launches bucketed" {
+    const Caps = @import("caps.zig").Caps;
+    const Launcher = @import("launches.zig").Launcher;
+    for ([_][]const u8{ "gfx1030", "gfx1100", "gfx1151", "gfx1201" }) |name| {
+        var l: Launcher = undefined;
+        l.affine.caps = Caps.of(name).?;
+        const prefill: Ops = .{ .l = &l, .bf16 = true, .stream = undefined, .arena = undefined, .window = false };
+        var window = prefill;
+        window.window = true;
+        try std.testing.expectEqual(@as(usize, 16), planRows(prefill, false, 3));
+        try std.testing.expectEqual(@as(usize, 3), planRows(prefill, true, 3));
+        const want: usize = if (l.affine.caps.generation == .rdna3_5) 3 else 16;
+        try std.testing.expectEqual(want, planRows(window, false, 3));
+        try std.testing.expectEqual(@as(usize, 3), planRows(window, true, 3));
+    }
 }

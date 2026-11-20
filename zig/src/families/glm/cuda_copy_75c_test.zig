@@ -40,7 +40,7 @@ test "GLM 75c copy: strict cached default-off and all-rank fingerprint agreement
     try t.expect(std.meta.eql(only, on));
     Env.value = "0";
     try t.expect(on.copy_policy_75c);
-    for ([_][]const u8{ "", "2", "01", "true", "yes", " 1", "1 " }) |v| {
+    for ([_][]const u8{ "2", "01", "true", "yes", " 1", "1 " }) |v| {
         Env.value = v;
         try t.expectError(error.BadSetting, ranks.Settings.read(Env.get, &problem));
         try t.expectEqualStrings("TF_GLM_COPY_POLICY_75C: 0 or 1", problem);
@@ -53,7 +53,7 @@ test "GLM 75c copy: strict cached default-off and all-rank fingerprint agreement
     try t.expectEqual(FP.Field.copy_policy_75c, ranks.mismatch(&all).?.field);
     all[0] = FP.of(4, 0, on, 4096, true, @splat(0), @splat(0), @splat(0));
     try t.expect(ranks.mismatch(&all) == null);
-    try t.expectEqual(@as(u32, 65), all[0].layout);
+    try t.expectEqual(@as(u32, 85), all[0].layout);
 }
 
 test "GLM 75c copy: actual factory owns separate requests and OFF retains null/min_match4" {

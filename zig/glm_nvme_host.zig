@@ -58,6 +58,7 @@ test "GLM NVMe: a disk command preserves its source credit when the follow link 
     var d = rec.init();
     HostCopy.attach(&d);
     d.api.cuLaunchKernel = Packet.launch;
+    d.api.cuLaunchKernelEx = glm.pdl.forwardEx(Packet.launch);
     var f: Fixture = undefined;
     try f.init(&d, 0, 4, true);
     defer f.deinit();

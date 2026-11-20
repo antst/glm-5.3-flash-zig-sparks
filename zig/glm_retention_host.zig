@@ -108,11 +108,11 @@ test "sequence retention: strict cached default-off setting and all-rank agreeme
     const FP = glm.ranks.Fingerprint;
     const f0 = FP.of(4, 0, off, 4096, true, @splat(0), @splat(0), @splat(0));
     const f1 = FP.of(4, 1, on, 4096, true, @splat(0), @splat(0), @splat(0));
-    try t.expectEqual(@as(u32, 65), f0.layout);
+    try t.expectEqual(@as(u32, 85), f0.layout);
     try t.expectEqual(FP.Field.retain_sequence_slots, glm.ranks.mismatch(&.{ f0, f1 }).?.field);
     const agreed = FP.of(4, 0, on, 4096, true, @splat(0), @splat(0), @splat(0));
     try t.expect(glm.ranks.mismatch(&.{ agreed, f1 }) == null);
-    for ([_][]const u8{ "", "2", "true", "-1", "1 ", "01" }) |bad| {
+    for ([_][]const u8{ "2", "true", "-1", "1 ", "01" }) |bad| {
         Env.value = bad;
         try t.expectError(error.BadSetting, glm.ranks.Settings.read(Env.get, &problem));
         try t.expectEqualStrings("TF_GLM_RETAIN_SEQUENCE_SLOTS: 0 or 1", problem);

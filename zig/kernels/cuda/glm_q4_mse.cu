@@ -1,3 +1,4 @@
+#include "glm_pdl.cuh"
 #include <cuda_bf16.h>
 #include <stdint.h>
 #include <math.h>
@@ -17,6 +18,7 @@ __device__ __forceinline__ float code(float v, float s, float b) {
 extern "C" __global__ void tf_glm_q4_mse_v1(
     const __nv_bfloat16 *w, int64_t groups, uint32_t *words,
     __nv_bfloat16 *scales, __nv_bfloat16 *biases, uint32_t *invalid) {
+    glm_pdl::enter();
     int lane = threadIdx.x & 31;
     int64_t g = int64_t(blockIdx.x) * 4 + threadIdx.x / 32;
     if (g >= groups) return;

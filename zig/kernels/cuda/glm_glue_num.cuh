@@ -2,6 +2,7 @@
 //   tf_glm_latent_mma_kn / _nk: absorb_q / expand_v for prompt rows as a head-batched bf16 GEMM on tensor cores
 //     (TF_GLM_ABSORB_MMA=1); fp32 sums in mma order instead of the SIMT kernels' fma-and-shuffle order.
 #pragma once
+#include "glm_pdl.cuh"
 
 #include "glm_triton.cuh"
 
@@ -144,6 +145,7 @@ __device__ __forceinline__ void latent_mma(const __nv_bfloat16* __restrict__ x, 
 extern "C" __global__ void __launch_bounds__(256)
     tf_glm_latent_mma_kn(const __nv_bfloat16* x, int64_t xr, const __nv_bfloat16* w, __nv_bfloat16* out, int64_t orow,
                          int64_t rows, int n, int k) {
+    glm_pdl::enter();
   glm_num::latent_mma<true, 3>(x, xr, w, out, orow, rows, n, k);
 }
 
@@ -151,6 +153,6 @@ extern "C" __global__ void __launch_bounds__(256)
 extern "C" __global__ void __launch_bounds__(256)
     tf_glm_latent_mma_nk(const __nv_bfloat16* x, int64_t xr, const __nv_bfloat16* w, __nv_bfloat16* out, int64_t orow,
                          int64_t rows, int n, int k) {
+    glm_pdl::enter();
   glm_num::latent_mma<false, 3>(x, xr, w, out, orow, rows, n, k);
 }
-

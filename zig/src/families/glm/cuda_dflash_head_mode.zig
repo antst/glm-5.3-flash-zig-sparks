@@ -2,7 +2,7 @@
 const weights = @import("cuda_weights.zig");
 
 pub fn require(settings: anytype, external: bool, drafts: bool, vision: bool) !void {
-    if (settings.dflash_only_head and (!external or !drafts or vision or settings.pages or settings.kv_host != 0))
+    if (settings.dflash_only_head and (!external or !drafts or vision or (settings.pages and !settings.kv8) or settings.kv_host != 0))
         return error.DFlashHeadScope;
 }
 

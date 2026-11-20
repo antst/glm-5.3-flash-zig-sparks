@@ -24,7 +24,7 @@ test "GLM live state: strict cached mode, rank agreement and disk identity separ
     const FP = glm.ranks.Fingerprint;
     const a = FP.of(4, 0, off, 196608, true, @splat(0), @splat(0), @splat(0));
     const b = FP.of(4, 1, on, 196608, true, @splat(0), @splat(0), @splat(0));
-    try t.expectEqual(@as(u32, 65), a.layout);
+    try t.expectEqual(@as(u32, 85), a.layout);
     try t.expectEqual(FP.Field.kv_live_half, glm.ranks.mismatch(&.{ a, b }).?.field);
     const mode = glm.snapshots.mode;
     const base: [32]u8 = @splat(0x71);
@@ -41,7 +41,7 @@ test "GLM live state: strict cached mode, rank agreement and disk identity separ
     try t.expectEqual(glm.disk_image.Words.Layout.live_dflash, mode.layoutFor(&fake));
     fake.drafter = null;
     try t.expect(mode.head(&fake));
-    for ([_][]const u8{ "", "yes", "true", "2", "-1" }) |value| {
+    for ([_][]const u8{ "yes", "true", "2", "-1" }) |value| {
         Env.value = value;
         try t.expectError(error.BadSetting, glm.ranks.Settings.read(Env.get, &problem));
         try t.expectEqualStrings("TF_GLM_KV_LIVE_HALF: 0 or 1", problem);

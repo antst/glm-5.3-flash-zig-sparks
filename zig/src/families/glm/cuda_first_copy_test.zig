@@ -25,7 +25,7 @@ test "DFlash policy: first-copy startup accepts only3or7 and freezes all-rank ag
     Env.value = "7";
     const seven = try ranks.Settings.read(Env.get, &problem);
     try std.testing.expectEqual(@as(u8, 7), seven.first_copy_tokens);
-    for ([_][]const u8{ "", "0", "1", "4", "8", "15", "03", "+7", "7 ", "true" }) |bad| {
+    for ([_][]const u8{ "0", "1", "4", "8", "15", "03", "+7", "7 ", "true" }) |bad| {
         Env.value = bad;
         try std.testing.expectError(error.BadSetting, ranks.Settings.read(Env.get, &problem));
         try std.testing.expectEqualStrings("TF_GLM_FIRST_COPY_TOKENS: 3/7, 15 requires width>=16, 31 requires width32", problem);
@@ -36,7 +36,7 @@ test "DFlash policy: first-copy startup accepts only3or7 and freezes all-rank ag
     const FP = ranks.Fingerprint;
     const f0 = FP.of(4, 0, legacy, 4096, true, @splat(0), @splat(0), @splat(0));
     const f1 = FP.of(4, 1, seven, 4096, true, @splat(0), @splat(0), @splat(0));
-    try std.testing.expectEqual(@as(u32, 65), f0.layout);
+    try std.testing.expectEqual(@as(u32, 85), f0.layout);
     try std.testing.expectEqual(FP.Field.first_copy_tokens, ranks.mismatch(&.{ f0, f1 }).?.field);
     const agreed = FP.of(4, 0, seven, 4096, true, @splat(0), @splat(0), @splat(0));
     try std.testing.expect(ranks.mismatch(&.{ agreed, f1 }) == null);
