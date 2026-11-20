@@ -47,11 +47,17 @@ the NVMe tier at this length still need validation.
 
 ## RAM and NVMe
 
-`--prompt-cache-gib` controls the RAM prompt snapshot budget. The Q8/BF16 runtime has a
+The packaged TP2 profiles use contiguous FP8 live KV in memory. `--prompt-cache-gib`
+budgets reusable prompt snapshots in RAM. Set `--prompt-cache-gib 0 --tier off` for
+cold-prefill measurements with both prompt-cache tiers disabled.
+
+The packaged Q8/BF16 runtime has a
 measured optional NVMe tier. Set `--tier nvme --prompt-cache-gib 1.75 --learn-gib 32`
-to render it with a distinct per-rank cache namespace on local NVMe. Cold inference
-keeps active KV in memory. A disk hit restores a snapshot into memory for subsequent
-attention. This profile uses a 256 MiB staging limit and a 64 MiB index limit per rank.
+to render it with a distinct cache directory per rank and configuration under a local
+NVMe cache root. A disk hit restores the snapshot into memory for subsequent attention.
+`--learn-gib` limits persistent snapshots per rank. `--require-cache-tokens` controls
+the minimum eligible prefix length and defaults to 137,216 tokens. This profile uses a
+256 MiB staging limit and a 64 MiB index limit per rank.
 
 The Q8 validation covered 160K/192K requests, cache reopening and checksum-failure
 fallback. Per-rank pinned buffers used 207.5 MiB and the index peaked at 3.12 MiB.
@@ -61,6 +67,15 @@ was 3.65/2.89 s on those two requests, compared with 112.21/134.18 s cold. The c
 192K time to first token with the tier enabled was 138.17 s.
 The current TP2 BF16 and Q4 profiles are provided with `--tier off`. See the
 [TP4 cache documentation](TP4.md#ram-and-nvme-prompt-cache-tiers) for the shared cache model.
+
+### Paged FP8 testing
+
+A separate TP2 Q8 build at `fe09d039` tested paged FP8 live KV with disk caching off.
+It processed one 1,041,491-token prompt at 1,310 prompt tok/s and matched the native
+output hash of the contiguous run. In a separate 60,952-token test, a shared RAM
+prefix recovered 59,392 tokens and reduced native prefill from 41.59 s to 1.18 s.
+These measurements cover the paged test build. The packaged profiles and
+`c829c30e` speed runs use contiguous KV.
 
 ## Quality and performance
 
