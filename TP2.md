@@ -15,6 +15,9 @@ The Q4 and Q8 bundles include rank-specific calibration data used at weight load
 calibration and correlation directories with the matching runtime. All four profiles use the
 same [EXL3 4.0 bpw weights and DFlash2 drafter](TP4.md#weights-and-dependencies).
 
+Download the matching archive and verify its SHA256 before extracting it.
+[TP2 runtime downloads](https://github.com/antst/glm-5.3-flash-zig-sparks/releases/tag/v1.2.12-tp2-tp4) · [Archive hashes](tp2/RELEASE-ASSETS.json)
+
 With the selected archive extracted into `/srv/glm/tp2`, render two ranks and verify the bundle:
 
 ```sh

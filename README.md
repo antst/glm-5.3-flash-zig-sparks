@@ -23,7 +23,7 @@ TP2 uses the C24 calibration for both Q4 profiles and correlation-aware packing 
 ## Run the recipe
 
 1. Use the [pinned weights and drafter revisions](TP4.md#weights-and-dependencies). Keep one read-only copy of each checkpoint per host.
-2. Install the hash-pinned [TP2](tp2/RELEASE-ASSETS.json) or [TP4](RELEASE-ASSETS.json) runtime bundle for your selected profile.
+2. Download the tested [TP2 runtime](https://github.com/antst/glm-5.3-flash-zig-sparks/releases/tag/v1.2.12-tp2-tp4) or [TP4 runtime](https://github.com/antst/glm-5.3-flash-zig-sparks/releases/tag/v1.2.12-tp4). Verify its hash against the [TP2](tp2/RELEASE-ASSETS.json) or [TP4](RELEASE-ASSETS.json) asset inventory.
 3. Run `python3 render_config.py --tp 2` or `--tp 4` with the paths and network settings on the topology page. The renderer writes rank payloads and commands locally.
 4. Create the cache directories and start the ranks using the rendered commands. Start followers before rank 0 and stop rank 0 first.
 
@@ -35,7 +35,7 @@ Connect the second ports directly. The recipe uses `enp1s0f1np1`, HCAs `rocep1s0
 and `roceP2p1s0f1`, GID 3, and RoCE traffic class 104. Set `--master` to rank 0’s
 direct-link IPv4 address. Both hosts need the matching runtime and read-only weights
 at the paths below. The two Q4 profiles share one runtime archive, with a separate
-head setting and cache namespace for each. [TP2 runtime bundles](tp2/RELEASE-ASSETS.json)
+head setting and cache namespace for each. [TP2 runtime downloads](https://github.com/antst/glm-5.3-flash-zig-sparks/releases/tag/v1.2.12-tp2-tp4)
 
 This example selects Q4/FP8 and uses the benchmark’s eight active lanes and cache settings. Use your real host labels, addresses, and a fresh output directory.
 
