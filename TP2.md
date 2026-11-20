@@ -64,6 +64,8 @@ The current TP2 BF16 and Q4 profiles are provided with `--tier off`. See the
 
 ## Quality and performance
 
+The [frozen TensorFold refresh tables](TP2-REFRESH.md) cover all four TP2 profiles on engine `c829c30e`. The tables below describe the packaged runtime builds.
+
 The tables use the TP4 format. Mia's original Zig clients provide the C1, C4, C6 and C8
 rates and the long-prompt diagnostics. The balanced benchmark holds 400 completion tokens
 per request, uses two repetitions and reports throughput over a common client-clock window.
