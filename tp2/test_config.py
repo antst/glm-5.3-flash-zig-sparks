@@ -91,6 +91,30 @@ class DirectRecipeTests(unittest.TestCase):
         self.assertEqual((len(nodes),report['context']), (4,1048576))
         self.assertFalse(report['context_and_parallel_match_measured_scope'])
 
+    def test_exl3_profiles_default_to_the_model_context(self):
+        switch = json.loads((ROOT.parent/'recipe.json').read_text())
+        for precision in ('bf16', 'q4', 'q4-fp8', 'q8'):
+            with self.subTest(topology='tp2', precision=precision):
+                nodes, report = self.render('--precision', precision)
+                self.assert_full_context(nodes, report)
+            with self.subTest(topology='tp4', precision=precision):
+                args = self.arguments('--tp', '4', '--master', '192.168.2.201',
+                                      '--roce-address-range', '10.78.0.0/15',
+                                      '--precision', precision)
+                nodes, report = render_config.construct(args, switch)
+                self.assert_full_context(nodes, report)
+        for recipe in (self.recipe, switch):
+            self.assert_full_context_args(recipe['payload_template']['Cmd'])
+
+    def assert_full_context(self, nodes, report):
+        self.assertEqual((report['context'], report['parallel']), (1048576, 1))
+        for node in nodes:
+            self.assert_full_context_args(node['payload']['Cmd'])
+
+    def assert_full_context_args(self, argv):
+        self.assertEqual(argv[argv.index('--context') + 1], '1048576')
+        self.assertEqual(argv[argv.index('--parallel') + 1], '1')
+
     def test_rejects_bad_runtime_bytes_and_escape(self):
         with tempfile.TemporaryDirectory() as folder:
             root = Path(folder)

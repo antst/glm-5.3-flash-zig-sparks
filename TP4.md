@@ -59,16 +59,15 @@ See [SIGNING.md](SIGNING.md) for the release's signing identity and verification
 The configuration generator writes four rank payloads and shell commands. It does not start
 containers or change a proxy registration.
 
-Example for EXL3/BF16, with a192K context limit and eight active lanes:
+This EXL3/BF16 command uses the default 1,048,576-token context and one active request.
 
 ```sh
-python3 render_config.py \
+python3 render_config.py --tp 4 \
   --expert-checkpoint exl3 --precision bf16 \
   --runtime-root /srv/glm/runtime --model-root /srv/weights/glm53-exl3 \
   --drafter-root /srv/weights/glm53-dflash2 --cache-root /var/cache/glm53 \
   --master 192.168.2.201 --roce-address-range 10.78.0.0/15 \
-  --context 196608 --parallel 8 --verify-rows 32 --verify-runtime \
-  --prompt-cache-gib 1.75 --tier off --output /tmp/glm53-rendered
+  --verify-runtime --output /tmp/glm53-rendered
 ```
 
 Choose `--precision q4`, `q4-fp8` or `q8` to render a different EXL3 option. Set `--hosts` to the four
@@ -89,10 +88,10 @@ checkpoint revision, drafter revision, weight-directory paths, precision and set
 
 The default qualification covers deterministic temperature0 and thinking disabled with the pinned
 chat template. Changing sampling, templates, precision or checkpoint changes the request contract.
-Use model/context settings within the documented memory fit. Context and parallelism share the
-same UMA capacity; eight active lanes do not promise eight simultaneously full192K contexts.
-The launcher accepts up to 1,048,576 tokens. TP4's completed long-context measurements reach
-192K. Available memory and the active lane count determine which larger settings can start.
+Context and parallelism share the same UMA capacity. The engine checks available
+memory at startup. TP4 long-context measurements currently cover up to 192K.
+To reproduce the throughput benchmark settings, use
+`--context 196608 --parallel 8 --prompt-cache-gib 0 --tier off`.
 
 ## Quality and performance
 
@@ -189,6 +188,7 @@ python3 render_config.py \
   --runtime-root /srv/glm/runtime --model-root /srv/weights/glm53-exl3 \
   --drafter-root /srv/weights/glm53-dflash2 --cache-root /var/cache/glm53 \
   --master 192.168.2.201 --roce-address-range 10.78.0.0/15 \
+  --context 196608 --parallel 8 \
   --prompt-cache-gib 1.75 --tier nvme --learn-gib 32 --verify-runtime \
   --output /tmp/glm53-nvme-rendered
 ```

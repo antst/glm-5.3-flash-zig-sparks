@@ -262,8 +262,10 @@ def parser():
     p.add_argument('--port', type=int, default=18888)
     p.add_argument('--nccl-port', type=int, default=28664)
     p.add_argument('--plan-port', type=int, default=28651)
-    p.add_argument('--context', type=int, default=196608)
-    p.add_argument('--parallel', type=int, default=8)
+    p.add_argument('--context', type=int, default=MAX_CONTEXT,
+                   help='Maximum request context in tokens (default: %(default)s)')
+    p.add_argument('--parallel', type=int, default=1,
+                   help='Concurrent request lanes (default: %(default)s)')
     p.add_argument('--prompt-cache-gib', type=float, default=1.75)
     p.add_argument('--learn-gib', type=float, default=32)
     p.add_argument('--require-cache-tokens', type=int, default=137216)

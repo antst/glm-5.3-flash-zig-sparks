@@ -30,10 +30,24 @@ retained NVFP4 expert option. [TP2 profiles](TP2.md#runtime) · [TP4 precision o
 
 ## Install and serve
 
+The primary EXL3 profiles on TP2 and TP4 default to **1,048,576 tokens** and
+**one active request**. That context includes the prompt and generated tokens.
+The launch examples use those defaults.
+
 1. Download the pinned model and drafter once per host and mount them read-only. [Weights and dependencies](TP4.md#weights-and-dependencies)
 2. Install the shared ARM64 runtime image and the archive for your topology and profile. Verify the archive against its inventory. [TP2 downloads](https://github.com/antst/glm-5.3-flash-zig-sparks/releases/tag/v1.2.12-tp2-tp4) · [TP2 hashes](tp2/RELEASE-ASSETS.json) · [TP4 and shared downloads](https://github.com/antst/glm-5.3-flash-zig-sparks/releases/tag/v1.2.12-tp4) · [TP4 hashes](RELEASE-ASSETS.json)
 3. Run `python3 render_config.py --tp 2` or `--tp 4` with the paths and network settings in the launch guide. Use `--verify-runtime` to check the extracted assets. The renderer writes per-rank Docker commands and cache paths into the output directory.
 4. Run the generated commands on their assigned hosts. Start the followers before rank 0. Connect clients to rank 0 and use `GLM-5.3-Flash` as the API model name. Stop rank 0 first to let the followers close.
+
+Set `GLM53_URL` to the reachable address of rank 0. Wait for `/health` to
+report `"status": "ok"` and `"warming": false` before sending a request.
+
+```sh
+GLM53_URL=http://192.168.2.201:18888
+curl -fsS "$GLM53_URL/v1/chat/completions" \
+  -H 'Content-Type: application/json' \
+  -d '{"model":"GLM-5.3-Flash","max_tokens":64,"messages":[{"role":"user","content":"Say hello."}]}'
+```
 
 ## Performance and quality
 
@@ -100,18 +114,21 @@ Fixed prompt bodies and 400 completion tokens per request.
 ## Context and KV cache
 
 Both topologies keep active FP8 KV in memory. `--prompt-cache-gib` budgets reusable
-prefix snapshots in RAM. The optional NVMe tier stores those snapshots across
-restarts and restores a hit into memory before attention resumes. Use
-`--prompt-cache-gib 0 --tier off` for cold-prefill measurements.
+prefix snapshots in RAM. The default 1.75 GiB snapshot budget can skip saving
+very long prompts while the active request still uses its full context. The optional
+NVMe tier stores snapshots across restarts and restores a hit into memory before
+attention resumes. Use `--prompt-cache-gib 0 --tier off` for cold-prefill measurements.
 
 | Topology | Long-context evidence | Qualified NVMe profile |
 |---|---|---|
-| TP2 | Q8 served a cold 1,041,491-token prompt with one active lane | Q8/BF16 at 160K and 192K |
+| TP2 | All four EXL3 profiles served a cold 1,041,491-token prompt with the serving defaults | Q8/BF16 at 160K and 192K |
 | TP4 | Completed measurements through 192K | BF16/BF16 at 160K and 192K |
 
-Each renderer accepts up to 1,048,576 tokens. Context, lane count, and snapshots
-share memory. The topology guides give measured settings, cache restore times,
-and per-rank overhead. [TP2 cache settings](TP2.md#ram-and-nvme) · [TP4 cache settings](TP4.md#ram-and-nvme-prompt-cache-tiers)
+Context, lane count, and snapshots share memory. Choose a higher lane count
+explicitly when you have budgeted for concurrent requests. To reproduce the
+throughput benchmarks, use `--context 196608 --parallel 8 --prompt-cache-gib 0 --tier off`.
+The topology guides give measured settings, cache restore times, and per-rank
+overhead. [TP2 cache settings](TP2.md#ram-and-nvme) · [TP4 cache settings](TP4.md#ram-and-nvme-prompt-cache-tiers)
 
 ## Source builds
 

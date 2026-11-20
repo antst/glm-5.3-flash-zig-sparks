@@ -18,14 +18,15 @@ same [EXL3 4.0 bpw weights and DFlash2 drafter](TP4.md#weights-and-dependencies)
 Download the matching archive and verify its SHA256 before extracting it.
 [TP2 runtime downloads](https://github.com/antst/glm-5.3-flash-zig-sparks/releases/tag/v1.2.12-tp2-tp4) · [Archive hashes](tp2/RELEASE-ASSETS.json)
 
-With the selected archive extracted into `/srv/glm/tp2`, render two ranks and verify the bundle:
+With the selected archive extracted into `/srv/glm/tp2`, render two ranks and
+verify the bundle. The command uses the default 1,048,576-token context and one
+active request.
 
 ```sh
 python3 render_config.py --tp 2 --precision q4-fp8 \
   --hosts spark1 spark2 --master 10.79.12.1 --roce-address-range 10.79.0.0/16 \
   --runtime-root /srv/glm/tp2 --model-root /srv/weights/glm53-exl3 \
   --drafter-root /srv/weights/glm53-dflash2 --cache-root /var/cache/glm53 \
-  --context 196608 --parallel 8 --prompt-cache-gib 0 --tier off \
   --verify-runtime --output /tmp/glm53-tp2
 ```
 
@@ -34,19 +35,18 @@ Use `--master` and `--roce-address-range` for your direct links. The renderer us
 (NCCL port +1) and gather-bootstrap ports must be distinct. Each rank has its own
 writable cache directory and the borrowed gather CPU is included in the process cpuset.
 
-The eight-lane benchmark configuration uses a 196608-token context, stepped prefill
-and 32 verification rows. The attention KV and recurrent state share the host's UMA
-capacity.
+The throughput benchmark uses `--context 196608 --parallel 8 --prompt-cache-gib 0 --tier off`.
+Both serving and benchmark configurations use stepped prefill and 32 verification rows.
+The attention KV and recurrent state share the host's UMA capacity.
 
-The launcher accepts up to 1,048,576 tokens. Each additional lane and snapshot budget
-uses memory alongside the model. The engine checks available memory at startup.
+Each additional lane and snapshot budget uses memory alongside the model. The
+engine checks available memory at startup.
 
-For a single long request, use `--precision q8 --context 1048576 --parallel 1
---prompt-cache-gib 0 --tier off`. The Q8/BF16 build processed a cold prompt of
-1,041,491 tokens on Sparks 3 and 4 and returned the receipt code from the start of
-the prompt exactly. Prefill took 781.25 seconds, about 1,333 tok/s, with drafting
-disabled for that request. This is one retrieval test. Concurrent long requests and
-the NVMe tier at this length still need validation.
+With the serving defaults, each of the four EXL3 profiles processed a cold
+1,041,491-token prompt and retrieved the receipt code from the start of the prompt
+exactly. All four returned identical answer token IDs. Prefill took 778 to 786
+seconds on Sparks 3 and 4. The retrieval request disabled drafting. The NVMe
+measurements below cover 160K and 192K prompts.
 
 ## Quality and performance
 
