@@ -33,7 +33,10 @@ retained NVFP4 expert option. [TP2 profiles](TP2.md#runtime) · [TP4 precision o
 
 The primary EXL3 profiles on TP2 and TP4 default to **1,048,576 tokens** and
 **one active request**. That context includes the prompt and generated tokens.
-The launch examples use those defaults, with optimized prefill and native NVMe snapshots enabled.
+The launch examples enable optimized prefill and native NVMe snapshots. At 1M
+context, all eight EXL3 profiles request an **8 GiB RAM snapshot budget per rank**,
+verify that a full-window snapshot fits at startup, and allow **256 GiB of NVMe
+history per rank**. Use `--learn-gib` to set the history limit to suit your disk.
 
 1. Download the pinned model and drafter once per host and mount them read-only. [Weights and dependencies](TP4.md#weights-and-dependencies)
 2. Install the shared ARM64 runtime image and the current archive for your topology and profile. The renderer checks the installed runtime against its inventory by default. [Current runtime downloads](https://github.com/antst/glm-5.3-flash-zig-sparks/releases/tag/v1.3.0-tp2-tp4) · [TP2 hashes](tp2/RELEASE-ASSETS.json) · [TP4 hashes](RELEASE-ASSETS.json) · [Shared ARM64 runtime image](https://github.com/antst/glm-5.3-flash-zig-sparks/releases/tag/v1.2.12-tp4)
@@ -128,9 +131,8 @@ Identical 62,027- and 299,992-token prompts, at the 1M context setting with one 
 ## Context and KV cache
 
 Both topologies keep active FP8 KV in memory. `--prompt-cache-gib` budgets reusable
-prefix snapshots in RAM. The default 1.75 GiB snapshot budget can skip saving
-very long prompts while the active request still uses its full context. The
-NVMe tier stores snapshots across restarts and restores a hit into memory before
+prefix snapshots in RAM. The budget scales with context and is checked after
+stream admission. The NVMe tier stores snapshots across restarts and restores a hit into memory before
 attention resumes. Use `--prompt-cache-gib 0 --tier off` for cold-prefill measurements.
 
 | Topology | Long-context evidence | Qualified NVMe profile |

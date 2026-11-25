@@ -23,7 +23,7 @@ class DirectRecipeTests(unittest.TestCase):
             '--master','10.79.12.1','--roce-address-range','10.79.0.0/16','--no-verify-runtime',*extra])
 
     def render(self,*extra):
-        return config.construct(self.arguments(*extra),self.recipe,self.sources,render_config.create_command)
+        return config.construct(self.arguments(*extra),self.recipe,self.sources,render_config.create_command,render_config.cache_budget)
 
     def test_profiles_preserve_ranks_and_separate_cache_names(self):
         namespaces = set()
@@ -56,7 +56,8 @@ class DirectRecipeTests(unittest.TestCase):
             self.assertEqual(env['TF_GLM_NVME_INDEX_MIB'],'64')
             self.assertIn('--learn-conversations',node['payload']['Cmd'])
         _, other = self.render('--precision','q8','--tier','nvme','--learn-gib','48')
-        self.assertNotEqual(report['namespace'],other['namespace'])
+        self.assertEqual(report['namespace'],other['namespace'])
+        self.assertEqual((report['learn_gib'], other['learn_gib']), (256, 48))
         off, _ = self.render('--precision','q8','--tier','off')
         self.assertIn('TF_GLM_NVME_STAGING_MIB=192',off[0]['payload']['Env'])
 
@@ -123,13 +124,19 @@ class DirectRecipeTests(unittest.TestCase):
     def assert_full_context(self, nodes, report):
         self.assertEqual((report['context'], report['parallel']), (1048576, 1))
         self.assertEqual(report['tier'], 'nvme')
+        self.assertEqual(report['prompt_cache_gib'], 8)
+        self.assertEqual(report['learn_gib'], 256)
         for node in nodes:
             self.assert_full_context_args(node['payload']['Cmd'])
             env = dict(item.split('=', 1) for item in node['payload']['Env'])
             self.assertEqual(env['TF_GLM_PREFILL_OPT'], '1')
             self.assertEqual(env['TF_KV_PAGES'], 'off')
             self.assertEqual(env['TF_GLM_NVME_TIER'], 'native-tiered')
+            self.assertEqual(env['TF_GLM_NVME_MIN_CACHE_TOKENS'], '1048576')
             self.assertIn('--learn-conversations', node['payload']['Cmd'])
+            cmd = node['payload']['Cmd']
+            self.assertEqual(cmd[cmd.index('--prompt-cache-gib')+1], '8')
+            self.assertEqual(cmd[cmd.index('--learn-gib')+1], '256')
 
     def assert_full_context_args(self, argv):
         self.assertEqual(argv[argv.index('--context') + 1], '1048576')

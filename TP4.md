@@ -196,8 +196,11 @@ The active attention KV state resides in memory during inference. The optional d
 prompt snapshots for later reuse. A cache hit restores the snapshot into the active state; attention
 does not fetch NVMe blocks on each KV access or each generated token.
 
-`--prompt-cache-gib` limits useful RAM prompt-cache storage. Native NVMe snapshots are enabled by default for the four EXL3 profiles. `--tier off` disables them. The tier keeps persistent snapshots
-under the per-rank cache root, and `--learn-gib` limits their disk footprint per rank. Separate
+`--prompt-cache-gib` budgets reusable RAM snapshots. At 1M context the renderer
+requests 8 GiB per rank and checks that a full-window snapshot fits after stream
+admission. Native NVMe snapshots are enabled by default for the four EXL3
+profiles. `--tier off` disables them. `--learn-gib` limits disk history to 256 GiB
+per rank by default. Separate
 metadata/index and staging limits bound the maintenance allocations. They are not useful cache
 capacity and should not be added to the useful-cache budget as if they were prompt data.
 
@@ -208,12 +211,12 @@ python3 render_config.py \
   --drafter-root /srv/weights/glm53-dflash2 --cache-root /var/cache/glm53 \
   --master 192.168.2.201 --roce-address-range 10.78.0.0/15 \
   --context 196608 --parallel 8 \
-  --prompt-cache-gib 1.75 --tier nvme --learn-gib 32 --verify-runtime \
+  --tier nvme --verify-runtime \
   --output /tmp/glm53-nvme-rendered
 ```
 
-The conservative disk-persistence threshold is137216 tokens. `--require-cache-tokens` changes that
-threshold; the renderer requires it to fit within the context limit. Use a fresh namespace when
+`--require-cache-tokens` overrides the snapshot size the engine requires to fit
+at NVMe startup. The value must be within the configured context. Use a fresh namespace when
 changing source, precision, checkpoint or snapshot layout. Do not reuse older experimental cache
 prefixes merely because a directory has the same model name. Cleanup should target closed,
 unreferenced cache roots after verifying their ownership; weight directories are separate.

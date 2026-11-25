@@ -36,11 +36,13 @@ def validate(args, hosts, ports):
             'TP2 uses stepped prefill, 32 verification rows and warm turns off')
     require(1 <= args.parallel <= 8 and 4096 <= args.context <= MAX_CONTEXT,
             f'TP2 requires 1 to 8 lanes and a context from 4096 to {MAX_CONTEXT}')
-    require(math.isfinite(args.prompt_cache_gib) and 0 <= args.prompt_cache_gib <= 32,
+    requested = args.prompt_cache_gib if args.prompt_cache_gib is not None else 0
+    require(math.isfinite(requested) and 0 <= requested <= 32,
             'Invalid RAM cache size')
     require(math.isfinite(args.learn_gib) and 1 <= args.learn_gib <= 4096,
             'Invalid NVMe cache size')
-    require(0 <= args.require_cache_tokens <= MAX_CONTEXT, 'Invalid cached-prefix threshold')
+    require(args.require_cache_tokens is None or 0 <= args.require_cache_tokens <= MAX_CONTEXT,
+            'Invalid required cached-prefix size')
     require(len(hosts) == 2 and len(set(hosts)) == 2, 'Choose two distinct rank hosts for TP2')
     require(all(re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9_.-]{0,252}', host) for host in hosts),
             'Invalid rank host label')
@@ -77,17 +79,19 @@ def verify_runtime(root, inventory):
             require(file.stat().st_mode & 0o111, 'Restore the executable permissions from the archive')
 
 
-def construct(args, recipe, sources, create_command):
+def construct(args, recipe, sources, create_command, cache_budget):
     hosts = args.hosts or recipe['rank_hosts']
     ports = [args.port, args.nccl_port, args.nccl_port + 1, args.plan_port]
     roots = validate(args, hosts, ports)
     selected = recipe['profiles'][args.precision]
     bundle = recipe['bundles'][selected['bundle']]
     source = sources[selected['bundle']]
+    prompt_cache_gib = cache_budget(args.prompt_cache_gib, args.context, args.expert_checkpoint)
     tier = args.tier or 'nvme'
+    required_tokens = args.context if args.require_cache_tokens is None else args.require_cache_tokens
     tiered = tier == 'nvme'
     if tiered:
-        require(args.prompt_cache_gib > 0 and args.require_cache_tokens <= args.context,
+        require(prompt_cache_gib > 0 and required_tokens <= args.context,
                 'NVMe needs a RAM prompt cache and a cache threshold within the context')
     if args.verify_runtime:
         verify_runtime(roots['runtime'], bundle['files'])
@@ -111,7 +115,7 @@ def construct(args, recipe, sources, create_command):
     env.update(NCCL_COMM_ID=f'{args.master}:{args.nccl_port}', TF_TP_MASTER=args.master,
                TF_TP_PLAN_PORT=str(args.plan_port), NCCL_IB_ADDR_RANGE=args.roce_address_range,
                TF_GLM_NVME_TIER='native-tiered' if tiered else '0',
-               TF_GLM_NVME_MIN_CACHE_TOKENS=str(args.require_cache_tokens))
+               TF_GLM_NVME_MIN_CACHE_TOKENS=str(required_tokens))
     if tiered:
         env['TF_GLM_NVME_STAGING_MIB'] = '256'
     config = dict(tensor_parallel=2, topology='direct', precision=args.precision,
@@ -120,14 +124,18 @@ def construct(args, recipe, sources, create_command):
                   model_root=str(roots['model']), drafter_root=str(roots['drafter']),
                   context=args.context, parallel=args.parallel, tier=tier, verify_rows=32,
                   context_and_parallel_match_measured_scope=(args.context == 196608 and args.parallel == 8),
-                  prompt_cache_gib=args.prompt_cache_gib,
+                  prompt_cache_gib=prompt_cache_gib,
                   calibration_sha256=env.get('TF_GLM_CALIBRATION_SHA256'),
                   correlation_sha256=env.get('TF_GLM_Q8_CORRELATION_SHA256'))
     if tiered:
-        config.update(learn_gib=args.learn_gib, require_cache_tokens=args.require_cache_tokens,
+        config.update(learn_gib=args.learn_gib, require_cache_tokens=required_tokens,
                       nvme_staging_mib=int(env['TF_GLM_NVME_STAGING_MIB']),
                       nvme_index_mib=int(env['TF_GLM_NVME_INDEX_MIB']))
-    fingerprint = hashlib.sha256(json.dumps(config, sort_keys=True).encode()).hexdigest()[:12]
+    cache_identity = dict(config, prompt_cache_gib=1.75)
+    if tiered:
+        # Preserve the previous default namespace. Capacity limits do not change on-disk compatibility.
+        cache_identity.update(learn_gib=32, require_cache_tokens=137216)
+    fingerprint = hashlib.sha256(json.dumps(cache_identity, sort_keys=True).encode()).hexdigest()[:12]
     namespace = f'tp2-{args.precision}-{source["source_commit"][:12]}-{fingerprint}'
     nodes, commands = [], []
     for rank, host in enumerate(hosts):
@@ -150,7 +158,7 @@ def construct(args, recipe, sources, create_command):
         rank_env = dict(env, TF_GLM_RANK=str(rank), TF_TP_RANK=str(rank))
         payload['Env'] = [f'{key}={value}' for key, value in sorted(rank_env.items())]
         for key, value in [('--port', args.port), ('--context', args.context), ('--parallel', args.parallel),
-                           ('--prompt-cache-gib', format(args.prompt_cache_gib, 'g'))]:
+                           ('--prompt-cache-gib', format(prompt_cache_gib, 'g'))]:
             set_arg(payload['Cmd'], key, value)
         if tiered:
             payload['Cmd'] += ['--learn-conversations', '--learn-dir', '/cache', '--learn-gib', str(args.learn_gib)]

@@ -11,6 +11,7 @@ import shlex
 
 P = pathlib.Path(__file__).resolve().parent
 MAX_CONTEXT = 1_048_576
+DEFAULT_NVME_GIB = 256
 
 
 def require(condition, message):
@@ -86,20 +87,32 @@ def create_command(name, payload):
     return command
 
 
+def cache_budget(requested, context, expert_checkpoint):
+    """Budget a full-window EXL3 snapshot with room for fixed state and page rounding."""
+    if requested is not None:
+        return requested
+    if expert_checkpoint == 'nvfp4':
+        return 1.75
+    return max(1.75, math.ceil(8 * context / MAX_CONTEXT))
+
+
 def construct(args, recipe):
     require(args.expert_checkpoint in ('exl3', 'nvfp4'), 'Choose exl3 or nvfp4 experts')
     require(args.precision in ('bf16', 'q4', 'q4-fp8', 'q8'), 'Unknown projection/head precision')
     require(args.verify_rows in (16, 32), 'Verification rows must be16 or32')
     require(1 <= args.parallel <= 8 and 4096 <= args.context <= MAX_CONTEXT,
         f'TP4 requires 1 to 8 lanes and a context from 4096 to {MAX_CONTEXT}')
-    require(math.isfinite(args.prompt_cache_gib) and 0 <= args.prompt_cache_gib <= 32, 'Invalid RAM cache size')
+    prompt_cache_override = args.prompt_cache_gib if args.prompt_cache_gib is not None else 0
+    require(math.isfinite(prompt_cache_override) and 0 <= prompt_cache_override <= 32, 'Invalid RAM cache size')
     require(math.isfinite(args.learn_gib) and 1 <= args.learn_gib <= 4096, 'Invalid NVMe cache size')
     require(args.tier in (None, 'off', 'nvme') and args.prefill in ('whole', 'stepped'), 'Unknown cache/prefill mode')
     tier = args.tier or ('nvme' if args.expert_checkpoint == 'exl3' else 'off')
+    prompt_cache_gib = cache_budget(args.prompt_cache_gib, args.context, args.expert_checkpoint)
+    required_tokens = args.context if args.require_cache_tokens is None else args.require_cache_tokens
     require(not args.warm_turns, 'Background warm turns have not passed activation qualification; keep them off')
-    require(tier != 'nvme' or args.prompt_cache_gib > 0, 'Persistent snapshots require useful RAM cache room')
-    require(0 <= args.require_cache_tokens <= MAX_CONTEXT, 'Invalid required cached-prefix size')
-    require(tier != 'nvme' or args.require_cache_tokens <= args.context,
+    require(tier != 'nvme' or prompt_cache_gib > 0, 'Persistent snapshots require useful RAM cache room')
+    require(0 <= required_tokens <= MAX_CONTEXT, 'Invalid required cached-prefix size')
+    require(tier != 'nvme' or required_tokens <= args.context,
         'Required cached prefix exceeds the context; choose --require-cache-tokens explicitly')
     ipaddress.IPv4Address(args.master)
     ipaddress.IPv4Network(args.roce_address_range, strict=True)
@@ -137,7 +150,7 @@ def construct(args, recipe):
         TF_GLM_PROMPT_STEPS='1' if args.prefill == 'stepped' else '0',
         TF_GLM_WARM_TURNS='1' if args.warm_turns else '0',
         TF_GLM_NVME_TIER='native-tiered' if tier == 'nvme' else '0',
-        TF_GLM_NVME_MIN_CACHE_TOKENS=str(args.require_cache_tokens),
+        TF_GLM_NVME_MIN_CACHE_TOKENS=str(required_tokens),
         TF_TP_MASTER=args.master, TF_TP_PLAN_PORT=str(args.plan_port),
         NCCL_IB_ADDR_RANGE=args.roce_address_range,
         NCCL_COMM_ID=args.master + ':' + str(args.nccl_port))
@@ -165,8 +178,12 @@ def construct(args, recipe):
         drafter_revision=recipe['checkpoints']['drafter']['revision'],
         model_root=str(roots['model']), drafter_root=str(roots['drafter']))
     if tier == 'nvme':
-        settings.update(learn_gib=args.learn_gib, require_cache_tokens=args.require_cache_tokens)
-    key = hashlib.sha256(json.dumps(settings, sort_keys=True).encode()).hexdigest()[:12]
+        settings.update(learn_gib=args.learn_gib, require_cache_tokens=required_tokens)
+    cache_identity = dict(settings)
+    if tier == 'nvme':
+        # Preserve the previous default namespace. Capacity limits do not change on-disk compatibility.
+        cache_identity.update(learn_gib=32, require_cache_tokens=137216)
+    key = hashlib.sha256(json.dumps(cache_identity, sort_keys=True).encode()).hexdigest()[:12]
     namespace = runtime['source_commit'][:12] + '-' + args.expert_checkpoint + '-' + args.precision + '-' + key
     nodes, commands = [], []
     for rank, host in enumerate(hosts):
@@ -187,7 +204,7 @@ def construct(args, recipe):
             'Finite experiment controls must not enter serving')
         payload['Env'] = [key + '=' + value for key, value in sorted(env.items())]
         for flag, value in [('--port', args.port), ('--context', args.context), ('--parallel', args.parallel),
-            ('--prompt-cache-gib', args.prompt_cache_gib)]:
+            ('--prompt-cache-gib', format(prompt_cache_gib, 'g'))]:
             set_arg(payload['Cmd'], flag, value)
         if tier == 'nvme':
             payload['Cmd'] += ['--learn-conversations', '--learn-dir', '/cache', '--learn-gib', str(args.learn_gib)]
@@ -201,7 +218,7 @@ def construct(args, recipe):
     return nodes, dict(source_commit=runtime['source_commit'], native_sha256=runtime['native_sha256'],
         source_manifest_sha256=runtime['source_manifest_sha256'], native_binary=runtime['native_binary'],
         rank_control_port=args.nccl_port + 1,
-        **settings, namespace=namespace, commands=commands,
+        **settings, prompt_cache_gib=prompt_cache_gib, namespace=namespace, commands=commands,
         release_status=recipe['release_status'], profile_qualification=selected['qualification'],
         context_and_parallel_match_measured_scope=(args.context == 196608 and args.parallel == 8),
         rendered_only=True, deployed=False, proxy_registration_changed=False)
@@ -216,7 +233,7 @@ def main(args):
         from tp2 import config
         path = P / 'tp2/recipe.json'
         source = json.loads((P / 'tp2/SOURCE.json').read_text())
-        nodes, report = config.construct(args, json.loads(path.read_text()), source, create_command)
+        nodes, report = config.construct(args, json.loads(path.read_text()), source, create_command, cache_budget)
         report['recipe_sha256'] = sha(path)
         report['release_status'] = 'UNIFIED_EXL3_RELEASE_CONTENT'
         write_configuration(args, nodes, report)
@@ -276,9 +293,12 @@ def parser():
                    help='Maximum request context in tokens (default: %(default)s)')
     p.add_argument('--parallel', type=int, default=1,
                    help='Concurrent request lanes (default: %(default)s)')
-    p.add_argument('--prompt-cache-gib', type=float, default=1.75)
-    p.add_argument('--learn-gib', type=float, default=32)
-    p.add_argument('--require-cache-tokens', type=int, default=137216)
+    p.add_argument('--prompt-cache-gib', type=float,
+                   help='Requested RAM snapshot budget (EXL3 default scales with context to 8 GiB at 1M)')
+    p.add_argument('--learn-gib', type=float, default=DEFAULT_NVME_GIB,
+                   help='NVMe history limit in GiB per rank (default: %(default)s)')
+    p.add_argument('--require-cache-tokens', type=int,
+                   help='Require room for this many cached tokens at NVMe startup (default: configured context)')
     return p
 
 

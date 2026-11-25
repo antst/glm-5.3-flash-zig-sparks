@@ -152,8 +152,9 @@ cold-prefill measurements with both prompt-cache tiers disabled.
 
 Native NVMe snapshots are enabled by default for all four EXL3 profiles. Point
 `--cache-root` at a local NVMe filesystem. The renderer uses a distinct directory
-per rank and configuration. `--learn-gib` defaults to 32 GiB per rank.
-`--require-cache-tokens` defaults to 137,216 eligible prefix tokens. The NVMe
+per rank and configuration. `--learn-gib` defaults to 256 GiB per rank.
+`--require-cache-tokens` requires a full-window snapshot to fit in the effective
+RAM pool at startup by default. The 1M default requests 8 GiB per rank. The NVMe
 worker uses a 256 MiB staging limit and a 64 MiB index limit per rank. A disk hit
 restores a snapshot into memory for subsequent attention. Use `--tier off` to
 disable persistent snapshots.
