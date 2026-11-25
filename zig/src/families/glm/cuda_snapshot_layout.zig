@@ -69,7 +69,7 @@ pub const Plan = struct {
         if (shared > 0 and (st.table == 0 or shared * page_rows > at)) return error.SnapshotShape; // pages below `at` only
         var p: Plan = .{ .ids = st.pages, .sizing = sizing, .shared = shared, .half = halfOf(cur, st.kda_layers, live) };
         // a paged sequence's caches are its pages: its fields up to them end at its first ring
-        const first = if (st.table != 0) st.rings[0] else if (st.caches.len > 0) st.caches[0].lc else st.mtp_caches.lc;
+        const first = st.snapshotPrefixEnd();
         if (first < st.arena.buf.ptr) return error.SnapshotShape;
         try p.prefix(st, first, cur, live);
         for (st.caches, 0..) |x, j| try p.rows(st, c, x, j, at);
@@ -116,13 +116,28 @@ pub const Plan = struct {
 
     /// A cache's rows: in the arena, or on the sequence's pages, `span` bytes a page (past the store's `shared`).
     fn addCache(p: *Plan, st: *const State, x: cache.Caches, live: u64, len: usize, span: usize, page: u64) !void {
-        if (x.pt == 0) return p.add(st, live, len);
+        if (x.pt == 0) {
+            if (len != 0 and st.linear != null and (live == x.lc or live == x.ls)) return p.outside(live, len);
+            return p.add(st, live, len);
+        }
         const from = @min(len, p.shared * span);
         if (len == from) return;
         if ((!p.sizing and (len - 1) / span >= p.ids.len) or p.count == p.parts.len) return error.SnapshotShape;
         p.len = try std.math.add(usize, p.len, len - from);
         p.parts[p.count] = .{ .live = live, .len = len - from, .span = span, .page = page, .from = from };
         p.count += 1;
+    }
+
+    /// The shared latent ranges are already present at their destination. Keep their canonical offsets.
+    pub fn skipAliased(p: *Plan, st: *const State) void {
+        for (p.parts[0..p.count]) |*part| {
+            for (st.caches) |cache_part| {
+                if (part.live == cache_part.lc or part.live == cache_part.ls) {
+                    part.skip = true;
+                    break;
+                }
+            }
+        }
     }
 
     /// Where a part's bytes from `done` on sit, as many as lie in a row there.

@@ -46,6 +46,8 @@ const Snap = @import("cuda_engine_types.zig").Snap;
 pub const Resume = @import("cuda_engine_types.zig").Resume;
 pub const Cancel = @import("cuda_engine_types.zig").Cancel;
 pub const Marks = @import("cuda_engine_types.zig").Marks;
+const linear_work = @import("cuda_linear_work.zig");
+
 pub const Engine = struct {
     gpa: std.mem.Allocator,
     io: std.Io,
@@ -91,6 +93,7 @@ pub const Engine = struct {
     bs: ?fw.Buffers = null, // shared verify windows (with the MTP head, as the lane core shares only then)
     pairs: cuda.DeviceBuffer, // greedy records: one/rank, or [world][window_rows] when batching is agreed
     smp: sampler.Sampler,
+    linear: ?*@import("cuda_linear_owner.zig").Owner = null,
     seqs: std.ArrayList(?*Seq) = .empty, // every stream's sequence by slot (the lane backend's), slot 0 made at init
     cur: *Seq = undefined, // the bound slot's: every step below runs on it
     slot: u32 = 0,
@@ -222,6 +225,8 @@ pub const Engine = struct {
         if (o.settings.tiled) e.m.packs = &e.packs;
         if (o.settings.l2pf.want(try ctx.capability(), world)) e.l2pf = try l2pf_mod.L2pf.init(gpa, d, &e.w, o.settings.l2pf);
         errdefer if (e.l2pf) |*p| p.deinit();
+        if (o.settings.linear_cache) try @import("cuda_linear_owner.zig").open(e, ctx);
+        errdefer if (e.linear) |owner| owner.deinit();
         if (o.settings.pages) try pages_mod.ownSequence(e) else try e.bind(0); // on pages: no window, its pool places it
         errdefer {
             e.free(0);
@@ -321,6 +326,7 @@ pub const Engine = struct {
         e.bp.deinit();
         if (e.pages) |p| p.deinit();
         e.freeSequences();
+        if (e.linear) |owner| linear_work.close(owner, e.share.rank);
         if (e.l2pf) |*p| p.deinit();
         e.w.deinit();
         e.pieces.deinit();
@@ -365,13 +371,7 @@ pub const Engine = struct {
                 e.slot = previous_slot;
             }
         }
-        if (made) {
-            const q = try e.gpa.create(Seq);
-            errdefer e.gpa.destroy(q);
-            q.* = .{ .st = try fw.State.initHead(e.gpa, e.d, &e.w, e.capacity, e.settings.kv8, !@import("cuda_dflash_head_mode.zig").omitted(e)) };
-            e.seqs.items[slot] = q;
-            if (e.settings.retain_sequence_slots) e.sequence_counts.created += 1;
-        }
+        if (made) try sequence_slots.make(e, slot);
         e.cur = e.seqs.items[slot].?;
         e.slot = slot;
         if (e.images) |v| try v.activate(slot);
@@ -381,6 +381,7 @@ pub const Engine = struct {
     pub fn release(e: *Engine, slot: u32) void {
         if (e.images) |v| v.release(slot);
         const paged = if (e.pages) |p| p.paged(slot) else false;
+        linear_work.release(e, slot);
         if (paged) e.pages.?.close(slot) else if (slot != 0 and !sequence_slots.retain(e, slot)) e.free(slot);
         e.cur = e.seqs.items[0].?;
         e.slot = 0;
@@ -403,7 +404,7 @@ pub const Engine = struct {
     }
     /// Bytes one more stream's sequence takes on this rank (its state arena).
     pub fn seqBytes(e: *const Engine) u64 {
-        return e.seqs.items[0].?.st.arena.buf.len;
+        return e.seqs.items[0].?.st.arena.buf.len + if (e.linear) |v| v.per_state else 0;
     }
     /// The committed length: the pending token sits at this position, a window's row r draws position pos + 1 + r.
     pub fn pos(e: *const Engine) usize {
@@ -419,6 +420,7 @@ pub const Engine = struct {
         e.cur.sampling = sampler.check(sampling);
         e.cur.in_head = 0;
         e.cur.cuts.clearRetainingCapacity(); // a request without starts cuts on the grid alone
+        try linear_work.reset(e.cur, e.stream);
         try e.cur.st.reset(e.stream);
         if (e.drafter) |dr| try dr.restart(e.slot, 0);
     }
@@ -432,14 +434,7 @@ pub const Engine = struct {
             start = end;
         }
     }
-    /// Where a prompt pass of `len` ids starts: 0, or `from`'s position with its kept state restored.
-    fn prefillStart(e: *Engine, len: usize, from: ?Resume) !usize {
-        if (len == 0 or len + e.settings.verify_rows >= e.cur.st.capacity) return error.PromptTooLong;
-        const r = from orelse return 0;
-        if (r.at == 0 or r.at >= len or !prompt_cuts.coldCut(len, e.cur.cuts.items, r.at)) return error.BadResume;
-        try e.restoreState(r.id);
-        return r.at;
-    }
+    const prefillStart = prompt_cuts.resumeStart;
     /// One chunk of a `len`-id prompt pass: `part` from `start` plus the next id; first token at the end, else null.
     pub fn prefillChunk(e: *Engine, part: []const u32, start: usize, len: usize, from: ?Resume, cancel: ?Cancel, marks: ?Marks) !?u32 {
         const split = e.index_split; // this step's alone
@@ -473,6 +468,7 @@ pub const Engine = struct {
         };
         stamp.end();
         if (f.prof) |p| p.mark(e.stream, .gate);
+        try linear_work.one(e, start, rows);
         try f.run(as_i32[0..rows]);
         e.index_splits += @intFromBool(split);
         stamp = prof_mod.span(f.prof, e.stream, .prompt_score);
@@ -520,6 +516,7 @@ pub const Engine = struct {
         const at = e.cur.st.pos;
         f.prof = e.profs[ids.len - 1];
         if (f.prof) |p| try p.begin(e.stream, verifyLabel(ids.len));
+        try linear_work.one(e, at, ids.len);
         try @import("cuda_verify_forward.zig").run(e, &f, @ptrCast(ids));
         if (e.drafter) |dr| try dr.noteVerify(e.slot, 0, ids.len, at, true);
         e.cur.rows_at = e.bd.fnormed;
@@ -548,6 +545,7 @@ pub const Engine = struct {
         var f = e.sharedView(b, segs[0..parts.len], &one);
         const shared_prof = try @import("cuda_engine_prof.zig").beginShared(e, &f, rows, parts.len);
         errdefer if (shared_prof) |v| v.cancel();
+        try linear_work.many(e, segs[0..parts.len]);
         try @import("cuda_verify_forward.zig").run(e, &f, @ptrCast(ids[0..rows]));
         if (e.drafter) |dr| for (parts, segs[0..parts.len], 0..) |p, g, i| try dr.noteVerify(p.slot, g.row0, g.rows, g.st.pos, i == 0);
         try @import("cuda_shared_pick.zig").draw(e, b, parts, segs[0..parts.len], rows);
@@ -572,12 +570,7 @@ pub const Engine = struct {
     pub fn draft(e: *Engine, from_prompt: bool, follow: []const u32, depth: usize, out: []u32, chances: ?[]f64) !void {
         return @import("cuda_engine_mtp.zig").draft(e, from_prompt, follow, depth, out, chances);
     }
-    /// Ordinary greedy verification; all other draw callers retain their original path.
-    pub fn drawVerify(e: *Engine, logits: u64, rows: usize, first: u64, bits: u64, out: []u32) !void {
-        if (e.settings.greedy_batch and !e.structured and e.cur.sampling == null)
-            return @import("cuda_engine_pick.zig").greedyRows(e, logits, rows, out);
-        return e.draw(logits, rows, first, bits, out);
-    }
+    pub const drawVerify = @import("cuda_engine_pick.zig").drawVerify;
     /// `rows` logits rows of this rank's vocabulary -> the tokens at positions first, first + 1, ...
     pub fn draw(e: *Engine, logits: u64, rows: usize, first: u64, bits: u64, out: []u32) !void {
         if (e.structured) return e.drawWhole(logits, rows, first, bits, out);

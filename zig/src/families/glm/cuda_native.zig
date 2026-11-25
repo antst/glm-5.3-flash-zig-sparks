@@ -65,6 +65,7 @@ pub const Loaded = struct {
     facts: lanes.Model,
     rows: u32,
     stream_bytes: usize,
+    linear_lease: ?kv.PerRequest = null,
     free_streams: u32 = 1,
     reserve: *const fn (*anyopaque, u32) anyerror!void = reserveStreams,
     learn_bytes: usize = 0, // no learner: the streams keep all the room
@@ -81,6 +82,7 @@ pub const Loaded = struct {
     warm_turns: bool = false,
     greedy_unconstrained_drafts: bool = false,
     host_snaps: bool = false, // TF_GLM_HOST_CACHE: kept states in pinned host memory, --prompt-cache-gib of it
+    pub const linear_max_streams: u32 = @import("cuda_sequence_slots.zig").keep_slots;
 };
 pub fn benchmark(p: *anyopaque) struct { ranks: ?u32, group: ?[]const u8 } {
     const own: *Owned = @ptrCast(@alignCast(p));
@@ -88,9 +90,7 @@ pub fn benchmark(p: *anyopaque) struct { ranks: ?u32, group: ?[]const u8 } {
 }
 fn reserveStreams(p: *anyopaque, streams: u32) !void {
     const own: *Owned = @ptrCast(@alignCast(p));
-    if (!own.e.settings.prewarm_sequence_slots or own.e.settings.pages) return;
-    try own.lanes.x.reserveSlots(streams);
-    std.log.info("GLM_PREWARM_SEQUENCE_SLOTS admitted={d} per_rank_bytes={d}", .{ streams, own.e.seqBytes() * streams });
+    try @import("cuda_sequence_slots.zig").reserveLeader(own.lanes.x, streams);
 }
 /// The pool behind every stream: the engine's own sequence and `streams` more on `pages` KV pages, on every rank.
 pub fn attach(p: *anyopaque, streams: u32, pages: usize) !void {
@@ -397,6 +397,7 @@ fn finishRank(a: OpenArgs) !Loaded {
         .greedy_unconstrained_drafts = set.verify_rows >= 16 or set.dflash_confidence_only,
         .rows = set.verify_rows,
         .stream_bytes = own.e.seqBytes() + extra, // each stream past the first makes its own sequence on every rank
+        .linear_lease = if (set.linear_paging) own.e.linear.?.leaseCost() else null,
         .free_streams = 1, // the first is the sequence the engine made
         .ctx = own,
         .deinit = close,
@@ -408,8 +409,6 @@ fn finishRank(a: OpenArgs) !Loaded {
         .host_snaps = try snapshots.pages.onHost(),
     };
 }
-// Each rank keeps a copy under rank 0's id, in the room rank 0 admitted by (the smallest over the ranks).
-
 /// The rounded pages for a committed prefix, including the head's possible verify window.
 pub fn snap_bytes(ptr: *anyopaque, at: u32) u64 {
     const e: *engine.Engine = @ptrCast(@alignCast(ptr));

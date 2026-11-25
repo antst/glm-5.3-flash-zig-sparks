@@ -4,6 +4,10 @@ const check = @import("check.zig");
 const dense = @import("glm_dense_segmented_contract.zig");
 
 pub fn run(cmd: []const u8, gpu: check.Gpu, rest: []const [:0]const u8) !bool {
+    if (std.mem.eql(u8, cmd, "glm-linear-kv-contract")) {
+        try @import("glm_linear_kv_contract.zig").run(gpu);
+        return true;
+    }
     if (dense.matches(cmd)) {
         try dense.dispatch(cmd, gpu, rest);
         return true;

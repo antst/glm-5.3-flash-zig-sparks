@@ -347,3 +347,55 @@ test "NVMe adapter: storage corruption is unlisted before abort, while a route m
     try t.expect(!h.s.presence(key));
     try t.expect(!m.map.contains(3));
 }
+
+test "NVMe adapter: serial staging keeps two queued checkpoints without a second writer" {
+    const Slow = struct {
+        fn event(_: ?*anyopaque, ev: @import("spill/fsio.zig").Event, _: []const u8) void {
+            if (ev == .write) std.Io.sleep(io, .fromMilliseconds(125), .awake) catch {};
+        }
+    };
+    const h = try fixture.H.init(a, .{ .tag = "serial-queued-marks", .write_slots = 1 });
+    defer h.deinit();
+    h.s.cfg.hooks.event = Slow.event;
+    var m: Memory = .{};
+    defer m.deinit();
+    var side = tier.Side.init(a, io, h.s, m.image(), 2, 1024);
+    defer side.deinit();
+    side.serial_writes = true;
+    side.defer_releases = true;
+
+    const at = 2 * fixture.block_tokens;
+    const first = try spill.format.testIds(a, at, 418);
+    defer a.free(first);
+    const second = try spill.format.testIds(a, at, 419);
+    defer a.free(second);
+    try m.source(1, at);
+    try m.source(2, at);
+    const want = try a.dupe(u8, m.map.get(2).?.bytes);
+    defer a.free(want);
+    try side.enqueue(.{ .id = 1, .at = at, .tokens = first, .metadata = "first", .lineage = .{ .root = @splat(18) } });
+    try side.enqueue(.{ .id = 2, .at = at, .tokens = second, .metadata = "second", .lineage = .{ .root = @splat(19) } });
+    try t.expectError(error.NvmeBacklog, side.enqueue(.{ .id = 3, .at = at, .tokens = second, .metadata = "extra", .lineage = .{ .root = @splat(20) } }));
+    Memory.drop(&m, 1);
+    Memory.drop(&m, 2);
+
+    side.pump(25 * std.time.ns_per_ms);
+    try t.expectEqual(@as(usize, 2), side.notes.items.len);
+    try t.expect(side.notes.items[0].job != null and side.notes.items[1].job == null);
+    try t.expectEqual(@as(u64, 1), h.s.counts().pending_jobs);
+    try settle(&side);
+    try t.expect(side.completed(1) and side.completed(2));
+    try t.expectEqual(@as(u64, 2), h.s.counts().committed);
+    try t.expectEqual(@as(u64, 0), side.counts.refused);
+    try side.release(1);
+    try side.release(2);
+    try t.expect(!m.map.contains(1) and !m.map.contains(2));
+
+    const key = spill.format.pointKey(second, fixture.block_tokens, &.{});
+    try h.reopen();
+    side.store = h.s;
+    try side.beginRead(key, 3, at, "second");
+    try t.expectEqual(tier.Status.ready, try readUntil(&side));
+    try side.commitRead();
+    try t.expectEqualSlices(u8, want, m.map.get(3).?.bytes);
+}

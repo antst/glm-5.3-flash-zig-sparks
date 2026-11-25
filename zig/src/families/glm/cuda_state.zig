@@ -14,6 +14,7 @@ const moe = @import("cuda_moe.zig");
 const glue = @import("cuda_glue.zig");
 const mlp = @import("cuda_mlp.zig");
 const kda_block = @import("cuda_kda_block.zig");
+const linear = @import("cuda_linear_owner.zig");
 
 /// A prompt chunk's rows (decode.PREFILL_ROWS).
 pub const prefill_rows = 2048;
@@ -101,7 +102,7 @@ fn onPages(x: *dsa_block.Caches, c: anytype, p: Paged, table: u64, j: usize, kv8
 }
 
 /// A State's fields in order; on pages (a table of `table` entries) no latent or pooled rows, and the table last.
-fn stateSizes(gpa: std.mem.Allocator, w: *const weights.Weights, capacity: usize, kv8: bool, table: ?usize, head: bool) ![]usize {
+fn stateSizes(gpa: std.mem.Allocator, w: *const weights.Weights, capacity: usize, kv8: bool, table: ?usize, head: bool, mapped: bool) ![]usize {
     const c = &w.config;
     const s = &w.share;
     const nd = mlaLayers(w);
@@ -118,7 +119,7 @@ fn stateSizes(gpa: std.mem.Allocator, w: *const weights.Weights, capacity: usize
     const lc_bytes = try latent.cacheBytes(capacity, c.kv_lora, kv8);
     for (0..nd + 1) |j| {
         const on: usize = @intFromBool(j < nd or head);
-        try sizes.appendSlice(gpa, &.{ on * rows * lc_bytes, on * ring_rows * c.i_dim * 2, on * ring_rows * c.i_dim * 2, on * rows * pk_rows * c.i_dim * 2 });
+        try sizes.appendSlice(gpa, &.{ on * rows * @as(usize, @intFromBool(!mapped)) * lc_bytes, on * ring_rows * c.i_dim * 2, on * ring_rows * c.i_dim * 2, on * rows * pk_rows * c.i_dim * 2 });
     }
     try sizes.appendSlice(gpa, &.{ 4, c.hidden * 2 }); // MTP position and sequence-owned first-draft row
     if (table) |t| try sizes.append(gpa, t * 4);
@@ -425,6 +426,7 @@ pub const State = struct {
     mtp_base: usize = 0,
     prompt_hidden: u64, // first-draft row owned and charged by this sequence arena
     table: u64 = 0, // on pages: its page table (i32, `pages` entries), else 0
+    linear: ?struct { owner: *linear.Owner, views: []@import("cuda_linear_latent.zig").View, writable: usize = 0, generation: u64 = 0, resumed: ?u64 = null } = null,
     page_kv8: bool = false,
     page_head: bool = true,
     pages: []const u32 = &.{}, // on pages: the page ids its table holds, in row order (none while no stream holds it)
@@ -434,12 +436,16 @@ pub const State = struct {
     }
 
     pub fn initFormat(gpa: std.mem.Allocator, d: *const cuda.Driver, w: *const weights.Weights, capacity: usize, kv8: bool) !State {
-        return make(gpa, d, w, capacity, kv8, null, true);
+        return make(gpa, d, w, capacity, kv8, null, true, null);
     }
 
     /// A DFlash-only sequence holds no target MTP cache; its position word and first-draft row stay owned.
     pub fn initHead(gpa: std.mem.Allocator, d: *const cuda.Driver, w: *const weights.Weights, capacity: usize, kv8: bool, head: bool) !State {
-        return make(gpa, d, w, capacity, kv8, null, head);
+        return make(gpa, d, w, capacity, kv8, null, head, null);
+    }
+
+    pub fn initLinear(gpa: std.mem.Allocator, d: *const cuda.Driver, w: *const weights.Weights, capacity: usize, owner: *linear.Owner) !State {
+        return make(gpa, d, w, capacity, true, null, false, owner);
     }
 
     /// A sequence whose latent rows and pooled keys are pages of `p`; it holds no rows until a stream maps some.
@@ -448,7 +454,7 @@ pub const State = struct {
     }
 
     pub fn initPagedFormat(gpa: std.mem.Allocator, d: *const cuda.Driver, w: *const weights.Weights, capacity: usize, p: Paged, kv8: bool, head: bool) !State {
-        return make(gpa, d, w, capacity, kv8, p, head);
+        return make(gpa, d, w, capacity, kv8, p, head, null);
     }
 
     /// Bytes a sequence on pages allocates at any length (its fixed part, as `arena` rounds it), a table of `pages`.
@@ -457,14 +463,14 @@ pub const State = struct {
     }
 
     pub fn pagedBytesOf(gpa: std.mem.Allocator, w: *const weights.Weights, capacity: usize, pages: usize, head: bool) !usize {
-        const sizes = try stateSizes(gpa, w, capacity, false, pages, head);
+        const sizes = try stateSizes(gpa, w, capacity, false, pages, head, false);
         defer gpa.free(sizes);
         var total: usize = 0;
         for (sizes) |n| total += std.mem.alignForward(usize, n, 256);
         return total;
     }
 
-    fn make(gpa: std.mem.Allocator, d: *const cuda.Driver, w: *const weights.Weights, capacity: usize, kv8: bool, paged: ?Paged, head: bool) !State {
+    fn make(gpa: std.mem.Allocator, d: *const cuda.Driver, w: *const weights.Weights, capacity: usize, kv8: bool, paged: ?Paged, head: bool, mapped: ?*linear.Owner) !State {
         const c = &w.config;
         const s = &w.share;
         const nk = w.layers.len - mlaLayers(w);
@@ -472,7 +478,7 @@ pub const State = struct {
         const n = s.kda.len() * c.kda_dim;
         const kw = @import("cuda_kda_block.zig").rowWidth(s.kda.len()); // TF_GLM_KDA_PAD
         const pk_rows = capacity / sparse.pool + 2;
-        const sizes = try stateSizes(gpa, w, capacity, kv8, if (paged) |q| q.pages else null, head);
+        const sizes = try stateSizes(gpa, w, capacity, kv8, if (paged) |q| q.pages else null, head, mapped != null);
         defer gpa.free(sizes);
         const p = try gpa.alloc(u64, sizes.len);
         defer gpa.free(p);
@@ -486,8 +492,10 @@ pub const State = struct {
         for (caches, 0..) |*x, j| x.* = .{ .lc = p[8 + 4 * j], .ls = if (kv8) p[8 + 4 * j] + capacity * c.kv_lora else 0, .ik = p[9 + 4 * j], .ig = p[10 + 4 * j], .pk = p[11 + 4 * j], .pk_rows = pk_rows };
         const rings = try gpa.alloc(u64, 2 * (nd + 1));
         for (0..nd + 1) |j| rings[2 * j ..][0..2].* = .{ p[9 + 4 * j], p[10 + 4 * j] };
+        errdefer gpa.free(rings);
         const ring_rows = @min(capacity, index_ring);
         var st: State = .{ .ring_rows = ring_rows, .ring_row = c.i_dim * 2, .rings = rings, .arena = a, .gpa = gpa, .capacity = capacity, .pos_dev = p[0], .conv = p[1], .rec = p[2], .proj = p[3], .save_k = p[4], .save_v = p[5], .save_g = p[6], .save_b = p[7], .cur = cur, .heads = s.kda.len(), .mtp_caches = .{ .lc = p[8 + 4 * nd], .ls = if (kv8) p[8 + 4 * nd] + @intFromBool(head) * capacity * c.kv_lora else 0, .ik = p[9 + 4 * nd], .ig = p[10 + 4 * nd], .pk = p[11 + 4 * nd], .pk_rows = pk_rows }, .mtp_pos_dev = p[12 + 4 * nd], .prompt_hidden = p[13 + 4 * nd], .kda_layers = nk, .caches = caches, .conv_c = 3 * n, .rec_layer = s.kda.len() * kda.dk * kda.dv * 4, .proj_layer = window_rows * kw, .proj_row = kw };
+        if (mapped) |owner| st.linear = .{ .owner = owner, .views = try owner.make(caches) };
         if (paged) |q| {
             st.table = p[14 + 4 * nd];
             st.page_kv8 = kv8;
@@ -498,6 +506,10 @@ pub const State = struct {
         return st;
     }
 
+    pub fn snapshotPrefixEnd(st: *const State) u64 {
+        if (st.table != 0 or st.linear != null) return st.rings[0];
+        return if (st.caches.len > 0) st.caches[0].lc else st.mtp_caches.lc;
+    }
     /// A paged sequence's caches on the pages of `p` (the engine's own, made before its pool, placed when it is made).
     pub fn place(st: *State, w: *const weights.Weights, p: Paged) void {
         for (st.caches, 0..) |*x, j| onPages(x, &w.config, p, st.table, j, st.page_kv8);
@@ -505,6 +517,7 @@ pub const State = struct {
     }
 
     pub fn deinit(st: *State) void {
+        if (st.linear) |v| v.owner.discard(v.views);
         st.arena.buf.free();
         st.gpa.free(st.cur);
         st.gpa.free(st.caches);
@@ -534,18 +547,8 @@ pub const State = struct {
         try st.setMtpLen(stream, mtp_len);
     }
 
-    /// State.set_mtp_len: rows in the MTP layer's caches (the next MTP step writes from here).
-    pub fn setMtpLen(st: *State, stream: cuda.Stream, n: usize) !void {
-        st.mtp_len = n;
-        const v: i32 = @intCast(n);
-        try st.arena.buf.d.check(st.arena.buf.d.api.cuMemsetD32Async(st.mtp_pos_dev, @bitCast(v), 1, stream.handle), "cuMemsetD32Async");
-    }
-
-    pub fn setPos(st: *State, stream: cuda.Stream, pos: usize) !void {
-        st.pos = pos;
-        const v: i32 = @intCast(pos);
-        try st.arena.buf.d.check(st.arena.buf.d.api.cuMemsetD32Async(st.pos_dev, @bitCast(v), 1, stream.handle), "cuMemsetD32Async");
-    }
+    pub const setMtpLen = @import("cuda_state_position.zig").setMtpLen;
+    pub const setPos = @import("cuda_state_position.zig").setPos;
 
     /// Before a pass of `rows` rows at pos: within capacity, and the index rings holding them (rebased if not).
     pub fn ready(st: *State, stream: cuda.Stream, rows: usize) !void {

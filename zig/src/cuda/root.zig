@@ -80,6 +80,7 @@ pub const exl3_candidate = @import("exl3_candidate.zig");
 pub const exl3_grouped = @import("exl3_grouped.zig");
 
 pub const arena = @import("arena.zig");
+pub const linear_pages = @import("linear_pages.zig");
 pub const pack = @import("pack.zig");
 pub const graph_cache = @import("graph_cache.zig");
 
@@ -165,6 +166,7 @@ pub const train_attn = @import("train_attn.zig");
 test {
     _ = tp_group;
     _ = arena;
+    _ = linear_pages;
     _ = pack;
     _ = graph_cache;
     _ = @import("graph_registry.zig");

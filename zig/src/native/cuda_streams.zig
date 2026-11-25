@@ -26,6 +26,7 @@ pub const Budget = struct {
     host_cache: bool,
     host_budget: u64, // a host prompt cache's bytes (0: none)
     share: bool, // TF_KV_SHARE: the prompt cache's kept states are pool pages
+    minimum_cache: u64 = 0,
 };
 
 /// The streams served, the page plan and layout or the KV ledger plan, and TF_KV_SHARE's count when states take slots.
@@ -36,7 +37,7 @@ pub const CacheRoom = struct { room: u64, streams: u64 };
 /// A host cache sits beside every admitted full window, including a request ledger's declared scratch.
 pub fn cacheRoom(room: u64, stream_bytes: u64, free: u32, counted: Count) CacheRoom {
     if (counted.ledger) |p| return .{
-        .room = room -| p.cost.each.scratch,
+        .room = room -| p.cost.each.scratch -| (p.fixed_slots orelse 0),
         .streams = p.one_full *| (counted.streams -| p.standing.streams),
     };
     return .{ .room = room, .streams = stream_bytes *| (counted.streams -| free) };
@@ -61,6 +62,15 @@ pub fn shareSlots(share: bool, snap_bytes: u64, host_cache: bool) !?usize {
 /// The family's streams in `b.room`; null with `problem` set when none fit or --parallel asks for more than fit.
 pub fn count(comptime F: type, a: Allocator, loaded: anytype, o: api.Open, b: Budget, problem: *[]const u8) !?Count {
     const free = loaded.free_streams;
+    if (comptime @hasField(@TypeOf(loaded), "linear_lease")) {
+        if (loaded.linear_lease) |each| {
+            const p = ledger.linear(F, loaded, o, b.room, b.window, b.host_cache, b.host_budget, each, b.minimum_cache) orelse {
+                problem.* = "Linear KV paging needs room for one full request and the fixed state of the configured lanes";
+                return null;
+            };
+            return .{ .streams = o.lanes, .paged = null, .layout = null, .ledger = p };
+        }
+    }
     const grow = budget.growRoom(b.room, !@hasField(F.Options, "lanes"));
     const wrapped = kv_pages.wrapped(F, loaded, free, b.stream_bytes, b.room);
     if (wrapped.layout) |l| {

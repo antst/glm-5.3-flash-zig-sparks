@@ -364,9 +364,12 @@ fn openWith(comptime F: type, a: Allocator, gpa: Allocator, io: std.Io, asked: a
         room = pr.bytes;
         low = try std.fmt.allocPrint(a, " on rank {d}, the smallest room of the ranks", .{pr.rank});
     };
+    var minimum_cache: u64 = 0;
     if (F == glm.native and o.learn_conversations and o.prompt_cache_gib != 0) {
         if (try glm.nvme_options.wanted()) {
             const limits = try glm.nvme_options.read();
+            if (loaded.linear_lease != null and limits.min_cache_tokens != 0)
+                minimum_cache = glm.native.snap_bytes(loaded.target, limits.min_cache_tokens);
             room = glm.nvme_options.reserve(limits, room, after.unified, true) catch {
                 problem.* = "Native Tiered KV Cache maintenance does not fit beside the model and reserve";
                 return null;
@@ -375,7 +378,7 @@ fn openWith(comptime F: type, a: Allocator, gpa: Allocator, io: std.Io, asked: a
         }
     }
     const free = loaded.free_streams;
-    const counted = try @import("cuda_streams.zig").count(F, a, loaded, o, .{ .room = room, .model = model, .reserve = after.reserve, .low = low, .window = window, .stream_bytes = served.stream_bytes, .host_cache = host_cache, .host_budget = staging_budget, .share = share }, problem) orelse return null;
+    const counted = try @import("cuda_streams.zig").count(F, a, loaded, o, .{ .room = room, .model = model, .reserve = after.reserve, .low = low, .window = window, .stream_bytes = served.stream_bytes, .host_cache = host_cache, .host_budget = staging_budget, .share = share, .minimum_cache = minimum_cache }, problem) orelse return null;
     const streams = counted.streams;
     const held = served.stream_bytes * (streams -| free);
     const cache_room = @import("cuda_streams.zig").cacheRoom(room, served.stream_bytes, free, counted);
@@ -383,7 +386,10 @@ fn openWith(comptime F: type, a: Allocator, gpa: Allocator, io: std.Io, asked: a
     const layout = counted.layout;
     const paged = counted.paged;
     if (!try kv_pages.attach(F, a, loaded.ctx, paged, counted.planned, problem) or !try drafted.price(F, a, io, &g.ctx, o.dir, loaded.ctx, &served, problem)) return null;
-    served.reserve(streams) catch |e| {
+    const prewarm = if (counted.ledger) |p| p.prewarm orelse streams else streams;
+    if (prewarm != streams)
+        std.log.info("GLM_LINEAR_KV_PRIVATE_SLOTS prewarm={d} admitted={d}", .{ prewarm, streams });
+    served.reserve(prewarm) catch |e| {
         problem.* = try std.fmt.allocPrint(a, "the native CUDA engine cannot reserve {d} streams' caches at a {d}-token window ({s}): serve fewer with --parallel, or lower --context", .{ streams, window, @errorName(e) });
         return null;
     };
@@ -395,7 +401,13 @@ fn openWith(comptime F: type, a: Allocator, gpa: Allocator, io: std.Io, asked: a
     if (@hasField(L, "admission_quiet_ns")) h.admission_quiet_ns = loaded.admission_quiet_ns;
     h.kv_plan = counted.ledger;
     // a ledger's plan placed the cache already, beside --parallel full-window requests
-    const kept = if (host_cache) kv_pages.kept(F, loaded, paged, o, room, held, final_host_budget, true) else if (counted.ledger) |lp| lp.kept else kv_pages.kept(F, loaded, paged, o, room, held, 0, false);
+    const kept = if (counted.ledger) |lp| (if (host_cache and lp.fixed_slots == null)
+        kv_pages.kept(F, loaded, paged, o, room, held, final_host_budget, true)
+    else
+        lp.kept) else if (host_cache)
+        kv_pages.kept(F, loaded, paged, o, room, held, final_host_budget, true)
+    else
+        kv_pages.kept(F, loaded, paged, o, room, held, 0, false);
     if (h.kv_plan) |*lp| lp.kept = kept;
     const cache = kept.copied;
     const cache_capacity = kv_pages.capacity(F, loaded, kept, @intCast(window));

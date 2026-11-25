@@ -61,6 +61,7 @@ pub const Side = struct {
     stopped: bool = false,
     lookahead: u1 = 0, // an extra key token is a sentinel tail, never a KV row
     serial_read_wait_ns: u64 = 0,
+    serial_writes: bool = false, // allow queued sources without another pinned staging slot
     defer_releases: bool = false, // TP: source pages return only after every rank reports this point complete
     held: [4]u64 = @splat(0),
 
@@ -154,6 +155,7 @@ pub const Side = struct {
         s.reap();
         var i: usize = 0;
         while (i < s.notes.items.len) {
+            if (s.serial_writes and i != 0) break;
             if (s.notes.items[i].job == null) {
                 const started = s.start(&s.notes.items[i]) catch {
                     s.counts.failures += 1;

@@ -284,6 +284,76 @@ pub const Vmm = struct {
         return at;
     }
 
+    /// Explicit physical handles for remappable linear windows. The owning Vmm and stream must outlive them.
+    pub const Linear = struct {
+        vmm: *Vmm,
+        stream: @import("stream.zig").Stream,
+
+        pub fn backend(l: *Linear) @import("linear_pages.zig").Backend {
+            return .{
+                .ptr = l,
+                .granularity = l.vmm.granularity,
+                .reserve = reserveRange,
+                .create = createBacking,
+                .release = releaseBacking,
+                .map = alias,
+                .unmap = detach,
+                .copy = copy,
+            };
+        }
+
+        fn of(ctx: *anyopaque) *Linear {
+            return @ptrCast(@alignCast(ctx));
+        }
+
+        fn reserveRange(ctx: *anyopaque, bytes: usize) !u64 {
+            const v = of(ctx).vmm;
+            if (bytes == 0 or bytes % v.granularity != 0) return error.PageGeometry;
+            if (bytes > v.va + v.va_len - v.next) return error.VirtualWindowLimit;
+            const base = v.next;
+            v.next += bytes;
+            return base;
+        }
+
+        fn createBacking(ctx: *anyopaque, bytes: usize) !u64 {
+            const l = of(ctx);
+            const v = l.vmm;
+            var h: u64 = 0;
+            try l.stream.d.check(v.api.create(&h, bytes, &v.prop, 0), "cuMemCreate");
+            memory.chargeBacking(bytes);
+            return h;
+        }
+
+        fn releaseBacking(ctx: *anyopaque, h: u64, bytes: usize) !void {
+            const l = of(ctx);
+            try l.stream.d.check(l.vmm.api.release(h), "cuMemRelease");
+            memory.releaseBacking(bytes);
+        }
+
+        fn alias(ctx: *anyopaque, address: u64, bytes: usize, h: u64) !void {
+            const l = of(ctx);
+            const v = l.vmm;
+            try l.stream.d.check(v.api.map(address, bytes, 0, h, 0), "cuMemMap");
+            const desc: AccessDesc = .{ .loc_id = v.device };
+            l.stream.d.check(v.api.setAccess(address, bytes, &desc, 1), "cuMemSetAccess") catch |err| {
+                if (v.api.unmap(address, bytes) != abi.success) return error.MappingUncertain;
+                return err;
+            };
+        }
+
+        fn detach(ctx: *anyopaque, address: u64, bytes: usize) !void {
+            const l = of(ctx);
+            try l.stream.d.check(l.vmm.api.unmap(address, bytes), "cuMemUnmap");
+        }
+
+        fn copy(ctx: *anyopaque, dst: u64, src: u64, bytes: usize) !void {
+            const s = of(ctx).stream;
+            const rc = s.d.api.cuMemcpyDtoDAsync_v2(dst, src, bytes, s.handle);
+            s.synchronize() catch return error.CopyUncertain;
+            try s.d.check(rc, "cuMemcpyDtoDAsync");
+        }
+    };
+
     fn fail(v: *Vmm, call: []const u8, code: c_int) ?u64 {
         if (v.failed == null) v.failed = .{ .call = call, .code = code };
         return null;

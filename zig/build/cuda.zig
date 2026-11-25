@@ -143,6 +143,21 @@ pub fn targets(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.bu
     const control_exe = b.addExecutable(.{ .name = "tf-glm-q4-control-input", .root_module = control_runner });
     b.step("glm-q4-control-input-runner", "Build only the original full-width BF16 recurrent input comparator")
         .dependOn(&b.addInstallArtifact(control_exe, .{}).step);
+    const linear_kv = b.createModule(.{
+        .root_source_file = b.path("zig/tests/cuda/glm_linear_kv_main.zig"),
+        .target = target,
+        .optimize = optimize,
+        .link_libc = true,
+        .strip = strip,
+        .imports = &.{
+            .{ .name = "cuda", .module = cuda },
+            .{ .name = "core", .module = mods.core },
+            .{ .name = "glm_cuda", .module = runner.import_table.get("glm_cuda").? },
+        },
+    });
+    const linear_kv_exe = b.addExecutable(.{ .name = "tf-glm-linear-kv", .root_module = linear_kv });
+    b.step("glm-linear-kv-runner", "Build the standalone GLM linear KV device test")
+        .dependOn(&b.addInstallArtifact(linear_kv_exe, .{}).step);
     // tf-tp-watch-check: the ranks' lines with no GPU or NCCL; a failing or dying rank stops every rank
     b.installArtifact(b.addExecutable(.{ .name = "tf-tp-watch-check", .root_module = b.createModule(.{ .root_source_file = b.path("zig/tests/cuda/tp_watch_check.zig"), .target = target, .optimize = optimize, .link_libc = true, .strip = strip, .imports = &.{.{ .name = "cuda", .module = cuda }} }) }));
     @import("living_dense.zig").target(b, target, optimize, cuda, mods.qwen35);
@@ -318,7 +333,7 @@ pub fn hostTests(b: *std.Build, draft_ids: *std.Build.Module, build_options: *st
     b.step("test-nemotron-grants-host", "Nemotron shared head-cost and copy grants without a GPU").dependOn(&b.addRunArtifact(b.addTest(.{ .root_module = mods.nemotron, .filters = &.{"Nemotron shared prices:"} })).step);
     @import("rows_host.zig").tests(b, native_modules.api, step);
     const native = native_modules.engines;
-    b.step("test-cuda-cache-budget-host", "CUDA cache defaults after stream sizing without devices").dependOn(&b.addRunArtifact(b.addTest(.{ .root_module = native, .filters = &.{"CUDA cache default"} })).step);
+    b.step("test-cuda-cache-budget-host", "CUDA cache defaults after stream sizing without devices").dependOn(&b.addRunArtifact(b.addTest(.{ .root_module = native, .filters = &.{ "CUDA cache default", "linear paging:" } })).step);
     b.step("test-draft-cuda-host", "CUDA draft source metadata without devices").dependOn(&b.addRunArtifact(b.addTest(.{ .root_module = native, .filters = &.{"draft sources:"} })).step);
     @import("cuda_family_host.zig").registerCopyFamilies(b, native, step);
     const copies = b.step("test-nemotron-copies-host", "Nemotron CUDA copy gates and plain equality without devices");

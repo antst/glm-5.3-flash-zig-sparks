@@ -17,7 +17,7 @@ pub const Fingerprint = extern struct {
     world: u32,
     rank: u32,
     kv8: u32 = 0,
-    pages: u32 = 0, // TF_KV_PAGES: the engine's own sequence is made on pages at init, so every rank pages alike
+    pages: u32 = 0, // sequence backing: contiguous (0), software page table (1), or linear GPU mappings (2)
     prompt_fixed_k: u32,
     kda_segments: u32 = 0,
     kda_min_streams: u32 = 8,
@@ -188,7 +188,7 @@ pub const Fingerprint = extern struct {
             .q4_bf16_families = @as(u32, s.q4_bf16_families),
             .calibration_sha = if (s.q8_activation or s.q4_activation) s.calibration_sha else @splat(0),
             .kv8 = @intFromBool(s.kv8),
-            .pages = @intFromBool(s.pages),
+            .pages = if (s.linear_paging) 3 else if (s.linear_cache) 2 else @intFromBool(s.pages),
             .world = @intCast(world),
             .rank = @intCast(rank),
             .prompt_fixed_k = @intFromBool(s.prompt_fixed_k),

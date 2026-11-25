@@ -95,3 +95,40 @@ test "live half: halfOf keeps both halves when the flag is off, when a layer is 
     try t.expectEqual(@as(?u1, null), layout.halfOf(&same, 2, true));
     try t.expectEqual(@as(?u1, 0), layout.halfOf(&zero, 1, true));
 }
+
+test "linear latent: external codes and scales retain the ordinary NVMe byte layout" {
+    var d = Fake.driver();
+    var layers: [2]weights.Layer = undefined;
+    var w: weights.Weights = undefined;
+    var init = try fixture(&d, &w, &layers);
+    init.deinit();
+    var st = try state.State.initHead(t.allocator, &d, &w, 4096, true, false);
+    defer st.deinit();
+    const image = @import("cuda_disk_image.zig");
+    const a = try layout.Plan.initWith(&st, &w.config, 2048, null, 0, st.cur, true);
+    const s = try image.Shape.ofMode(&st, &w.config, st.capacity, false, true);
+    const prefix_end = st.caches[0].lc;
+    const old_scales = st.caches[0].ls;
+    const code_slot = for (a.parts[0..a.count], 0..) |part, i| {
+        if (part.live == prefix_end) break i;
+    } else return error.MissingCodes;
+    const scale_slot = for (a.parts[0..a.count], 0..) |part, i| {
+        if (part.live == old_scales) break i;
+    } else return error.MissingScales;
+
+    st.rings[0] = prefix_end;
+    const codes: u64 = 0x1000000000;
+    const scales = codes + 0x100000;
+    st.caches[0].lc = codes;
+    st.caches[0].ls = scales;
+    var owner: @import("cuda_linear_owner.zig").Owner = undefined;
+    st.linear = .{ .owner = &owner, .views = &.{} };
+    defer st.linear = null;
+    const b = try layout.Plan.initWith(&st, &w.config, 2048, null, 0, st.cur, true);
+    try t.expectEqual(s, try image.Shape.ofMode(&st, &w.config, st.capacity, false, true));
+    try t.expectEqual(a.len, b.len);
+    try t.expectEqual(a.count, b.count);
+    for (a.parts[0..a.count], b.parts[0..b.count]) |one, two| try t.expectEqual(one.len, two.len);
+    try t.expectEqual(codes, b.parts[code_slot].live);
+    try t.expectEqual(scales, b.parts[scale_slot].live);
+}

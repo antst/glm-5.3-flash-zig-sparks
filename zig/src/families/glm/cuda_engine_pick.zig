@@ -110,3 +110,10 @@ test "greedy batching: host view preserves original NaN rank order and signed-ze
     try std.testing.expectError(error.BadWorld, selectRows(8, &records, 0, 2, &out));
     try std.testing.expectError(error.BadWorld, selectRows(8, records[0..5], 3, 2, &out));
 }
+
+/// Ordinary greedy verification; all other draw callers retain their original path.
+pub fn drawVerify(e: *Engine, logits: u64, rows: usize, first: u64, bits: u64, out: []u32) !void {
+    if (e.settings.greedy_batch and !e.structured and e.cur.sampling == null)
+        return greedyRows(e, logits, rows, out);
+    return e.draw(logits, rows, first, bits, out);
+}

@@ -24,7 +24,15 @@ pub const Cost = struct {
 };
 
 /// The ledger's total (its standing streams in it), the cache beside it, a full-window request's cost, any one's.
-pub const Plan = struct { total: u64, kept: kv_pages.Kept, one_full: u64, cost: Cost, standing: Standing = .{} };
+pub const Plan = struct {
+    total: u64,
+    kept: kv_pages.Kept,
+    one_full: u64,
+    cost: Cost,
+    standing: Standing = .{},
+    fixed_slots: ?u64 = null,
+    prewarm: ?u32 = null,
+};
 
 /// What the budget needs from load beyond the family.
 pub const Inputs = struct { room: u64, context: i64, host_budget: u64, host_cache: bool };
@@ -72,6 +80,35 @@ pub fn plan(comptime F: type, loaded: anytype, o: api.Open, in: Inputs, short: *
     return .{ .total = total, .kept = kept, .one_full = one_full, .cost = cost, .standing = standing };
 }
 
+/// GLM keeps fixed per-slot recurrent/index state and grows its latent planes per request.
+pub fn linear(comptime F: type, loaded: anytype, o: api.Open, room: u64, context: i64, host: bool, host_budget: u64, each: PerRequest, minimum_cache: u64) ?Plan {
+    if (o.lanes == 0 or o.lanes > @TypeOf(loaded).linear_max_streams) return null;
+    const fixed = loaded.stream_bytes - loaded.target.linear.?.per_state;
+    const views: Cost = .{ .each = each, .context = @intCast(context) };
+    const reserve = @as(u64, fixed) *| (o.lanes -| loaded.free_streams);
+    const warm = linearPlan(F, loaded, o, room, host, host_budget, views, reserve);
+    if (warm) |p| if (p.kept.copied >= minimum_cache) return p;
+    if (o.lanes <= loaded.free_streams or host) return warm;
+
+    // Under pressure everything after the first arena follows the request ledger.
+    // Charging the prepaid slot's arena too keeps the estimate independent of slot assignment.
+    var lazy = views;
+    lazy.each.layout.fixed_bytes += fixed;
+    var p = linearPlan(F, loaded, o, room, host, host_budget, lazy, 0) orelse return warm;
+    if (p.kept.copied < minimum_cache) return warm;
+    p.prewarm = loaded.free_streams;
+    return p;
+}
+
+fn linearPlan(comptime F: type, loaded: anytype, o: api.Open, room: u64, host: bool, host_budget: u64, cost: Cost, fixed_slots: u64) ?Plan {
+    const full = cost.of(@intCast(cost.context), 0);
+    if (fixed_slots +| full > room) return null;
+    const variable_room = room - fixed_slots;
+    const kept = kv_pages.kept(F, loaded, null, o, variable_room, full, host_budget, host);
+    const device: u64 = if (kept.host) 0 else kept.copied;
+    return .{ .total = variable_room - device, .kept = kept, .one_full = full, .cost = cost, .fixed_slots = fixed_slots };
+}
+
 /// The lane host's hook over a plan that outlives the host (the CUDA Host keeps it).
 pub fn info(p: ?*const Plan) ?api.Ledger {
     const x = p orelse return null;
@@ -93,6 +130,53 @@ var unused: u8 = 0;
 
 fn fixture(per_request: ?PerRequest) struct { ctx: *anyopaque, stream_bytes: u64, per_request: ?PerRequest } {
     return .{ .ctx = &unused, .stream_bytes = 7, .per_request = per_request };
+}
+
+test "linear paging: eight short lanes fit while the full-context claim is bounded" {
+    const Loaded = struct {
+        pub const linear_max_streams = 8;
+        target: *const struct { linear: ?struct { per_state: u64 } },
+        stream_bytes: u64,
+        free_streams: u32,
+    };
+    const loaded: Loaded = .{
+        .target = &.{ .linear = .{ .per_state = 100_000 } },
+        .stream_bytes = 105_000,
+        .free_streams = 1,
+    };
+    var args: api.Open = .{ .dir = "", .model_type = "glm", .lanes = 8, .prompt_cache_gib = 0 };
+    const p = linear(Cached, loaded, args, 250_000, 10_000, false, 0, sample, 0).?;
+    try std.testing.expectEqual(@as(?u64, 35_000), p.fixed_slots);
+    try std.testing.expectEqual(@as(u64, 215_000), p.total);
+    try std.testing.expectEqual(@as(u32, 0), p.standing.streams);
+    try std.testing.expect(p.cost.of(400, 400) * 8 < p.total);
+    try std.testing.expect(p.one_full * 2 <= p.total and p.one_full * 3 > p.total);
+    args.lanes = 9;
+    try std.testing.expect(linear(Cached, loaded, args, 250_000, 10_000, false, 0, sample, 0) == null);
+}
+
+test "linear paging: keep a full checkpoint by moving dormant sequence arenas into leases" {
+    const Loaded = struct {
+        pub const linear_max_streams = 8;
+        target: *const struct { linear: ?struct { per_state: u64 } },
+        stream_bytes: u64,
+        free_streams: u32,
+    };
+    const loaded: Loaded = .{
+        .target = &.{ .linear = .{ .per_state = 100_000 } },
+        .stream_bytes = 120_000,
+        .free_streams = 1,
+    };
+    const args: api.Open = .{ .dir = "", .model_type = "glm", .lanes = 4, .prompt_cache_gib = 1 };
+    const warm = linear(Cached, loaded, args, 295_000, 10_000, false, 0, sample, 130_000).?;
+    try std.testing.expectEqual(@as(?u32, null), warm.prewarm);
+    try std.testing.expectEqual(@as(?u64, 60_000), warm.fixed_slots);
+    const lazy = linear(Cached, loaded, args, 295_000, 10_000, false, 0, sample, 170_000).?;
+    try std.testing.expectEqual(@as(?u32, 1), lazy.prewarm);
+    try std.testing.expectEqual(@as(?u64, 0), lazy.fixed_slots);
+    try std.testing.expectEqual(@as(u64, 121_080), lazy.one_full);
+    try std.testing.expect(lazy.kept.copied >= 170_000);
+    try std.testing.expect(lazy.cost.of(400, 400) * 4 < lazy.total);
 }
 
 test "kv ledger cost: prompt and reply rows within the context, plus the lookahead" {

@@ -70,7 +70,8 @@ pub const State = struct {
         }
         std.debug.assert(off == plan.bytes());
         const store = try spill.Store.open(a, e.io, .{ .root = s.root, .rank = @intCast(e.share.rank), .compat = @import("cuda_latent_mma.zig").compatibility(@import("cuda_snapshot_mode.zig").compatibilityFor(@import("cuda_affine_prompt_owner.zig").compatibilityWithSplits(compat, e.settings.q4_python_prompt, e.settings.q4_python_splits), e.settings.kv_live_half, e.drafter != null), e.settings.absorb_mma), .limits = .{ .max_tokens = @intCast(max_at + cfg.lookahead), .block_tokens = rows_per_block, .block_bytes = l.blockBytes(), .max_small_bytes = small_max, .max_forks = 4096 }, .cap_bytes = cfg.cap, .floor_bytes = cfg.floor, .min_tokens = cfg.min_tokens, .index_bytes = @intCast(cfg.index), .readers = 2, .max_reads = 1, .staging = .{ .write = &s.buffers[0], .read = &s.buffers[1], .small = &s.buffers[2], .restore = &s.buffers[3], .shared_small_restore = plan.shared_small_restore } });
-        s.side = nvme.tier_state.Side.init(a, e.io, store, img, if (cfg.serial_mode) 1 else max_pending, max_metadata);
+        s.side = nvme.tier_state.Side.init(a, e.io, store, img, max_pending, max_metadata);
+        s.side.serial_writes = cfg.serial_mode;
         s.side.serial_read_wait_ns = if (cfg.serial_mode) 3 * std.time.ns_per_s else 0;
         s.side.lookahead = cfg.lookahead;
         s.side.defer_releases = true;

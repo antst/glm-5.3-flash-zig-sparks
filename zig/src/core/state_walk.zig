@@ -28,7 +28,7 @@ pub fn lease(pool: *kv.Pool, bytes: usize) !kv.Lease {
 pub fn Walk(comptime Live: type, comptime at: fn (Live, usize) Live) type {
     return struct {
         /// `len` bytes at `live`, or on a sequence's pages: `span` bytes a page, `page` bytes apart, from byte `from`.
-        pub const Part = struct { live: Live, len: usize, span: usize = 0, page: u64 = 0, from: usize = 0 };
+        pub const Part = struct { live: Live, len: usize, span: usize = 0, page: u64 = 0, from: usize = 0, skip: bool = false };
 
         /// Where a part's bytes from `done` on lie (`ids`: the sequence's pages in row order), as many as lie in a row.
         pub fn piece(ids: []const u32, part: Part, done: usize) Part {
@@ -56,6 +56,10 @@ pub fn Walk(comptime Live: type, comptime at: fn (Live, usize) Live) type {
         ) !void {
             var off: usize = 0;
             for (parts) |part| {
+                if (part.skip) {
+                    off += part.len;
+                    continue;
+                }
                 var done: usize = 0;
                 while (done < part.len) {
                     const o = off + done;
@@ -91,6 +95,18 @@ const Runs = struct {
         try r.got.append(testing.allocator, .{ live, kept, n });
     }
 };
+
+test "linear latent: skipping an aliased span preserves the stored offsets of other parts" {
+    var got: std.ArrayList([3]u64) = .empty;
+    defer got.deinit(testing.allocator);
+    const parts = [_]Device.Part{
+        .{ .live = 100, .len = 3 },
+        .{ .live = 120, .len = 13, .skip = true },
+        .{ .live = 150, .len = 5 },
+    };
+    try Device.each(&parts, &.{}, .{ .base = 1_000 }, Runs{ .got = &got }, Runs.add);
+    try testing.expectEqualSlices([3]u64, &.{ .{ 100, 1_000, 3 }, .{ 150, 1_016, 5 } }, got.items);
+}
 
 test "parts walk onto one buffer whole, onto kept pages split at each page's end, live pages split at a span's" {
     var got: std.ArrayList([3]u64) = .empty;

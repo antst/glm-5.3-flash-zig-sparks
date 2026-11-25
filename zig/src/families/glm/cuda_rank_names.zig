@@ -14,7 +14,7 @@ pub fn explain(f: anytype) []const u8 {
         .rank => "a rank number given twice or out of order",
         .world => "the ranks were started with different world sizes",
         .kv8 => "--kv-cache fp8",
-        .pages => "TF_KV_PAGES (unset or auto pages from two ranks)",
+        .pages => "TF_KV_PAGES, TF_GLM_LINEAR_CACHE or TF_GLM_LINEAR_PAGING",
         .prompt_fixed_k => "TF_GLM_PROMPT_K",
         .kda_segments => "TF_GLM_KDA_SEGMENTS",
         .kda_min_streams => "TF_GLM_KDA_MIN_STREAMS",

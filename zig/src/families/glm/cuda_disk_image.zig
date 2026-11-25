@@ -75,7 +75,7 @@ pub const Shape = struct {
     pub fn ofMode(st: *const State, c: *const Config, capacity: usize, head: bool, live: bool) !Shape {
         if (st.rings.len == 0) return error.SnapshotShape;
         const base = st.arena.buf.ptr;
-        const first = if (st.table != 0) st.rings[0] else if (st.caches.len > 0) st.caches[0].lc else st.mtp_caches.lc;
+        const first = st.snapshotPrefixEnd();
         const end = if (st.table != 0) st.table else base + st.arena.buf.len;
         if (first < base or st.mtp_pos_dev < first or end < st.mtp_pos_dev) return error.SnapshotShape;
         const bank = if (live) try @import("cuda_snapshot_layout.zig").recurrentBytes(st) else 0;

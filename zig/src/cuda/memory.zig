@@ -97,6 +97,16 @@ fn freed(counter: *std.atomic.Value(u64), n: usize) void {
     _ = counter.fetchSub(n, .monotonic);
 }
 
+/// Count physical backing created outside DeviceBuffer. Mapping the same backing again changes no bytes.
+pub fn chargeBacking(bytes: usize) void {
+    held(&device_bytes, bytes);
+    _ = driver_allocs.fetchAdd(1, .monotonic);
+}
+
+pub fn releaseBacking(bytes: usize) void {
+    freed(&device_bytes, bytes);
+}
+
 fn lockCounts() void {
     while (!counts_mutex.tryLock()) std.Thread.yield() catch {};
 }

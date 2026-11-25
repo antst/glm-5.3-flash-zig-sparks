@@ -20,6 +20,10 @@ pub fn validate(o: Options, world: usize) !bool {
         return error.Exl3DecodeScope;
     if (o.settings.prewarm_sequence_slots and (!o.settings.retain_sequence_slots or (o.settings.pages and !o.settings.kv8) or
         o.vision != null or o.settings.kv_host != 0 or o.settings.verify_graphs)) return error.PrewarmSequenceScope;
+    if (o.settings.linear_cache and
+        ((world != 2 and world != 4) or !o.settings.kv8 or o.settings.pages or o.settings.kv_host != 0 or
+            !o.settings.dflash_only_head or !o.settings.prewarm_sequence_slots or !o.settings.retain_sequence_slots or
+            o.settings.verify_graphs or o.vision != null)) return error.LinearKvScope;
     const profiled = try prof_mod.Prof.wanted();
     if (o.settings.ffn_graphs and ((world != 2 and world != 4) or (o.settings.pages and !o.settings.kv8) or o.settings.kv_host != 0 or
         o.vision != null or !@import("cuda_target_precision.zig").supported(o.settings) or profiled))

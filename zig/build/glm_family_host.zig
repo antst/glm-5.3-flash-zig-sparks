@@ -167,6 +167,8 @@ pub fn steps(b: *std.Build, cuda: *std.Build.Module, glm: *std.Build.Module, mod
         .dependOn(&b.addRunArtifact(b.addTest(.{ .root_module = live, .filters = &.{ "GLM live state:", "GLM disk image:" } })).step);
     b.step("test-glm-disk-live-host", "Compact and legacy disk image byte layouts through the GLM module itself")
         .dependOn(&b.addRunArtifact(b.addTest(.{ .root_module = glm, .filters = &.{ "GLM live state:", "GLM disk image:" } })).step);
+    b.step("test-glm-linear-cache-host", "Linear GLM cache accounting and unchanged snapshot byte order")
+        .dependOn(&b.addRunArtifact(b.addTest(.{ .root_module = glm, .filters = &.{"linear latent:"} })).step);
     const snapshots_run = b.addRunArtifact(b.addTest(.{ .root_module = snapshots }));
     b.step("test-glm-snapshots-host", "Prompt-sized GLM state copies, page budgets and rank ordering without devices").dependOn(&snapshots_run.step);
     const nvme = b.createModule(.{ .root_source_file = b.path("zig/glm_nvme_host.zig"), .target = host, .optimize = .debug, .link_libc = true, .imports = &.{ .{ .name = "glm", .module = glm }, .{ .name = "cuda", .module = cuda }, .{ .name = "core", .module = mods.core } } });

@@ -116,8 +116,9 @@ const Owner = struct {
 
     fn queueImage(o: *Owner, id: u64, at: u32, tokens: []const u32, spans: []const [2]u32, starts: []const u32, shared: bool, ids: []const u32) void {
         if (o.stopped or at < o.local().side.store.cfg.min_tokens) return;
-        o.enqueueImage(id, at, tokens, spans, starts, shared, ids) catch {
+        o.enqueueImage(id, at, tokens, spans, starts, shared, ids) catch |err| {
             o.refused += 1;
+            if (o.refused <= 4) std.log.warn("GLM NVMe checkpoint at {d} was refused: {s}", .{ at, @errorName(err) });
             return;
         };
         o.queued += 1;

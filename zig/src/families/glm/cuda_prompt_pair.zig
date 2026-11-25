@@ -113,6 +113,7 @@ pub fn prefill(e: *Engine, part: []const u32, start: usize, len: usize, cancel: 
     fa.index_split = split; // the step's choice (TF_GLM_INDEX_SPLIT) for both chunks
     fb.index_split = split;
     const st = &e.cur.st;
+    try @import("cuda_linear_work.zig").one(e, start, ra + rb);
     try st.ready(e.stream, ra + rb); // one rebase for both chunks, at a as a chunk at a time, before b's view copies it
     var sb = st.*;
     sb.pos_dev = pair.pos.ptr;

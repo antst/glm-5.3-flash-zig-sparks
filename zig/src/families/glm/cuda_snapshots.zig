@@ -60,7 +60,8 @@ pub fn keepAs(e: anytype, id: u64) !void {
     errdefer e.gpa.free(cur);
     try pool.move(e.stream, &lease, &plan, true);
     try e.stream.synchronize();
-    e.snaps.putAssumeCapacityNoClobber(id, .{ .lease = lease, .len = plan.len, .pos = e.cur.st.pos, .mtp_len = e.cur.st.mtp_len, .cur = cur, .bases = .{ e.cur.st.base, e.cur.st.mtp_base }, .shared = plan.shared, .ring_from = ring_from });
+    const origin = if (comptime @hasField(@TypeOf(e.*), "linear")) @import("cuda_linear_fork.zig").origin(e) else null;
+    e.snaps.putAssumeCapacityNoClobber(id, .{ .lease = lease, .len = plan.len, .pos = e.cur.st.pos, .mtp_len = e.cur.st.mtp_len, .cur = cur, .bases = .{ e.cur.st.base, e.cur.st.mtp_base }, .shared = plan.shared, .ring_from = ring_from, .origin = origin });
 }
 
 /// A disk read's state: `at`'s pages leased under rank 0's id on each rank, refused by `restore` until `seal`.
@@ -103,16 +104,19 @@ pub fn restore(e: anytype, id: u64) !void {
         g.invalidate();
     }
     if (s.len == 0) return error.UnsealedState;
+    const aliased = if (comptime @hasField(@TypeOf(e.*), "linear")) try @import("cuda_linear_fork.zig").restore(e, id, s) else false;
     const pool = if (e.snap_pages) |*p| p else return error.NoSnapshotCache;
     var plan = try layout.Plan.initWith(&e.cur.st, &e.c, s.pos, if (mode.head(e)) s.mtp_len else null, s.shared, s.cur, mode.enabled(e));
     if (s.ring_from != null) try plan.outside(try (e.drafter orelse return error.SnapshotSize).ringPtr(e.slot), dflash.ring_bytes);
     if (plan.len != s.len) return error.SnapshotSize;
     errdefer cuda.completion.drain(e.d, e.stream, "a failed GLM snapshot restore did not drain");
+    if (aliased) plan.skipAliased(&e.cur.st);
     try pool.move(e.stream, &s.lease, &plan, false);
     try e.cur.st.restoreHost(e.stream, s.pos, s.mtp_len, s.cur, s.bases);
     if (e.drafter) |dr| if (s.ring_from) |from| try dr.resumeAt(e.slot, from, s.pos) else try dr.restart(e.slot, s.pos);
     e.cur.in_head = 0;
     try e.stream.synchronize();
+    if (comptime @hasField(@TypeOf(e.*), "linear")) @import("cuda_linear_fork.zig").restored(e, id);
 }
 
 /// A disk image's drafter descriptor is validated before any restored ring bytes become usable.

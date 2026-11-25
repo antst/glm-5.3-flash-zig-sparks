@@ -57,6 +57,15 @@ pub fn stepRows(len: usize, cuts: []const u32, start: usize, part_len: usize) !u
     return @min(len - start, state.solo_rows);
 }
 
+/// Where a prompt pass of `len` ids starts: 0, or `from`'s position with its kept state restored.
+pub fn resumeStart(e: anytype, len: usize, from: ?@import("cuda_engine_types.zig").Resume) !usize {
+    if (len == 0 or len + e.settings.verify_rows >= e.cur.st.capacity) return error.PromptTooLong;
+    const r = from orelse return 0;
+    if (r.at == 0 or r.at >= len or !coldCut(len, e.cur.cuts.items, r.at)) return error.BadResume;
+    try e.restoreState(r.id);
+    return r.at;
+}
+
 test "glm request starts: with no cuts a pass cuts every prefill_rows rows from 0, as before" {
     const m = prefill_rows;
     const len = 5 * m + 7;
