@@ -100,7 +100,10 @@ def construct(args, recipe):
     require(args.expert_checkpoint in ('exl3', 'nvfp4'), 'Choose exl3 or nvfp4 experts')
     require(args.precision in ('bf16', 'q4', 'q4-fp8', 'q8'), 'Unknown projection/head precision')
     require(args.verify_rows in (16, 32), 'Verification rows must be16 or32')
-    require(1 <= args.parallel <= 8 and 4096 <= args.context <= MAX_CONTEXT,
+    parallel = args.parallel
+    if parallel is None:
+        parallel = recipe['defaults']['parallel'] if args.expert_checkpoint == 'exl3' else 1
+    require(1 <= parallel <= 8 and 4096 <= args.context <= MAX_CONTEXT,
         f'TP4 requires 1 to 8 lanes and a context from 4096 to {MAX_CONTEXT}')
     prompt_cache_override = args.prompt_cache_gib if args.prompt_cache_gib is not None else 0
     require(math.isfinite(prompt_cache_override) and 0 <= prompt_cache_override <= 32, 'Invalid RAM cache size')
@@ -170,7 +173,7 @@ def construct(args, recipe):
                 'Runtime module must name exactly one declared asset: ' + key)
             require(name in names, 'Runtime module is outside its profile asset scope: ' + key)
     settings = dict(source=runtime['source_commit'], binary_sha256=runtime['native_sha256'], expert_checkpoint=args.expert_checkpoint,
-        precision=args.precision, verify_rows=args.verify_rows, context=args.context, parallel=args.parallel,
+        precision=args.precision, verify_rows=args.verify_rows, context=args.context, parallel=parallel,
         prefill=args.prefill, warm_turns=args.warm_turns, tier=tier,
         model_repository=recipe['checkpoints'][args.expert_checkpoint]['repository'],
         model_revision=recipe['checkpoints'][args.expert_checkpoint]['revision'],
@@ -182,7 +185,8 @@ def construct(args, recipe):
     cache_identity = dict(settings)
     if tier == 'nvme':
         # Preserve the previous default namespace. Capacity limits do not change on-disk compatibility.
-        cache_identity.update(learn_gib=32, require_cache_tokens=137216)
+        cache_identity.update(learn_gib=32, require_cache_tokens=137216,
+                              parallel=1 if args.parallel is None else parallel)
     key = hashlib.sha256(json.dumps(cache_identity, sort_keys=True).encode()).hexdigest()[:12]
     namespace = runtime['source_commit'][:12] + '-' + args.expert_checkpoint + '-' + args.precision + '-' + key
     nodes, commands = [], []
@@ -203,7 +207,7 @@ def construct(args, recipe):
         require(not any(k.startswith('GLM_') or k == 'TF_LANE_TRACE' for k in env),
             'Finite experiment controls must not enter serving')
         payload['Env'] = [key + '=' + value for key, value in sorted(env.items())]
-        for flag, value in [('--port', args.port), ('--context', args.context), ('--parallel', args.parallel),
+        for flag, value in [('--port', args.port), ('--context', args.context), ('--parallel', parallel),
             ('--prompt-cache-gib', format(prompt_cache_gib, 'g'))]:
             set_arg(payload['Cmd'], flag, value)
         if tier == 'nvme':
@@ -220,7 +224,7 @@ def construct(args, recipe):
         rank_control_port=args.nccl_port + 1,
         **settings, prompt_cache_gib=prompt_cache_gib, namespace=namespace, commands=commands,
         release_status=recipe['release_status'], profile_qualification=selected['qualification'],
-        context_and_parallel_match_measured_scope=(args.context == 196608 and args.parallel == 8),
+        context_and_parallel_match_measured_scope=(args.context == 196608 and parallel == 8),
         rendered_only=True, deployed=False, proxy_registration_changed=False)
 
 
@@ -291,8 +295,8 @@ def parser():
     p.add_argument('--plan-port', type=int, default=28651)
     p.add_argument('--context', type=int, default=MAX_CONTEXT,
                    help='Maximum request context in tokens (default: %(default)s)')
-    p.add_argument('--parallel', type=int, default=1,
-                   help='Concurrent request lanes (default: %(default)s)')
+    p.add_argument('--parallel', type=int,
+                   help='Concurrent request lanes (EXL3 defaults: 4 on TP2, 6 on TP4)')
     p.add_argument('--prompt-cache-gib', type=float,
                    help='Requested RAM snapshot budget (EXL3 default scales with context to 8 GiB at 1M)')
     p.add_argument('--learn-gib', type=float, default=DEFAULT_NVME_GIB,

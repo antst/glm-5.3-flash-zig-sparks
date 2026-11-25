@@ -61,7 +61,9 @@ See [SIGNING.md](SIGNING.md) for the release's signing identity and verification
 The configuration generator writes four rank payloads and shell commands. It does not start
 containers or change a proxy registration.
 
-This EXL3 command defaults to Q4/FP8, a 1,048,576-token context and one active request. It enables optimized prefill and native NVMe snapshots.
+The EXL3 serving defaults are Q4/FP8, six active lanes with 1,048,576 tokens
+each, optimized prefill, and native NVMe snapshots. Use `--parallel 8` when all
+four hosts have room for eight full-window lanes and the snapshot budget.
 
 ```sh
 python3 render_config.py --tp 4 \
@@ -93,7 +95,7 @@ Context and parallelism share the same UMA capacity. The engine checks available
 memory at startup. To reproduce the throughput benchmark settings, use
 `--context 196608 --parallel 8 --prompt-cache-gib 0 --tier off`.
 
-With the default context and one active request, BF16/BF16 and Q4/BF16 each processed a
+In the single-lane qualification at 1,048,576 tokens, BF16/BF16 and Q4/BF16 each processed a
 cold 1,041,491-token prompt and returned the same exact receipt code as TP2. Prefill took
 545.07 seconds for BF16/BF16 and 561.60 seconds for Q4/BF16. Q4/FP8 and Q8/BF16 both
 started with the 1M limit and passed a 3,191-token retrieval check. The retrieval fixtures

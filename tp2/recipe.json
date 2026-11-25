@@ -1,4 +1,7 @@
 {
+  "defaults": {
+    "parallel": 4
+  },
   "bundles": {
     "bf16": {
       "archive": "glm53-tp2-bf16-unified-runtime.tar.gz",
@@ -629,7 +632,7 @@
       "--context",
       "1048576",
       "--parallel",
-      "1",
+      "4",
       "--kv-cache",
       "fp8",
       "--drafter",

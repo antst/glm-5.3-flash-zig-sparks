@@ -31,8 +31,8 @@ retained NVFP4 expert option. [TP2 profiles](TP2.md#runtime) · [TP4 precision o
 
 ## Install and serve
 
-The primary EXL3 profiles on TP2 and TP4 default to **1,048,576 tokens** and
-**one active request**. That context includes the prompt and generated tokens.
+The EXL3 serving defaults are **1,048,576 tokens per lane** and **four active requests
+on TP2** or **six on TP4**. That context includes the prompt and generated tokens.
 The launch examples enable optimized prefill and native NVMe snapshots. At 1M
 context, all eight EXL3 profiles request an **8 GiB RAM snapshot budget per rank**,
 verify that a full-window snapshot fits at startup, and allow **256 GiB of NVMe
@@ -137,11 +137,11 @@ attention resumes. Use `--prompt-cache-gib 0 --tier off` for cold-prefill measur
 
 | Topology | Long-context evidence | Qualified NVMe profile |
 |---|---|---|
-| TP2 | All four EXL3 profiles served a cold 1,041,491-token prompt with the serving defaults | Q8/BF16 at 160K and 192K |
+| TP2 | All four EXL3 profiles served a cold 1,041,491-token prompt in the single-lane qualification | Q8/BF16 at 160K and 192K |
 | TP4 | BF16/BF16 and Q4/BF16 served a cold 1,041,491-token prompt | BF16/BF16 at 160K and 192K |
 
-Context, lane count, and snapshots share memory. Choose a higher lane count
-explicitly when you have budgeted for concurrent requests. To reproduce the
+Context, lane count, and snapshots share memory. Use `--parallel` to override
+the lane count when sharing memory with other workloads. To reproduce the
 throughput benchmarks, use `--context 196608 --parallel 8 --prompt-cache-gib 0 --tier off`.
 The topology guides give measured settings, cache restore times, and per-rank
 overhead. [TP2 cache settings](TP2.md#ram-and-nvme) · [TP4 cache settings](TP4.md#ram-and-nvme-prompt-cache-tiers)

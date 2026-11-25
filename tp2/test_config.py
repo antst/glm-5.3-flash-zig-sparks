@@ -95,39 +95,54 @@ class DirectRecipeTests(unittest.TestCase):
         for precision in ('bf16', 'q4', 'q4-fp8', 'q8'):
             with self.subTest(topology='tp2', precision=precision):
                 nodes, report = self.render('--precision', precision)
-                self.assert_full_context(nodes, report)
+                self.assert_full_context(nodes, report, 4)
             with self.subTest(topology='tp4', precision=precision):
                 args = self.arguments('--tp', '4', '--master', '192.168.2.201',
                                       '--roce-address-range', '10.78.0.0/15',
                                       '--precision', precision)
                 nodes, report = render_config.construct(args, switch)
-                self.assert_full_context(nodes, report)
-        for recipe in (self.recipe, switch):
-            self.assert_full_context_args(recipe['payload_template']['Cmd'])
+                self.assert_full_context(nodes, report, 6)
+        for recipe, lanes in ((self.recipe, 4), (switch, 6)):
+            self.assert_full_context_args(recipe['payload_template']['Cmd'], lanes)
 
     def test_default_precision_is_q4_fp8_on_both_topologies(self):
         switch = json.loads((ROOT.parent/'recipe.json').read_text())
         switch_args = ('--tp', '4', '--master', '192.168.2.201',
                        '--roce-address-range', '10.78.0.0/15')
         tp4 = render_config.construct(self.arguments(*switch_args), switch)
-        for topology, (nodes, report) in (('tp2', self.render()), ('tp4', tp4)):
+        for topology, (nodes, report), lanes in (('tp2', self.render(), 4), ('tp4', tp4, 6)):
             with self.subTest(topology=topology):
                 self.assertEqual(report['precision'], 'q4-fp8')
-                self.assert_full_context(nodes, report)
+                self.assert_full_context(nodes, report, lanes)
                 for node in nodes:
                     env = dict(value.split('=', 1) for value in node['payload']['Env'])
                     self.assertEqual((env['TF_GLM_DENSE_BITS'], env['TF_GLM_HEAD_BITS'],
                                       env['TF_GLM_Q4_HEAD_FP8']), ('4', '8', '1'))
         self.assertEqual(tuple(switch['defaults'][field] for field in
-                               ('precision', 'context', 'parallel')), ('q4-fp8', 1048576, 1))
+                               ('precision', 'context', 'parallel')), ('q4-fp8', 1048576, 6))
 
-    def assert_full_context(self, nodes, report):
-        self.assertEqual((report['context'], report['parallel']), (1048576, 1))
+    def test_explicit_lane_overrides(self):
+        _, serving = self.render('--parallel', '1')
+        _, bench = self.render('--context', '196608', '--parallel', '8',
+                               '--prompt-cache-gib', '0', '--tier', 'off')
+        self.assertEqual(serving['parallel'], 1)
+        self.assertEqual(bench['parallel'], 8)
+        self.assertTrue(bench['context_and_parallel_match_measured_scope'])
+
+        switch = json.loads((ROOT.parent/'recipe.json').read_text())
+        for lanes in (4, 6, 8):
+            args = self.arguments('--tp', '4', '--master', '192.168.2.201',
+                                  '--roce-address-range', '10.78.0.0/15', '--parallel', str(lanes))
+            nodes, report = render_config.construct(args, switch)
+            self.assert_full_context(nodes, report, lanes)
+
+    def assert_full_context(self, nodes, report, lanes):
+        self.assertEqual((report['context'], report['parallel']), (1048576, lanes))
         self.assertEqual(report['tier'], 'nvme')
         self.assertEqual(report['prompt_cache_gib'], 8)
         self.assertEqual(report['learn_gib'], 256)
         for node in nodes:
-            self.assert_full_context_args(node['payload']['Cmd'])
+            self.assert_full_context_args(node['payload']['Cmd'], lanes)
             env = dict(item.split('=', 1) for item in node['payload']['Env'])
             self.assertEqual(env['TF_GLM_PREFILL_OPT'], '1')
             self.assertEqual(env['TF_KV_PAGES'], 'off')
@@ -138,9 +153,10 @@ class DirectRecipeTests(unittest.TestCase):
             self.assertEqual(cmd[cmd.index('--prompt-cache-gib')+1], '8')
             self.assertEqual(cmd[cmd.index('--learn-gib')+1], '256')
 
-    def assert_full_context_args(self, argv):
+    def assert_full_context_args(self, argv, lanes):
         self.assertEqual(argv[argv.index('--context') + 1], '1048576')
-        self.assertEqual(argv[argv.index('--parallel') + 1], '1')
+        self.assertEqual(argv[argv.index('--parallel') + 1], str(lanes))
+        self.assertEqual(argv[argv.index('--max-tokens') + 1], '131072')
 
     def test_rejects_bad_runtime_bytes_and_escape(self):
         with tempfile.TemporaryDirectory() as folder:

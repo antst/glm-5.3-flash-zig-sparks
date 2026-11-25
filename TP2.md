@@ -23,8 +23,8 @@ Download the matching archive and verify its SHA256 before extracting it.
 [TP2 runtime downloads](https://github.com/antst/glm-5.3-flash-zig-sparks/releases/tag/v1.3.0-tp2-tp4) · [Archive hashes](tp2/RELEASE-ASSETS.json)
 
 Extract the Q4 archive into `/srv/glm/tp2`, then render two ranks and verify the
-bundle. The command defaults to Q4/FP8, a 1,048,576-token context and one active
-request, with optimized prefill and native NVMe snapshots enabled. For another profile, use its runtime archive and pass `--precision bf16`,
+bundle. The serving defaults are Q4/FP8, four active lanes with 1,048,576 tokens
+each, optimized prefill, and native NVMe snapshots. For another profile, use its runtime archive and pass `--precision bf16`,
 `--precision q4`, or `--precision q8`.
 
 ```sh
@@ -47,7 +47,7 @@ The attention KV and recurrent state share the host's UMA capacity.
 Each additional lane and snapshot budget uses memory alongside the model. The
 engine checks available memory at startup.
 
-With the serving defaults, each of the four EXL3 profiles processed a cold
+In the single-lane qualification, each of the four EXL3 profiles processed a cold
 1,041,491-token prompt and retrieved the receipt code from the start of the prompt
 exactly. All four returned identical answer token IDs. Prefill took 778 to 786
 seconds on Sparks 3 and 4. The retrieval request disabled drafting. The NVMe
