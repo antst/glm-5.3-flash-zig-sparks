@@ -3,7 +3,8 @@ const std = @import("std");
 const Settings = @import("cuda_ranks.zig").Settings;
 
 pub const Fingerprint = extern struct {
-    layout: u32 = 85,
+    layout: u32 = 86,
+    prefill_opt: u32 = 0,
     q4_ffn_q8: u32 = 0,
     q4_ffn_q8_sha: [32]u8 = @splat(0),
     q8_correlated: u32 = 0,
@@ -85,6 +86,7 @@ pub const Fingerprint = extern struct {
     absorb_mma: u32 = 0,
     pub const Field = enum {
         layout,
+        prefill_opt,
         q8_correlated,
         correlation_sha,
         q4_ffn_q8,
@@ -197,6 +199,7 @@ pub const Fingerprint = extern struct {
             .kda_wide = @intFromBool(s.kda_wide),
             .kda_pad = @intFromBool(s.kda_pad),
             .kv_live_half = @intFromBool(s.kv_live_half),
+            .prefill_opt = @intFromBool(s.prefill_opt),
             .pieces = s.pieces,
             .pair = @intFromBool(s.pair),
             .layers = s.layers,

@@ -3,6 +3,27 @@ const std = @import("std");
 const Allocator = std.mem.Allocator;
 const pc = @import("prompt_cache.zig");
 
+/// A cold fallback cut. Leave an existing or borrowed state and the rewind policy alone.
+pub fn earlier(s: *const pc.Store, starts: []const u32, endpoint: u32) ?u32 {
+    if (!s.rules.fit_oversize or !s.rules.planned or s.hold or s.most == 0 or
+        s.budget == 0 or s.active_rewind_at != 0 or endpoint == 0) return null;
+    for (s.entries.items) |e| if (e.borrowers != 0) return null;
+    if (starts.len != 0) {
+        var best: u32 = 0;
+        for (starts) |at| if (at < endpoint and at > best and s.family.vtable.bytes(s.family.ptr, at) <= s.budget) {
+            best = at;
+        };
+        return if (best > 0) best else null;
+    }
+    const grid = s.rules.grid;
+    if (grid == 0) return null;
+    var at = (endpoint - 1) / grid * grid;
+    while (at > 0) : (at -= grid) {
+        if (s.family.vtable.bytes(s.family.ptr, at) <= s.budget) return at;
+    }
+    return null;
+}
+
 /// The marks the budget can hold (a new slice in `a`). Refuse the rest before any pass or peer copies them.
 pub fn fitting(s: *pc.Store, a: Allocator, marks_: []const u32) ![]const u32 {
     defer a.free(marks_);

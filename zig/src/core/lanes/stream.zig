@@ -93,6 +93,7 @@ pub const MarkHook = struct {
     ptr: *anyopaque,
     at: *const fn (ptr: *anyopaque, s: *Stream, at: u32) void,
     interrupted: ?*const fn (ptr: *anyopaque, s: *Stream, at: u32) void = null,
+    prepare: ?*const fn (ptr: *anyopaque, mark: ?u32) void = null,
 };
 
 /// Drafts the backend holds for the stream's next round; a tree keeps its tokens and parents on the host.

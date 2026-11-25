@@ -175,7 +175,7 @@ test "Q8 correlated serving: strict cached mode and SHA, scope and rank agreemen
     try t.expectEqual(@as(?*glm.q8_correlated_owner.Owner, null), try glm.q8_correlated_owner.Owner.open(t.allocator, undefined, undefined, undefined, .{}, @splat(0), 0));
     const FP = glm.ranks.Fingerprint;
     const f = FP.of(2, 0, settings, 8192, true, @splat(0), @splat(0), @splat(0));
-    try t.expectEqual(@as(u32, 85), f.layout);
+    try t.expectEqual(@as(u32, 86), f.layout);
     try t.expectEqual(@as(u32, 1), f.q8_correlated);
     try t.expectEqualSlices(u8, &on.sha, &f.correlation_sha);
     var other = f;

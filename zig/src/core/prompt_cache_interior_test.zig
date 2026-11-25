@@ -4,6 +4,64 @@ const pc = @import("prompt_cache.zig");
 const Fake = @import("prompt_cache_fake.zig").Fake;
 const fresh = @import("prompt_cache_test.zig").fresh;
 
+test "oversized prompt keeps the longest fitting cold cut and resumes an appended query" {
+    const gpa = std.testing.allocator;
+    var arena: std.heap.ArenaAllocator = .init(gpa);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const n = 300000;
+    const ids = try a.alloc(u32, n + 15);
+    for (ids, 0..) |*id, i| id.* = @intCast(i % 97);
+    const budget: u64 = 100 + 274 * 1024; // exact fake bytes at the last fitting grid point
+    const cases = [_]struct { starts: []const u32, on: bool, at: u32 }{
+        .{ .starts = &.{}, .on = false, .at = 0 },
+        .{ .starts = &.{}, .on = true, .at = 274 * 1024 },
+        .{ .starts = &.{ 256 * 1024, 273 * 1024, 280 * 1024, 289 * 1024 }, .on = true, .at = 273 * 1024 },
+    };
+    for (cases) |c| {
+        var f: Fake = .{ .gpa = gpa };
+        var s = pc.Store.init(gpa, f.snapshots(), .{ .planned = true, .grid = 2048, .lookahead = 1, .fit_oversize = c.on }, budget);
+        defer s.deinit();
+        const first = try s.begin(a, ids[0..n], n - 2, &.{}, c.starts, null, &.{});
+        try std.testing.expectEqualSlices(u32, if (c.at == 0) &.{} else &.{c.at}, first.marks);
+        try std.testing.expectEqual(fresh(ids[0..n]), f.pass(&s, ids[0..n], first));
+        const followup = try s.begin(a, ids, n + 13, &.{}, c.starts, null, &.{});
+        try std.testing.expectEqual(c.at, followup.from);
+        if (c.at != 0) try std.testing.expectEqual(@as(usize, 0), followup.marks.len);
+        try std.testing.expectEqual(fresh(ids), f.pass(&s, ids, followup));
+        try std.testing.expect(s.held <= budget);
+    }
+
+    // A plain request need not carry an explicit history watermark.
+    var f: Fake = .{ .gpa = gpa };
+    var s = pc.Store.init(gpa, f.snapshots(), .{ .planned = true, .grid = 2048, .lookahead = 1, .fit_oversize = true }, budget);
+    defer s.deinit();
+    const cold = try s.begin(a, ids[0..n], 0, &.{}, &.{}, null, &.{});
+    try std.testing.expectEqualSlices(u32, &.{274 * 1024}, cold.marks);
+    try std.testing.expectEqual(fresh(ids[0..n]), f.pass(&s, ids[0..n], cold));
+    const appended = try s.begin(a, ids, 0, &.{}, &.{}, null, &.{});
+    try std.testing.expectEqual(@as(u32, 274 * 1024), appended.from);
+    try std.testing.expectEqual(fresh(ids), f.pass(&s, ids, appended));
+}
+
+test "oversized prompt fallback respects rewind, existing marks and zero room" {
+    const gpa = std.testing.allocator;
+    var arena: std.heap.ArenaAllocator = .init(gpa);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const ids = try a.alloc(u32, 13000);
+    @memset(ids, 5);
+    for ([_]u64{ 0, 100 + 4096 }) |budget| {
+        var f: Fake = .{ .gpa = gpa };
+        var s = pc.Store.init(gpa, f.snapshots(), .{ .planned = true, .grid = 2048, .lookahead = 1, .fit_oversize = true }, budget);
+        defer s.deinit();
+        const cold = try s.begin(a, ids, 12998, &.{}, &.{}, null, &.{});
+        try std.testing.expectEqualSlices(u32, if (budget == 0) &.{} else &.{4096}, cold.marks);
+        const rewind = try s.beginRewind(a, ids, 12998, 2049, &.{}, &.{}, null, &.{});
+        try std.testing.expectEqualSlices(u32, if (budget == 0) &.{} else &.{2048}, rewind.marks);
+    }
+}
+
 test "same document and a new question resume an interior cold cut exactly" {
     const gpa = std.testing.allocator;
     var arena: std.heap.ArenaAllocator = .init(gpa);

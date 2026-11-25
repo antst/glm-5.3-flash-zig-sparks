@@ -27,6 +27,7 @@ pub const max_segments: u32 = 1;
 pub const prompt_rows: u32 = fw.prefill_rows;
 /// Chunk rows change prompt arithmetic: states keep and resume only where a cold pass cuts (cuda_prompt_cuts).
 pub const snap_grid: u32 = prompt_rows;
+pub const snap_fit_oversize = true;
 /// cuda_prompt_cuts cuts a cold pass at the request's chunk starts too, so the server may send its message starts.
 pub const request_starts = true;
 pub const request_starts_switch = "TF_GLM_REQUEST_STARTS";
@@ -87,7 +88,7 @@ pub fn benchmark(p: *anyopaque) struct { ranks: ?u32, group: ?[]const u8 } {
 }
 fn reserveStreams(p: *anyopaque, streams: u32) !void {
     const own: *Owned = @ptrCast(@alignCast(p));
-    if (!own.e.settings.prewarm_sequence_slots) return;
+    if (!own.e.settings.prewarm_sequence_slots or own.e.settings.pages) return;
     try own.lanes.x.reserveSlots(streams);
     std.log.info("GLM_PREWARM_SEQUENCE_SLOTS admitted={d} per_rank_bytes={d}", .{ streams, own.e.seqBytes() * streams });
 }

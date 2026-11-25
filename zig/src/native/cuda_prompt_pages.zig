@@ -24,6 +24,14 @@ pub fn hint(comptime F: type, loaded: anytype) []const u8 {
     return if (could(F, loaded)) "; TF_KV_SHARE=n keeps a prompt's rows as the pool's pages instead of copying them" else "";
 }
 
+pub const Tier = struct {
+    work: @FieldType(api.LaneHost, "tier_work"),
+    ptr: *anyopaque,
+    queue: *const fn (*anyopaque, *anyopaque, radix.Kept, radix.Query, u32, []const u32) void,
+    recall: *const fn (*anyopaque, *radix.Store, *anyopaque, radix.Query) void,
+    destroy: *const fn (*anyopaque) void,
+};
+
 /// The store over the family's pool: its pages in the tree, the rest of a state from the family's `snap_*` decls.
 pub const Adapter = struct {
     gpa: Allocator,
@@ -31,6 +39,7 @@ pub const Adapter = struct {
     store: radix.Store,
     detach: *const fn (*anyopaque) void,
     target: *anyopaque,
+    tier: ?Tier = null,
 
     /// The family's store, its pool's reclaim evicting the tree's idle pages; null: the family has no pool.
     pub fn open(comptime F: type, gpa: Allocator, target: anytype, page_tokens: u32, snap_limit: usize) !?*Adapter {
@@ -64,6 +73,7 @@ pub const Adapter = struct {
 
     /// The family stops calling, the pool's reclaim goes, the tree drops its states and releases its pages.
     pub fn close(x: *Adapter) void {
+        if (x.tier) |tune| tune.destroy(tune.ptr);
         x.detach(x.target);
         x.pool.leaveReclaim(x);
         x.store.deinit();
@@ -82,7 +92,9 @@ pub const Adapter = struct {
         const x = of(ctx);
         const ids = try identities(x.gpa, q.images);
         defer x.gpa.free(ids);
-        const p = try x.store.begin(x.gpa, query(q, ids), history_len, shared, owner, adopt);
+        const shaped = query(q, ids);
+        if (x.tier) |tier| tier.recall(tier.ptr, &x.store, owner, shaped);
+        const p = try x.store.begin(x.gpa, shaped, history_len, shared, owner, adopt);
         return .{ .from = p.from, .marks = p.marks };
     }
 
@@ -90,7 +102,10 @@ pub const Adapter = struct {
         const x = of(ctx);
         const ids = identities(x.gpa, q.images) catch return 0; // nothing kept: a later turn prefills it
         defer x.gpa.free(ids);
-        return x.store.keep(query(q, ids), at, owner, mine, path).shared;
+        const shaped = query(q, ids);
+        const kept = x.store.keep(shaped, at, owner, mine, path);
+        if (x.tier) |tier| if (kept.saved != null) tier.queue(tier.ptr, owner, kept, shaped, at, path);
+        return kept.shared;
     }
 
     /// The family's query as the store takes it, its images as `ids`.

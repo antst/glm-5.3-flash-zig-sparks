@@ -58,6 +58,20 @@ pub const Job = struct {
         return if (job.key.len > 0) job.key else job.request.cacheKey();
     }
 
+    /// Before a backend sends the next marked chunk, while every rank can service tier commands.
+    pub fn prepareCacheRoom(ptr: *anyopaque, mark: ?u32) void {
+        const job: *Job = @ptrCast(@alignCast(ptr));
+        const store = job.host.cache orelse return;
+        if (!store.room_at_mark) return;
+        var need: u64 = 0;
+        if (mark) |at| {
+            need = store.family.vtable.bytes(store.family.ptr, at);
+        } else {
+            for (job.marks) |at| need +|= store.family.vtable.bytes(store.family.ptr, at);
+        }
+        pc.tier.prepareRoom(store, need);
+    }
+
     /// The backend's prompt pass stands at a mark: the cache keeps the stream's state there.
     pub fn kept(ptr: *anyopaque, s: *lanes.Stream, at: u32) void {
         keepAt(ptr, s, at, false);

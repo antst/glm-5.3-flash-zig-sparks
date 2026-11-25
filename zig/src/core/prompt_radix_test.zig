@@ -522,3 +522,32 @@ test "a store refuses rules it cannot keep: no page, or a planned grid that is n
     var s = try newStore(&f, .{ .page = 4, .planned = true, .grid = 8 });
     s.deinit();
 }
+
+test "oversized paged prefix retains an earlier mark and an appended request resumes it" {
+    const a = std.testing.allocator;
+    var f: Fake = .{ .gpa = a };
+    var s = try Store.init(a, f.family(), f.pages(), .{
+        .page = 4,
+        .planned = true,
+        .grid = 8,
+        .lookahead = 1,
+        .tail = true,
+        .min_prompt = 0,
+        .min_gap = 1,
+        .fit_oversize = true,
+    });
+    defer s.deinit();
+    s.limit(.{ .pages = 4, .snaps = 1 });
+    const prompt = seq(31, 1);
+    var mine: std.ArrayList(u32) = .empty;
+    defer mine.deinit(a);
+    const cold = try pass(&f, &s, a, prompt[0..28], 0, &.{}, &mine);
+    defer cold.deinit(a);
+    try std.testing.expectEqualSlices(u32, &.{16}, cold.marks);
+    f.leave(mine.items);
+    const appended = try pass(&f, &s, a, &prompt, 0, &.{}, &mine);
+    defer appended.deinit(a);
+    defer f.leave(mine.items);
+    try std.testing.expectEqual(@as(u32, 16), appended.from);
+    try std.testing.expectEqual(@as(usize, 4), s.tree.heldPages());
+}

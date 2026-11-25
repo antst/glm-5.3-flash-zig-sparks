@@ -146,3 +146,41 @@ fn physicalSpare(p: *anyopaque) u64 {
 fn reuses(p: *anyopaque, at: u32) bool {
     return Pool.of(p).used + at <= 10;
 }
+
+test "bounded tier: optional prompt lookup defers the physical wait until a marked backend boundary" {
+    var f: Pool = .{};
+    defer f.images.deinit(a);
+    const vt: tier.Tier.VTable = .{
+        .queued = Pool.queued,
+        .recall = Pool.recall,
+        .pump = Pool.pump,
+        .pending = Pool.pending,
+        .room = Pool.room,
+        .stop = Pool.stop,
+        .destroy = Pool.destroy,
+    };
+    var s = pc.Store.init(a, .{ .ptr = &f, .vtable = &.{
+        .bytes = Pool.bytes,
+        .save = Pool.save,
+        .restore = Pool.restore,
+        .drop = Pool.drop,
+        .spare = Pool.spare,
+    } }, .{ .min_prompt = 0, .min_gap = 1 }, 10);
+    s.tier = .{ .ptr = &f, .vtable = &vt };
+    s.room_at_mark = true;
+    defer s.deinit();
+    try std.testing.expect(s.keep(&.{ 1, 2, 3, 4, 5, 6, 7 }, 6, null, &.{}, &.{}));
+    f.phase = .boundary;
+    const prompt = [_]u32{ 11, 12, 13, 14, 15, 16, 17, 18, 19 };
+    const plan = try s.lookup(a, &prompt, 8, &.{}, &.{}, &.{});
+    defer a.free(plan.marks);
+    try std.testing.expectEqualSlices(u32, &.{8}, plan.marks);
+    try std.testing.expectEqual(@as(u64, 1), s.counts.evicted);
+    try std.testing.expectEqual(@as(usize, 0), f.room_calls);
+    try std.testing.expectEqual(@as(u64, 6), f.used);
+    tier.prepareRoom(&s, s.family.vtable.bytes(s.family.ptr, plan.marks[0]));
+    f.phase = .pass;
+    try std.testing.expect(s.keep(&prompt, 8, null, &.{}, &.{}));
+    try std.testing.expectEqual(@as(usize, 1), f.room_calls);
+    try std.testing.expectEqual(@as(u64, 8), f.used);
+}

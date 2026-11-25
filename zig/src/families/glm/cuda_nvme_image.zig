@@ -4,6 +4,7 @@ const tier = @import("core").nvme1107.tier_state;
 const image = @import("cuda_disk_image.zig");
 const ranks = @import("cuda_disk_ranks.zig");
 const snapshots = @import("cuda_snapshots.zig");
+const paged = @import("cuda_nvme_paged_image.zig");
 const Engine = @import("cuda_engine.zig").Engine;
 
 fn engine(p: *anyopaque) *Engine {
@@ -16,7 +17,7 @@ pub fn of(e: *Engine) tier.Image {
 
 fn parts(p: *anyopaque, at: u32, out: *std.ArrayList(tier.Part), a: std.mem.Allocator) !void {
     const e = engine(p);
-    if (e.share_pages) return error.NvmeSharedPages;
+    if (e.share_pages) return (try paged.shape(e, at)).parts(out, a);
     var ps: std.ArrayList(image.Part) = .empty;
     defer ps.deinit(a);
     try image.nvmeParts(try ranks.shape(e), at, &ps, a);
@@ -27,7 +28,7 @@ fn take(p: *anyopaque, id: u64, ranges: []const tier.Range, out: []u8) !void {
     var done: usize = 0;
     for (ranges) |r| {
         if (r.len > out.len - done) return error.NvmeImageRange;
-        try ranks.copy(engine(p), id, r.off, out[done..][0..@intCast(r.len)], true);
+        try transfer(engine(p), id, r.off, out[done..][0..@intCast(r.len)], true);
         done += @intCast(r.len);
     }
     if (done != out.len) return error.NvmeImageRange;
@@ -37,10 +38,15 @@ fn put(p: *anyopaque, id: u64, ranges: []const tier.Range, in: []const u8) !void
     var done: usize = 0;
     for (ranges) |r| {
         if (r.len > in.len - done) return error.NvmeImageRange;
-        try ranks.copy(engine(p), id, r.off, @constCast(in[done..][0..@intCast(r.len)]), false);
+        try transfer(engine(p), id, r.off, @constCast(in[done..][0..@intCast(r.len)]), false);
         done += @intCast(r.len);
     }
     if (done != in.len) return error.NvmeImageRange;
+}
+
+fn transfer(e: *Engine, id: u64, off: u64, host: []u8, out: bool) !void {
+    if (e.share_pages) return paged.copy(e, id, off, host, out);
+    return ranks.copy(e, id, off, host, out);
 }
 
 fn pin(p: *anyopaque, id: u64) !void {

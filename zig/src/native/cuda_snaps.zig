@@ -9,6 +9,7 @@ pub fn cacheRules(comptime F: type) api.prompt_cache.Rules {
     if (@hasDecl(F, "warm_quiet")) rules.warm = .waits;
     if (@hasDecl(F, "warm_usable")) rules.warm_usable = F.warm_usable;
     if (@hasDecl(F, "snap_fork")) rules.fork = F.snap_fork; // opt-in, a family at a time after its device check
+    if (@hasDecl(F, "snap_fit_oversize")) rules.fit_oversize = F.snap_fit_oversize;
     if (@hasDecl(F, "snap_tail")) rules.tail = if (@import("core").profile.lookup(F.snap_tail)) |v| std.mem.eql(u8, v, "1") else false;
     if (@hasDecl(F, "snap_intermediate")) { // a chunk-invariant family's opt-in ladder of intermediate checkpoints
         rules.intermediate = F.snap_intermediate.tokens;

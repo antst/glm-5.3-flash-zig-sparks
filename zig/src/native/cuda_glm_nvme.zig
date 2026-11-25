@@ -5,6 +5,8 @@ const cuda = @import("cuda");
 const glm = @import("glm_cuda");
 const nvme = @import("core").nvme1107;
 const pc = api.prompt_cache;
+const radix = api.prompt_radix;
+const page_adapter = @import("cuda_prompt_pages.zig");
 const wire = glm.nvme_wire;
 const rank_state = glm.nvme_state;
 const Engine = glm.engine.Engine;
@@ -26,7 +28,7 @@ fn identity(a: std.mem.Allocator, io: std.Io, ctx: *const cuda.Context, e: *Engi
     const code = try @import("sys").file_identity.hash(io, exe, 1 << 31);
     const f = glm.ranks.Fingerprint.of(e.share.world, 0, e.settings, e.capacity, e.mtp, e.checkpoint_digest, code, e.checkpoint_digest);
     var h = std.crypto.hash.sha2.Sha256.init(.{});
-    h.update("glm-native-nvme1107-image-v1/ordinary-snapshot-lease");
+    h.update(if (e.share_pages) "glm-native-nvme-page-image-v1" else "glm-native-nvme1107-image-v1/ordinary-snapshot-lease");
     const physical_rows: u64 = glm.forward.window_rows;
     h.update(std.mem.asBytes(&physical_rows));
     inline for (@typeInfo(@TypeOf(f)).@"struct".field_names) |name| h.update(std.mem.asBytes(&@field(f, name)));
@@ -43,7 +45,8 @@ const Slot = struct { id: u64 = 0, sent: bool = false };
 const Owner = struct {
     e: *Engine,
     ctx: *const cuda.Context,
-    store: *pc.Store,
+    store: ?*pc.Store = null,
+    lookahead: u32,
     slots: [rank_state.max_pending]Slot = @splat(.{}),
     replies: [8]u64 = undefined,
     pump_status: [8]u64 = @splat(0),
@@ -92,32 +95,47 @@ const Owner = struct {
         return r;
     }
 
-    /// Called by a mark hook: own metadata and pin this rank's immutable snapshot, without I/O or peer work.
+    /// The mark hook pins an immutable state. I/O and rank commands run later on the engine thread.
     fn queue(p: *anyopaque, entry: *const pc.Entry, starts: []const u32) void {
         const o = of(p);
-        if (o.stopped or entry.image_frame != 0 or entry.images.len != 0 or entry.at < o.local().side.store.cfg.min_tokens) return;
+        if (entry.image_frame != 0 or entry.images.len != 0) return;
+        const saved: *const Kept = @ptrCast(@alignCast(entry.saved));
+        o.queueImage(saved.id, entry.at, entry.tokens, entry.decode_spans, starts, entry.shared, &.{});
+    }
+
+    fn queuePaged(p: *anyopaque, request: *anyopaque, kept: radix.Kept, q: radix.Query, at: u32, ids: []const u32) void {
+        const req: *const glm.share.Owner = @ptrCast(@alignCast(request));
+        if (!req.persist or !persistable(q)) return;
+        const prompt = q.key;
+        const o = of(p);
+        const saved: *const Kept = @ptrCast(@alignCast(kept.saved orelse return));
+        const n = @as(usize, at) + o.lookahead;
+        if (n > (q.prefilled orelse q.prompt_len) or saved.below != 0) return;
+        o.queueImage(saved.id, at, prompt[0..n], &.{}, &.{}, kept.shared_cut, ids);
+    }
+
+    fn queueImage(o: *Owner, id: u64, at: u32, tokens: []const u32, spans: []const [2]u32, starts: []const u32, shared: bool, ids: []const u32) void {
+        if (o.stopped or at < o.local().side.store.cfg.min_tokens) return;
+        o.enqueueImage(id, at, tokens, spans, starts, shared, ids) catch {
+            o.refused += 1;
+            return;
+        };
+        o.queued += 1;
+    }
+
+    fn enqueueImage(o: *Owner, id: u64, at: u32, tokens: []const u32, spans: []const [2]u32, starts: []const u32, shared: bool, ids: []const u32) !void {
         const slot = for (o.slots, 0..) |s, i| {
             if (s.id == 0) break i;
-        } else {
-            o.refused += 1;
-            return;
-        };
-        const saved: *const Kept = @ptrCast(@alignCast(entry.saved));
-        const meta = nvme.metadata.encode(o.e.gpa, entry.at, glm.native.snap_grid, o.store.rules.lookahead, entry.decode_spans, starts) catch {
-            o.refused += 1;
-            return;
-        };
+        } else return error.NvmeSourceRoom;
+        const meta = try nvme.metadata.encode(o.e.gpa, at, glm.native.snap_grid, o.lookahead, spans, starts);
         defer o.e.gpa.free(meta);
-        o.serial = std.math.add(u64, o.serial, 1) catch {
-            o.refused += 1;
-            return;
+        o.serial = try std.math.add(u64, o.serial, 1);
+        if (o.e.share_pages) try glm.snapshots.attachTierIds(o.e, id, ids);
+        errdefer if (o.e.share_pages) {
+            if (o.e.snaps.getPtr(id)) |kept| glm.snapshots.clearTierIds(o.e, kept);
         };
-        o.local().side.enqueue(.{ .id = saved.id, .at = entry.at, .tokens = entry.tokens, .metadata = meta, .lineage = nvme.spill.Lineage.fresh(o.boot, o.serial), .shared = entry.shared }) catch {
-            o.refused += 1;
-            return;
-        };
-        o.slots[slot] = .{ .id = saved.id };
-        o.queued += 1;
+        try o.local().side.enqueue(.{ .id = id, .at = at, .tokens = tokens, .metadata = meta, .lineage = nvme.spill.Lineage.fresh(o.boot, o.serial), .shared = shared });
+        o.slots[slot] = .{ .id = id };
     }
 
     fn cancel(o: *Owner, i: usize) void {
@@ -138,7 +156,14 @@ const Owner = struct {
             o.cancel(i);
             return;
         }
-        const packet = wire.payload(o.e.gpa, &source.lineage.root, source.metadata) catch {
+        const ids = if (o.e.share_pages)
+            (o.e.snaps.get(source.id) orelse {
+                o.cancel(i);
+                return;
+            }).tier_ids
+        else
+            &.{};
+        const packet = wire.pagePayload(o.e.gpa, &source.lineage.root, source.metadata, ids) catch {
             o.cancel(i);
             return;
         };
@@ -187,7 +212,7 @@ const Owner = struct {
     /// A mark cannot run peer work; finish its retired sources before the next backend pass begins instead.
     fn room(p: *anyopaque, bytes: u64) void {
         const o = of(p);
-        if (o.stopped or bytes == 0 or bytes > o.store.budget or !pending(o)) return;
+        if (o.stopped or bytes == 0 or bytes > (o.store orelse return).budget or !pending(o)) return;
         const retired = glm.snapshots.retiredBytes(o.e);
         if (retired == 0) return;
         const pool = if (o.e.snap_pages) |*v| v else return;
@@ -246,7 +271,7 @@ const Owner = struct {
         std.log.info("NATIVE_TIERED_WATCH progress_changes={d} hard_stops={d} hard_ns={d}", .{
             o.room_progress_changes, o.room_hard_stops, glm.nvme_progress.hard_ns,
         });
-        std.log.info("NATIVE_TIERED_PROMPT_METADATA peak={d} limit={d}", .{ o.store.token_pool.peak, o.store.token_pool.limit });
+        if (o.store) |s| std.log.info("NATIVE_TIERED_PROMPT_METADATA peak={d} limit={d}", .{ s.token_pool.peak, s.token_pool.limit });
         _ = o.required(.close, .{ .kind = 0 }, &.{});
         o.e.gpa.destroy(o);
     }
@@ -275,36 +300,7 @@ const Owner = struct {
             if (!pc.tier.makeRoom(store, have, prompt, born, at, bytes)) return have;
             const meta = nvme.metadata.encode(o.e.gpa, at, glm.native.snap_grid, ahead, spans, starts) catch return have;
             defer o.e.gpa.free(meta);
-            const packet = wire.payload(o.e.gpa, &hit.key, meta) catch return have;
-            defer o.e.gpa.free(packet);
-            if (glm.disk_ranks.link) |l| if (packet.len > l.ids.len) return have;
-            if (o.e.next_snap >= std.math.maxInt(u32)) return have;
-            const id = o.e.next_snap;
-            o.e.next_snap += 1;
-            const h: Header = .{ .kind = 0, .a = id, .seed = at, .depth = @intCast(meta.len) };
-            if (!wire.allOk(o.command(.read_begin, h, packet))) {
-                o.abortRead(id, null);
-                continue;
-            }
-            var ready = false;
-            var failed = false;
-            var damaged = false;
-            const end = std.Io.Clock.awake.now(o.e.io).toNanoseconds() + 60 * std.time.ns_per_s;
-            while (std.Io.Clock.awake.now(o.e.io).toNanoseconds() < end) {
-                const r = o.required(.read_poll, .{ .kind = 0 }, &.{});
-                ready = true;
-                for (r) |v| {
-                    ready = ready and v == 1;
-                    failed = failed or v >= 2;
-                    damaged = damaged or v == 3;
-                }
-                if (ready or failed) break;
-                std.Io.sleep(o.e.io, .fromMicroseconds(100), .awake) catch {};
-            }
-            if (!ready or !wire.allOk(o.command(.read_commit, .{ .kind = 0 }, &.{}))) {
-                o.abortRead(id, if (damaged) &hit.key else null);
-                continue;
-            }
+            const id = o.read(hit.key, at, meta, &.{}, null) orelse continue;
             const k = o.e.gpa.create(Kept) catch {
                 o.abortRead(id, null);
                 return have;
@@ -321,12 +317,99 @@ const Owner = struct {
         return have;
     }
 
+    /// Stage a checked image directly into the new pages, while the owner withholds publication.
+    fn read(o: *Owner, key: [32]u8, at: u32, meta: []const u8, ids: []const u32, check: ?@import("lanes").stream.CancelCheck) ?u64 {
+        const packet = wire.pagePayload(o.e.gpa, &key, meta, ids) catch return null;
+        defer o.e.gpa.free(packet);
+        if (glm.disk_ranks.link) |l| if (packet.len > l.ids.len) return null;
+        if (o.e.next_snap >= std.math.maxInt(u32)) return null;
+        const id = o.e.next_snap;
+        o.e.next_snap += 1;
+        const h: Header = .{ .kind = 0, .a = id, .seed = at, .depth = @intCast(meta.len) };
+        if (!wire.allOk(o.command(.read_begin, h, packet))) {
+            o.abortRead(id, null);
+            return null;
+        }
+        var ready = false;
+        var failed = false;
+        var damaged = false;
+        const end = std.Io.Clock.awake.now(o.e.io).toNanoseconds() + 60 * std.time.ns_per_s;
+        while (!cancelled(check) and std.Io.Clock.awake.now(o.e.io).toNanoseconds() < end) {
+            const r = o.required(.read_poll, .{ .kind = 0 }, &.{});
+            ready = true;
+            for (r) |v| {
+                ready = ready and v == 1;
+                failed = failed or v >= 2;
+                damaged = damaged or v == 3;
+            }
+            if (ready or failed) break;
+            std.Io.sleep(o.e.io, .fromMicroseconds(100), .awake) catch {};
+        }
+        if (!ready or cancelled(check) or !wire.allOk(o.command(.read_commit, .{ .kind = 0 }, &.{}))) {
+            o.abortRead(id, if (damaged) &key else null);
+            return null;
+        }
+        return id;
+    }
+
+    fn cancelled(check: ?@import("lanes").stream.CancelCheck) bool {
+        return if (check) |c| c.check(c.ptr) else false;
+    }
+
+    fn persistable(q: radix.Query) bool {
+        // The disk prefix key represents text rows with their default chunk schedule.
+        return q.images.len == 0 and q.namespace == 0 and q.frame == 0 and q.starts.len == 0 and
+            q.key.len == q.prompt_len;
+    }
+
+    fn recallPaged(p: *anyopaque, store: *radix.Store, request: *anyopaque, q: radix.Query) void {
+        if (!persistable(q)) return;
+        const prompt = q.key;
+        const req: *const glm.share.Owner = @ptrCast(@alignCast(request));
+        const o = of(p);
+        if (o.stopped or !req.persist or prompt.len < 2 or cancelled(req.cancel_check)) return;
+        pump(o, std.time.ns_per_ms);
+        const ahead = o.lookahead;
+        const have = if (store.find(q)) |n| n.at() + ahead else 0;
+        const max_at: u32 = @intCast(@min(prompt.len - @intFromBool(ahead == 0), std.math.maxInt(u32)));
+        const hit = o.local().side.store.lookup(.{ .keyed = prompt, .max_at = max_at, .longer_than = have }) orelse return;
+        const at = hit.at -| ahead;
+        if (at == 0 or at >= prompt.len or at % glm.native.snap_grid != 0 or store.tree.snaps >= store.limits.snaps) return;
+        const pool = glm.native.share_pool(o.e) orelse return;
+        const pages = at / store.rules.page;
+        const compact = o.e.stateBytes(at);
+        if (pool.available() < pages or (o.e.snap_pages orelse return).spare() < compact) return;
+        const ids = o.e.gpa.alloc(u32, pages) catch return;
+        defer o.e.gpa.free(ids);
+        if (!pool.hold(ids)) return;
+        defer for (ids) |id| pool.release(id);
+        const meta = nvme.metadata.encode(o.e.gpa, at, glm.native.snap_grid, ahead, &.{}, &.{}) catch return;
+        defer o.e.gpa.free(meta);
+        const k = o.e.gpa.create(Kept) catch return;
+        const id = o.read(hit.key, at, meta, ids, req.cancel_check) orelse {
+            o.e.gpa.destroy(k);
+            return;
+        };
+        k.* = .{ .id = id, .at = at };
+        store.adoptPages(k, q, at, ids, hit.shared) catch {
+            o.abortRead(id, null);
+            o.e.gpa.destroy(k);
+            return;
+        };
+        _ = o.required(.read_publish, .{ .kind = 0, .a = id }, &.{});
+        o.restored += 1;
+        std.log.info("GLM_NVME_PAGED_RESTORED at={d} pages={d} compact_bytes={d} all_ranks={d}", .{ at, pages, compact, o.e.share.world });
+    }
+
     const vtable: pc.tier.Tier.VTable = .{ .queued = queue, .recall = recall, .pump = pump, .pending = pending, .room = room, .stop = stop, .destroy = destroy };
 };
 
 pub fn attach(a: std.mem.Allocator, io: std.Io, ctx: *const cuda.Context, o: api.Open, root: []const u8, e: *Engine, store: *pc.Store) !void {
     if (e.share.rank != 0 or store.disk != null or store.tier != null or e.share_pages) return error.NvmeTierConflict;
     if (store.rules.lookahead > 1) return error.NvmeLookahead;
+    const room = @import("sys").environment.Process.get(.{}, "TF_GLM_NVME_MARK_ROOM") orelse "0";
+    const room_at_mark = std.mem.eql(u8, room, "1");
+    if (!room_at_mark and !std.mem.eql(u8, room, "0")) return error.BadGlmNvmeMarkRoom;
     const limits = try glm.nvme_options.read();
     const minimum = if (limits.min_cache_tokens == 0) 0 else e.stateBytes(limits.min_cache_tokens);
     glm.nvme_options.requireCache(limits, e.capacity - @import("glm_cuda").forward.window_rows, minimum, store.budget) catch |err| {
@@ -340,8 +423,31 @@ pub fn attach(a: std.mem.Allocator, io: std.Io, ctx: *const cuda.Context, o: api
         _ = wire.invoke(e, .close, .{ .kind = 0 }, &.{}, &reply) catch {};
     }
     const owner = try e.gpa.create(Owner);
-    owner.* = .{ .e = e, .ctx = ctx, .store = store, .boot = undefined };
+    owner.* = .{ .e = e, .ctx = ctx, .store = store, .lookahead = store.rules.lookahead, .boot = undefined };
     io.random(&owner.boot);
     store.tier = .{ .ptr = owner, .vtable = &Owner.vtable };
+    store.room_at_mark = room_at_mark;
+    if (room_at_mark) std.log.info("GLM NVMe snapshot room is prepared at the prompt mark", .{});
     std.log.info("GLM_NVME1107_ACTIVE ranks={d} root={s} format=3 staging_mib={d} index_mib={d} min_tokens=8192 shared_history=1", .{ e.share.world, root, cfg.staging >> 20, cfg.index >> 20 });
+}
+
+pub fn attachPaged(a: std.mem.Allocator, io: std.Io, ctx: *const cuda.Context, o: api.Open, root: []const u8, e: *Engine, adapter: *page_adapter.Adapter) !void {
+    if (e.share.rank != 0 or !e.share_pages or adapter.tier != null or !adapter.store.on()) return error.NvmeTierConflict;
+    const ahead = adapter.store.rules.lookahead;
+    if (ahead > 1) return error.NvmeLookahead;
+    const limits = try glm.nvme_options.read();
+    const minimum = if (limits.min_cache_tokens == 0) 0 else e.stateBytes(limits.min_cache_tokens / glm.native.snap_grid * glm.native.snap_grid);
+    const pool = if (e.snap_pages) |*v| v else return error.NoSnapshotCache;
+    try glm.nvme_options.requireCache(limits, e.capacity - glm.forward.window_rows, minimum, pool.spare());
+    const cfg: rank_state.Config = .{ .cap = try gib(o.learn_gib), .floor = try gib(o.learn_min_free_gib), .staging = limits.staging, .index = limits.index, .serial_mode = limits.mode == .serial, .lookahead = @intCast(ahead) };
+    try wire.open(e, root, try identity(a, io, ctx, e, o), cfg);
+    errdefer {
+        var reply: [8]u64 = undefined;
+        _ = wire.invoke(e, .close, .{ .kind = 0 }, &.{}, &reply) catch {};
+    }
+    const owner = try e.gpa.create(Owner);
+    owner.* = .{ .e = e, .ctx = ctx, .lookahead = ahead, .boot = undefined };
+    io.random(&owner.boot);
+    adapter.tier = .{ .ptr = owner, .queue = Owner.queuePaged, .recall = Owner.recallPaged, .destroy = Owner.destroy, .work = .{ .ptr = owner, .pending = Owner.pending, .pump = Owner.pump, .stop = Owner.stop } };
+    std.log.info("GLM_NVME_PAGED_ACTIVE ranks={d} root={s} staging_mib={d} index_mib={d}", .{ e.share.world, root, cfg.staging >> 20, cfg.index >> 20 });
 }

@@ -8,6 +8,12 @@ const rows = @import("prompt_cache.zig").rows;
 pub const stop_ns: i128 = 20 * std.time.ns_per_s;
 
 pub const Disk = api.ImprintDisk;
+pub const TierWork = struct {
+    ptr: *anyopaque,
+    pending: *const fn (*anyopaque) bool,
+    pump: *const fn (*anyopaque, u64) void,
+    stop: *const fn (*anyopaque, u64) void,
+};
 
 /// Engine.drain, and stop's first half: no more admissions, what is left cancelled, writes finished, the thread joined.
 pub fn drain(ctx: *anyopaque) void {
@@ -35,6 +41,7 @@ pub fn ask(ctx: *anyopaque, a: *api.ImprintAsk) bool {
 
 /// Every queued ask answered (between rounds, on the engine thread).
 pub fn answer(h: *LaneHost) void {
+    if (h.tier_work) |t| t.pump(t.ptr, std.time.ns_per_ms);
     if (h.cache) |store| @import("prompt_tier.zig").pump(store, std.time.ns_per_ms);
     if (h.cache) |store| if (store.disk) |r| {
         if (!r.sync_writes) _ = rows.write.step(r);
@@ -53,17 +60,19 @@ pub fn close(h: *LaneHost) void {
 
 /// Idle work waits; the synchronous writer also waits for the admission quiet (under the lock).
 pub fn ready(h: *LaneHost) bool {
+    if (h.queued.items.len > 0 or h.admitted.items.len > 0 or h.cancels.items.len > 0 or h.closing) return false;
+    if (h.tier_work) |t| if (t.pending(t.ptr)) return true;
     const store = h.cache orelse return false;
-    if (@import("prompt_tier.zig").pending(store)) return h.queued.items.len == 0 and h.admitted.items.len == 0 and h.cancels.items.len == 0 and !h.closing;
+    if (@import("prompt_tier.zig").pending(store)) return true;
     const r = store.disk orelse return false;
     if (!rows.write.ready(r)) return false;
-    if (h.queued.items.len > 0 or h.admitted.items.len > 0 or h.cancels.items.len > 0 or h.closing) return false;
     return !r.sync_writes or h.disk.quiet(h.admissions, std.Io.Clock.awake.now(h.io).toNanoseconds());
 }
 
 /// Stage one queued image or advance the synchronous writer, outside the lock.
 pub fn step(h: *LaneHost) void {
-    const store = h.cache.?;
+    if (h.tier_work) |t| t.pump(t.ptr, std.time.ns_per_ms);
+    const store = h.cache orelse return;
     @import("prompt_tier.zig").pump(store, std.time.ns_per_ms);
     if (store.disk) |r| _ = rows.write.step(r);
 }
@@ -78,6 +87,7 @@ pub fn idle(h: *LaneHost) bool {
 
 /// The engine thread's last act on a stop: what waits is written under `stop_ns`, and --learn's half-made cut settled.
 pub fn flush(h: *LaneHost) void {
+    if (h.tier_work) |t| t.stop(t.ptr, @intCast(stop_ns));
     const store = h.cache orelse return;
     @import("prompt_tier.zig").stop(store, @intCast(stop_ns));
     if (store.imprint) |im| @import("prompt_learn.zig").settle(store, im);

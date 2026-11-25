@@ -63,6 +63,7 @@ pub const LaneHost = struct {
     cache_status: ?api.Status.PromptCache = null, // published under mutex; HTTP threads never read the store
     disk_status: ?api.Status.DiskCache = null, // published under mutex beside it
     cache_at: i64 = 0, // wall-clock ms of the last full cache and disk copy (republished at 1 Hz at most)
+    tier_work: ?rows_host.TierWork = null,
     cache: ?*pc.Store = null, // kept prompt states (engine thread only); the backend restores and saves them
     recall: ?*lanes.recall_store.Store = null, // Recall's record: drafts from earlier requests (lane_host_recall.zig)
     decoded_rows: bool = false, // the backend prefills Request.decode_spans with decoded rows' arithmetic, cache or not

@@ -24,11 +24,15 @@ pub const Kernels = struct {
     prep: cuda.Function,
     step: cuda.Function,
     out: cuda.Function,
+    prompt_prep: ?cuda.Function = null,
+    prompt_step: ?cuda.Function = null,
     pdl: bool, // dependent launches (each entry opens with glm_pdl::enter()); the loader's caller opts in
 
     pub fn load(m: cuda.Module) !Kernels {
         var k: Kernels = undefined;
         inline for (.{ "chain", "replay", "replay_layers", "prep", "step", "out" }) |name| @field(k, name) = try m.function("tf_glm_kda_" ++ name);
+        k.prompt_prep = null;
+        k.prompt_step = null;
         k.pdl = false;
         return k;
     }
@@ -52,6 +56,7 @@ pub const Chain = struct {
     eps: f32,
     lower: f32,
     heads: usize,
+    prompt: bool = false,
 };
 
 /// Where a chain writes: out bf16, state_out like state_in, and replay's rows: k fp32, v bf16, decay and beta fp32.
@@ -65,6 +70,9 @@ pub fn chain(ks: *const Kernels, stream: cuda.Stream, c: Chain, rows: usize, s: 
     try validate(c, rows);
     const h: c_int = @intCast(c.heads);
     if (wide) |w| {
+        const prefill = c.prompt and rows >= wide_rows and (c.heads == 16 or c.heads == 32);
+        const prep = if (prefill) ks.prompt_prep else null;
+        const step = if (prefill) ks.prompt_step else null;
         const pdl = ks.pdl and rows < wide_rows; // a prompt chunk's chain launches plain: dependent, its first token comes later
         var a: cuda.Args = .{};
         a.add(h);
@@ -77,14 +85,14 @@ pub fn chain(ks: *const Kernels, stream: cuda.Stream, c: Chain, rows: usize, s: 
         a.add(c.lower);
         for ([_]u64{ w.q, s.k, s.v, s.g, s.b }) |v| a.add(v);
         const grid: cuda.launch.Dim3 = .{ .x = @intCast(rows), .y = @intCast(c.heads) };
-        try cuda.launch.launch(ks.prep, .{ .grid = grid, .block = .{ .x = 512 }, .pdl = pdl }, stream, &a);
+        try cuda.launch.launch(prep orelse ks.prep, .{ .grid = grid, .block = .{ .x = if (prep != null) 128 else 512 }, .pdl = pdl }, stream, &a);
         var b: cuda.Args = .{};
         b.add(h);
         for ([_]u64{ c.state_in, w.q, s.k, s.v, s.g, s.b }) |v| b.add(v);
         b.add(@as(c_int, @intCast(rows)));
         b.add(w.y);
         b.add(s.state_out);
-        try cuda.launch.launch(ks.step, .{ .grid = .{ .x = @intCast(c.heads), .y = dv / 4 / 8 }, .block = .{ .x = 8 * 32 }, .pdl = pdl }, stream, &b);
+        try cuda.launch.launch(step orelse ks.step, .{ .grid = .{ .x = @intCast(c.heads), .y = if (step != null) dv / 4 / 4 else dv / 4 / 8 }, .block = .{ .x = if (step != null) 4 * 32 else 8 * 32 }, .pdl = pdl }, stream, &b);
         var o: cuda.Args = .{};
         o.add(h);
         o.add(w.y);

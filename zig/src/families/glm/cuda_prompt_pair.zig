@@ -6,6 +6,7 @@ const weights = @import("cuda_weights.zig");
 const snapshots = @import("cuda_snapshots.zig");
 const engine = @import("cuda_engine.zig");
 const Engine = engine.Engine;
+const dflash = @import("dflash.zig");
 
 /// The fewest rows a paired step's second chunk takes: a shorter one's sites end before the first's exchanges do.
 pub const min_rows = fw.prefill_rows / 4;
@@ -26,6 +27,7 @@ pub const Pair = struct {
     }
 
     pub fn deinit(p: *Pair) void {
+        if (p.steps != 0) std.log.info("GLM_PREFILL_PAIR_CLOSE steps={d}", .{p.steps});
         p.pos.free();
         p.pieces.deinit();
         p.bp.deinit();
@@ -58,24 +60,42 @@ pub fn piecesOf(e: *const Engine, b: *const fw.Buffers) ?*const fw.Pieces {
     return if (b == &p.bp) &p.pieces else null;
 }
 
-/// Rank 0's choice for the step at `start` (the others take the ids it sends); not with a drafter, prompt rows or prof.
+/// The second chunk has at most 2048 rows; the combined width is a host-size value.
+fn secondRows(start: usize, len: usize) usize {
+    return @min(len - start - fw.prefill_rows, @as(usize, fw.prefill_rows));
+}
+
+fn pairedRows(start: usize, len: usize) usize {
+    return @as(usize, fw.prefill_rows) + secondRows(start, len);
+}
+
+/// DFlash only reads the final context window's taps.
+fn beforeDraftWindow(start: usize, rows: usize, len: usize) bool {
+    const keep_from = len -| @as(usize, @intCast(dflash.WIN));
+    return start <= keep_from and rows <= keep_from - start;
+}
+
+/// Rank 0's choice for the step at `start` (the other ranks use the ids it sends).
 pub fn pairedAt(e: *const Engine, start: usize, len: usize, from: ?engine.Resume, marks: ?engine.Marks) bool {
-    if (e.pair == null or !e.settings.pair or e.drafter != null or e.prompt_logprobs != null or e.prompt_profs[3] != null) return false;
+    if (e.pair == null or !e.settings.pair or e.prompt_logprobs != null or e.prompt_profs[3] != null) return false;
     if (e.cur.cuts.items.len > 0) return false; // a paired step would step over a request start
     if (e.pieces.count == 1 and !e.settings.split) return false; // run takes such a chunk whole
     if (!takesTwo(start, len, e.share.world, if (marks) |m| m.at else &.{})) return false;
+    const rb = secondRows(start, len);
+    if (e.drafter != null and (!e.settings.prefill_opt or !beforeDraftWindow(start, pairedRows(start, len), len))) return false;
     // a resumed step restores its kept state, and the rings' base, after this choice
     const base = if (from) |r| (e.snaps.get(r.id) orelse return false).bases[0] else e.cur.st.base;
-    return ringsAgree(base, e.cur.st.ring_rows, start, @min(len - start - fw.prefill_rows, fw.prefill_rows));
+    return ringsAgree(base, e.cur.st.ring_rows, start, rb);
 }
 
 /// Engine.prefillChunk of two chunks (`part`: both, then the next id): one pass, then each chunk's MTP rows and commit.
 pub fn prefill(e: *Engine, part: []const u32, start: usize, len: usize, cancel: ?engine.Cancel, marks: ?engine.Marks, split: bool) !?u32 {
     const ra: usize = fw.prefill_rows;
-    if (len <= start + ra) return error.BadChunk;
-    const rb: usize = @min(len - start - ra, fw.prefill_rows);
+    if (len <= start + ra or e.cur.cuts.items.len > 0) return error.BadChunk;
+    const rb = secondRows(start, len);
     const pair = if (e.pair) |*p| p else return error.BadChunk;
-    if (rb < e.share.world or part.len != @min(len - start, ra + rb + 1) or e.drafter != null or e.prompt_logprobs != null) return error.BadChunk;
+    if (rb < e.share.world or part.len != @min(len - start, ra + rb + 1) or e.prompt_logprobs != null) return error.BadChunk;
+    if (e.drafter != null and (!e.settings.prefill_opt or !beforeDraftWindow(start, pairedRows(start, len), len))) return error.BadChunk;
     if (!ringsAgree(e.cur.st.base, e.cur.st.ring_rows, start, rb)) return error.BadChunk; // pairedAt's rule, every rank
     if (marks) |m| if (start > 0 and std.mem.indexOfScalar(u32, m.at, @intCast(start)) != null) m.call(m.ctx, @intCast(start));
     e.gate(cancel) catch |err| {
@@ -88,6 +108,8 @@ pub fn prefill(e: *Engine, part: []const u32, start: usize, len: usize, cancel: 
     var fb = e.view(&pair.bp, &two);
     fa.prof = null;
     fb.prof = null;
+    fa.taps = null;
+    fb.taps = null;
     fa.index_split = split; // the step's choice (TF_GLM_INDEX_SPLIT) for both chunks
     fb.index_split = split;
     const st = &e.cur.st;
@@ -122,7 +144,7 @@ pub fn prefill(e: *Engine, part: []const u32, start: usize, len: usize, cancel: 
 
 /// decode._absorb_rows of a chunk: the MTP head over its next ids `nxt` on its final-norm rows `hidden`.
 fn mtpRows(e: *Engine, f: *fw.Forward, nxt: []const i32, hidden: u64) !void {
-    if (!e.mtp or nxt.len == 0) return;
+    if (nxt.len == 0 or !@import("cuda_snapshot_mode.zig").head(e)) return;
     try f.mtp(nxt, &.{hidden});
     try e.cur.st.setMtpLen(e.stream, e.cur.st.mtp_len + nxt.len);
 }
@@ -157,4 +179,26 @@ test "only ranks that exchange make the twin: TP=1 has no exchanges to hide" {
 test "a server with solo passes holds no twin: they take the pair's steps" {
     try std.testing.expect(!wanted(true, true, 2));
     try std.testing.expect(!wanted(true, true, 3));
+}
+
+test "GLM prompt pair: DFlash prompt ingest window boundary" {
+    const window: usize = @intCast(dflash.WIN);
+    const pair_rows = 2 * fw.prefill_rows;
+    const start = 7 * fw.prefill_rows;
+    for ([_]usize{ start + pair_rows + window - 1, start + pair_rows + window, start + pair_rows + window + 1 }) |len| {
+        const rows = pairedRows(start, len);
+        try std.testing.expectEqual(pair_rows, rows);
+        const run = try dflash.promptRun(0, 0, start, rows, len, 0, pair_rows);
+        try std.testing.expectEqual(run == null, beforeDraftWindow(start, rows, len));
+    }
+    try std.testing.expect(!beforeDraftWindow(0, 1, window));
+    try std.testing.expect(!beforeDraftWindow(start, pair_rows, window));
+}
+
+test "GLM prompt pair: a cold 62K request has a complete 4096-row first pair" {
+    const len: usize = 62_027;
+    const rows = pairedRows(0, len);
+    try std.testing.expectEqual(@as(usize, 4_096), rows);
+    try std.testing.expect(beforeDraftWindow(0, rows, len));
+    try std.testing.expectEqual(@as(usize, 607), secondRows(59_372, len));
 }

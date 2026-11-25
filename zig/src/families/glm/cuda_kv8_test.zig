@@ -554,8 +554,13 @@ test "GLM shared window: its KDA projection rows have their own room, even when 
         l.mixer = .{ .mla = undefined };
     } else {
         l.mixer = .{ .kda = undefined };
+        l.mixer.kda.proj = .{ .bf16 = 0 };
+        l.mixer.kda.control_tail = 0;
+        l.mixer.kda.heads = w.share.kda.len();
     };
     w.layers = &layers;
+    w.affine_target = false;
+    w.mixed_ffn_q8 = false;
     const rows = @import("cuda_engine.zig").shared_rows;
     try t.expect(state.window_rows <= rows);
     const row_bytes = @import("cuda_kda_block.zig").rowWidth(w.share.kda.len()) * 2;

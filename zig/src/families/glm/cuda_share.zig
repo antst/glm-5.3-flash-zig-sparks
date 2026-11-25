@@ -99,7 +99,11 @@ pub fn of(e: *const engine.Engine) ?kp.Prompts {
 }
 
 /// A resume's state: restored by the prompt pass's start on every rank (engine.Resume), once its pages are mapped.
-pub const Owner = struct { pending: ?*engine.Kept = null };
+pub const Owner = struct {
+    pending: ?*engine.Kept = null,
+    persist: bool = false,
+    cancel_check: ?@import("lanes").stream.CancelCheck = null,
+};
 
 /// Before a prompt pass: the deepest kept state's pages in `adopt` (held for the stream), the state in `owner`.
 pub fn begin(e: *engine.Engine, s: *const Stream, owner: *Owner, adopt: *std.ArrayList(u32)) !kp.Plan {
@@ -108,6 +112,8 @@ pub fn begin(e: *engine.Engine, s: *const Stream, owner: *Owner, adopt: *std.Arr
     defer e.gpa.free(ims);
     var q: kp.Query = .of(cacheKey(s) orelse return error.ImageCacheKeyRequired);
     q.images = ims;
+    owner.persist = s.images.len == 0;
+    owner.cancel_check = s.cancel_check;
     const plan = try prompts.begin(q, s.history_len, s.shared_prefixes, owner, adopt);
     defer prompts.free(plan.marks);
     const mine = e.gpa.dupe(u32, plan.marks) catch |err| { // the lane's own marks, freed by its allocator
@@ -144,7 +150,7 @@ pub const Keeps = struct {
         defer k.e.gpa.free(ims);
         var q: kp.Query = .of(k.prompt);
         q.images = ims;
-        var owner: Owner = .{};
+        var owner: Owner = .{ .persist = k.images.len == 0 };
         _ = prompts.keep(q, mark, &owner, ids[0..n], path);
     }
 };

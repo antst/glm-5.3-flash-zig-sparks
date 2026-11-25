@@ -36,7 +36,7 @@ test "Q4 FFN Q8: strict cached choice and all-rank identity" {
     try t.expect(on.q4_ffn_q8.on and on.q4_ffn_q8.sha[0] == 0x9a);
     const a = glm.ranks.Fingerprint.of(2, 0, off, 8192, true, @splat(0), @splat(0), @splat(0));
     const b = glm.ranks.Fingerprint.of(2, 1, on, 8192, true, @splat(0), @splat(0), @splat(0));
-    try t.expectEqual(@as(u32, 85), b.layout);
+    try t.expectEqual(@as(u32, 86), b.layout);
     try t.expectEqual(glm.ranks.Fingerprint.Field.q4_ffn_q8, glm.ranks.mismatch(&.{ a, b }).?.field);
     var other = b;
     other.q4_ffn_q8_sha[0] ^= 1;

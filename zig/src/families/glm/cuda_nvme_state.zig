@@ -33,7 +33,7 @@ pub const State = struct {
 
     pub fn open(e: *Engine, root: []const u8, compat: spill.Digest, cfg: Config) !*State {
         if (e.settings.q8_mse and !e.settings.q8_activation) return error.Q8MseNvmeScope;
-        if (local != null or e.share_pages or root.len == 0 or root.len > 4096 or cfg.cap == 0 or cfg.index < 16 << 20 or cfg.staging > 2 << 30) return error.NvmeSettings;
+        if (local != null or root.len == 0 or root.len > 4096 or cfg.cap == 0 or cfg.index < 16 << 20 or cfg.staging > 2 << 30) return error.NvmeSettings;
         const max_at = (e.capacity -| @as(usize, @import("cuda_state.zig").window_rows)) / @import("cuda_native.zig").snap_grid * @import("cuda_native.zig").snap_grid;
         if (max_at == 0 or max_at > std.math.maxInt(u32) - 1) return error.NvmeSettings;
         const a = e.gpa;
@@ -46,7 +46,8 @@ pub const State = struct {
         var ps: std.ArrayList(nvme.layout.Part) = .empty;
         defer ps.deinit(a);
         try img.parts(e, @intCast(max_at), &ps, a);
-        const l = try nvme.layout.Layout.init(ps.items, @intCast(max_at), block_tokens);
+        const rows_per_block: u32 = if (e.share_pages) @import("cuda_state.zig").page_rows else block_tokens;
+        const l = try nvme.layout.Layout.init(ps.items, @intCast(max_at), rows_per_block);
         const small_max = std.mem.alignForward(u64, max_metadata, 256) + l.smallBytes();
         const plan = if (cfg.serial_mode) try spill.slots.serialPlan(cfg.staging, l.blockBytes(), small_max) else try spill.slots.plan(cfg.staging, l.blockBytes(), small_max, max_pending, 1);
         var staging = try cuda.HostBuffer.alloc(e.d, @intCast(plan.bytes()));
@@ -68,7 +69,7 @@ pub const State = struct {
             }
         }
         std.debug.assert(off == plan.bytes());
-        const store = try spill.Store.open(a, e.io, .{ .root = s.root, .rank = @intCast(e.share.rank), .compat = @import("cuda_latent_mma.zig").compatibility(@import("cuda_snapshot_mode.zig").compatibilityFor(@import("cuda_affine_prompt_owner.zig").compatibilityWithSplits(compat, e.settings.q4_python_prompt, e.settings.q4_python_splits), e.settings.kv_live_half, e.drafter != null), e.settings.absorb_mma), .limits = .{ .max_tokens = @intCast(max_at + cfg.lookahead), .block_tokens = block_tokens, .block_bytes = l.blockBytes(), .max_small_bytes = small_max, .max_forks = 4096 }, .cap_bytes = cfg.cap, .floor_bytes = cfg.floor, .min_tokens = cfg.min_tokens, .index_bytes = @intCast(cfg.index), .readers = 2, .max_reads = 1, .staging = .{ .write = &s.buffers[0], .read = &s.buffers[1], .small = &s.buffers[2], .restore = &s.buffers[3], .shared_small_restore = plan.shared_small_restore } });
+        const store = try spill.Store.open(a, e.io, .{ .root = s.root, .rank = @intCast(e.share.rank), .compat = @import("cuda_latent_mma.zig").compatibility(@import("cuda_snapshot_mode.zig").compatibilityFor(@import("cuda_affine_prompt_owner.zig").compatibilityWithSplits(compat, e.settings.q4_python_prompt, e.settings.q4_python_splits), e.settings.kv_live_half, e.drafter != null), e.settings.absorb_mma), .limits = .{ .max_tokens = @intCast(max_at + cfg.lookahead), .block_tokens = rows_per_block, .block_bytes = l.blockBytes(), .max_small_bytes = small_max, .max_forks = 4096 }, .cap_bytes = cfg.cap, .floor_bytes = cfg.floor, .min_tokens = cfg.min_tokens, .index_bytes = @intCast(cfg.index), .readers = 2, .max_reads = 1, .staging = .{ .write = &s.buffers[0], .read = &s.buffers[1], .small = &s.buffers[2], .restore = &s.buffers[3], .shared_small_restore = plan.shared_small_restore } });
         s.side = nvme.tier_state.Side.init(a, e.io, store, img, if (cfg.serial_mode) 1 else max_pending, max_metadata);
         s.side.serial_read_wait_ns = if (cfg.serial_mode) 3 * std.time.ns_per_s else 0;
         s.side.lookahead = cfg.lookahead;

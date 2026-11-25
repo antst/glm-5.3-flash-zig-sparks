@@ -3,6 +3,7 @@ const std = @import("std");
 const pc = @import("prompt_cache.zig");
 const cuts = @import("prompt_cuts.zig");
 const modes = @import("cache_modes.zig");
+const fitting = @import("prompt_cache_fit.zig");
 
 /// Leave this many tokens outside the snapshot's key for a replacement question and the template's closing text.
 pub const QUESTION_TOKENS: u32 = 2048;
@@ -37,6 +38,13 @@ pub fn same(s: *const pc.Store, e: *const pc.Entry, prompt: []const u32, at: u32
 
 /// Takes ownership of marks only on success. Endpoint, rewind, other marks and outstanding borrows have priority.
 pub fn add(s: *pc.Store, a: std.mem.Allocator, prompt: []const u32, from: u32, end: u32, user: u32, starts: []const u32, spans: []const modes.Span, marks: []const u32, endpoint: u32, endpoint_bytes: u64, restored: ?*pc.Entry) ![]const u32 {
+    if (marks.len == 0 and restored == null and endpoint_bytes > s.budget) {
+        if (fitting.earlier(s, starts, endpoint)) |at| {
+            const out = try a.dupe(u32, &.{at});
+            a.free(marks);
+            return out;
+        }
+    }
     const at = cut(s.rules, prompt.len, from, end, user, starts, spans, marks);
     if (at == 0 or s.hold or std.mem.indexOfScalar(u32, marks, at) != null) return marks;
     var required: std.ArrayList(u32) = .empty;

@@ -102,7 +102,7 @@ pub const Query = struct {
     }
 };
 /// A paged store's `keep`: whether the mark holds a state, and how many leading ids the stream swaps for the store's.
-pub const Kept = struct { held: bool, shared: usize };
+pub const Kept = struct { held: bool, shared: usize, saved: ?Saved = null, shared_cut: bool = false };
 
 pub const Store = struct {
     tree: Tree,
@@ -237,8 +237,14 @@ pub const Store = struct {
         if (found == null) s.tree.counts.misses += 1;
         const resume_at: u32 = if (found) |f| f.at() else 0;
         const planned = try s.marks(a, q, resume_at, history_len, shared, if (found) |f| f.entry().last else &.{});
-        const marks_ = try s.fitting(a, planned);
+        const latest = if (planned.len == 0) 0 else planned[planned.len - 1];
+        var marks_ = try s.fitting(a, planned);
         errdefer a.free(marks_);
+        if (found == null and marks_.len == 0) if (s.earlier(q, latest)) |at| {
+            const fitting_mark = try a.dupe(u32, &.{at});
+            a.free(marks_);
+            marks_ = fitting_mark;
+        };
         for (shared) |w| { // the shared cuts this pass keeps: their states serve other conversations too
             const cut = sched.markAt(s.cuts(), q, w) orelse continue;
             if (std.mem.indexOfScalar(u32, marks_, cut) != null) s.noteShared(keyOf(q, cut + s.rules.lookahead));
@@ -393,6 +399,22 @@ pub const Store = struct {
         s.shared_keys.append(s.tree.gpa, k) catch {};
     }
 
+    /// A plain paged snapshot whose endpoint exceeds the retention limit can keep a legal earlier cut.
+    fn earlier(s: *const Store, q: Query, latest: u32) ?u32 {
+        if (!s.rules.fit_oversize or !s.rules.planned or !s.legacy or s.decl.specs.len != 0 or
+            s.per() != 1 or latest == 0 or latest / s.rules.page <= s.limits.pages) return null;
+        const page_limit = std.math.cast(u32, s.limits.pages) orelse std.math.maxInt(u32);
+        const through = @min(page_limit *| s.rules.page, (q.prefilled orelse q.prompt_len) -| s.rules.lookahead);
+        if (q.starts.len > 0) {
+            var best: u32 = 0;
+            for (q.starts) |at| if (at <= through and at % s.rules.page == 0) {
+                best = @max(best, at);
+            };
+            return if (best == 0) null else best;
+        }
+        return sched.markAt(s.cuts(), q, through);
+    }
+
     /// The marks whose state the limits can hold (a new slice in `a`); the rest are refused now.
     fn fitting(s: *Store, a: Allocator, marks_: []const u32) ![]const u32 {
         defer a.free(marks_);
@@ -515,7 +537,33 @@ pub const Store = struct {
         if (tailed) node.tails.appendAssumeCapacity(e) else node.entry = e;
         t.snaps += 1;
         t.counts.kept += 1;
-        return .{ .held = true, .shared = whole };
+        return .{ .held = true, .shared = whole, .saved = saved, .shared_cut = flagged };
+    }
+
+    /// Publish a complete disk state on an ordinary page edge. The caller retains
+    /// the restored page IDs until this operation has taken the tree's references.
+    pub fn adoptPages(s: *Store, saved: Saved, q: Query, at: u32, ids: []const u32, shared_cut: bool) !void {
+        const t = &s.tree;
+        const keyed = @as(usize, at) + s.rules.lookahead;
+        if (!s.on() or !s.legacy or s.page_only or s.decl.specs.len != 0 or s.per() != 1 or
+            !sched.keyed(q) or !sched.usable(s.cuts(), q, at) or at == 0 or at % s.rules.page != 0 or
+            at >= q.prompt_len or keyed > (q.prefilled orelse q.prompt_len) or
+            ids.len != at / s.rules.page or t.snaps >= s.limits.snaps) return error.DiskPageState;
+        const key = keyOf(q, keyed);
+        var edge: ?*Node = null;
+        const held = t.heldPrefix(key, ids.len, null, &edge);
+        if (held == ids.len and edge != null and edge.?.end == at and edge.?.entry != null)
+            return error.StateKept;
+        if (ids.len - held > s.limits.pages -| t.heldPages()) return error.DiskPageRoom;
+        const path = try t.gpa.alloc(u32, ids.len);
+        defer t.gpa.free(path);
+        const last = try t.gpa.dupe(u32, q.key);
+        errdefer t.gpa.free(last);
+        const node = try t.insert(key, ids, path);
+        std.debug.assert(node.entry == null and node.end == at);
+        t.clock += 1;
+        node.entry = .{ .saved = saved, .bytes = t.family.vtable.bytes(t.family.ptr, at), .born = q.prompt_len, .used = t.clock, .last = last, .shared = shared_cut };
+        t.snaps += 1;
     }
 
     /// The entry `edge` already holds for a keep `r` rows past it under `full`: at its end, or the tail that matches.

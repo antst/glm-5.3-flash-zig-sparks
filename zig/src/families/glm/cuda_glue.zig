@@ -22,6 +22,21 @@ pub const Set = struct {
     dscore: bool = false,
 };
 
+pub const LatentPrompt = struct { absorb: cuda.Function, expand: cuda.Function };
+pub const SparsePrompt = struct {
+    function: cuda.Function,
+    heads: usize,
+
+    pub fn tiles(s: SparsePrompt, heads: usize) ?u32 {
+        if (heads != s.heads) return null;
+        return switch (heads) {
+            16 => 1,
+            32 => 2,
+            else => null,
+        };
+    }
+};
+
 /// A hidden-size norm's weight: bf16, or float32 (FP4-Local's) read as float32 by the _f32w kernels.
 pub const Norm = union(enum) { bf16: u64, f32: u64 };
 
@@ -35,6 +50,9 @@ pub const Kernels = struct {
     stream_mean: cuda.Function,
     rank_sum: cuda.Function,
     hc_post: cuda.Function,
+    hc_post_own: ?cuda.Function = null,
+    sparse_prompt_fp8: ?SparsePrompt = null,
+    latent_prompt: ?LatentPrompt = null,
     combine: cuda.Function,
     slice_sum: cuda.Function,
     top1: cuda.Function,
@@ -81,7 +99,13 @@ pub const Kernels = struct {
 
     pub fn load(m: cuda.Module) !Kernels {
         var k: Kernels = undefined;
-        inline for (@typeInfo(Kernels).@"struct".field_names) |name| @field(k, name) = try m.function("tf_glm_" ++ name);
+        inline for (@typeInfo(Kernels).@"struct".field_names) |name| {
+            if (comptime @FieldType(Kernels, name) == cuda.Function)
+                @field(k, name) = try m.function("tf_glm_" ++ name);
+        }
+        k.hc_post_own = null;
+        k.sparse_prompt_fp8 = null;
+        k.latent_prompt = null;
         try k.bmm_tile.allowDynamicShared(bmm_tile_smem);
         try k.bmm_tile1.allowDynamicShared(bmm_tile1_smem[1]);
         try k.chunks_16.allowDynamicShared(chunksSmem(16));
@@ -175,6 +199,8 @@ pub const bmm_tile_smem: u32 = 3 * (128 + 64) * 64 * 2;
 /// tf_glm_bmm_tile1's [bf16, fp32 out]: 3 stages of 128 x and 128 w rows, 32 bf16 a row, or the fp32 tile if larger.
 pub const bmm_tile1_smem = [2]u32{ 3 * (128 + 128) * 32 * 2, 128 * (128 + 4) * 4 };
 /// common/mla.cuh's wide_smem<hb>(): q (hb x 512), two 32-key tiles, p (hb x 32) in bf16, then max/sum scratch.
+// The compact FP8 one-pass kernel has one key tile and no probability tile.
+pub const compact_sparse_smem = chunksSmem(16) + 2 * 16 * @sizeOf(f32) - (32 * 512 + 16 * 32) * @sizeOf(u16);
 pub fn chunksSmem(comptime hb: u32) u32 {
     return (hb * 512 + 2 * 32 * 512 + hb * 32) * 2 + (hb * 4 + 2 * hb) * 4;
 }
@@ -247,6 +273,16 @@ pub fn hcPost(set: Set, stream: cuda.Stream, x: u64, xout: u64, g: u64, post: u6
     try rows8Launch(set.glue.hc_post, stream, &a, rows, d, .{ x, xout, g });
 }
 
+/// Split prompt glue uses the local rank's partial directly, in the original rank order.
+pub fn hcPostOwn(set: Set, stream: cuda.Stream, x: u64, xout: u64, g: u64, post: u64, comb: u64, rows: usize, d: usize, s: usize, world: usize, own: u64, me: usize) !void {
+    if (s != 4) return error.StreamsNotFour;
+    var a: cuda.Args = .{};
+    inline for (.{ x, xout, g, post, comb, i64of(rows * d), i64of(d), cint(world), own, cint(me) }) |v| a.add(v);
+    if (d % 8 != 0 or (x | xout | g | own) % 16 != 0) return error.UnalignedRows;
+    const f = set.glue.hc_post_own orelse return error.OwnPartialsDisabled;
+    try cuda.launch.launch(f, .{ .grid = .{ .x = @intCast(rows), .y = cdiv(d, 1024) }, .block = .{ .x = 128 } }, stream, &a);
+}
+
 /// glue.rank_sum: out bf16 = partials summed rank 0 first, `me`'s from `own`, others' from `peers` in rank order.
 pub fn rankSum(set: Set, stream: cuda.Stream, own: u64, peers: u64, peer_stride: usize, out: u64, me: usize, rows: usize, d: usize, world: usize) !void {
     var a: cuda.Args = .{};
@@ -302,4 +338,14 @@ test "the wrappers' shape rules as glue.py's" {
     try std.testing.expectError(error.NoSwigluBlock, swigluBlock(96));
     try std.testing.expectEqual(@as(i64, 512), pow2(288 + 1)); // _topk's BLOCK for 288 experts
     try std.testing.expectEqual(@as(i64, 16), pow2(8 + 1)); // its SLOTP for top-8 and the shared slot
+}
+
+test "GLM prompt pair: compact sparse kernel uses the rank's exact head tiles" {
+    const narrow: SparsePrompt = .{ .function = undefined, .heads = 16 };
+    const wide: SparsePrompt = .{ .function = undefined, .heads = 32 };
+    try std.testing.expectEqual(@as(?u32, 1), narrow.tiles(16));
+    try std.testing.expectEqual(@as(?u32, 2), wide.tiles(32));
+    try std.testing.expectEqual(@as(?u32, null), narrow.tiles(32));
+    try std.testing.expectEqual(@as(?u32, null), wide.tiles(16));
+    try std.testing.expectEqual(@as(?u32, null), wide.tiles(48));
 }

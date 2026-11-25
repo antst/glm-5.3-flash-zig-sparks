@@ -9,7 +9,7 @@ pub fn require(o: anytype, world: usize) !void {
     if (!s.ffn_warm) return;
     if ((world != 2 and world != 4) or !o.drafter or !o.mtp or o.vision != null or !s.ffn_graphs or !@import("cuda_nvfp4_graph.zig").wide(s) or
         !s.tiled or !@import("cuda_target_precision.zig").supported(s) or (s.verify_rows != 16 and s.verify_rows != 32) or
-        s.pages or s.kv_host != 0 or s.verify_graphs) return error.FfnWarmScope;
+        (s.pages and !s.kv8) or s.kv_host != 0 or s.verify_graphs) return error.FfnWarmScope;
 }
 
 /// A failed init must drain uploaded executables before the modules and buffers unwind.

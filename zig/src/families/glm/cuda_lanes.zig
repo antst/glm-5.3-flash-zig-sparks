@@ -7,6 +7,7 @@ const fw = @import("cuda_forward.zig");
 const dflash = @import("dflash.zig");
 const prompt_lp = @import("cuda_prompt_logprobs.zig");
 const share_mod = @import("cuda_share.zig");
+const prompt_room = @import("cuda_prompt_room.zig");
 const cuda = @import("cuda");
 const be = lanes.backend;
 /// First tokens a handle names.
@@ -199,7 +200,7 @@ pub const Lanes = struct {
         self.x.e.prompt_logprobs = sink.want();
         defer self.x.e.prompt_logprobs = null;
         var keeps: share_mod.Keeps = undefined;
-        const first = try self.x.prefill(s.prompt(), from, .{ .ptr = s, .check = cancelled }, self.marksOf(s, &keeps));
+        const first = try self.x.prefill(s.prompt(), from, .{ .ptr = s, .check = cancelled }, prompt_room.before(s, self.marksOf(s, &keeps), null));
         self.lanes.getPtr(s).?.first = self.take(first);
     }
 
@@ -249,7 +250,7 @@ pub const Lanes = struct {
         self.x.e.prompt_logprobs = sink.want();
         defer self.x.e.prompt_logprobs = null;
         var keeps: share_mod.Keeps = undefined;
-        const step = try self.x.chunk(s.prompt(), at, !@import("cuda_prompt_solo.zig").othersDecode(&self.lanes, s), from, .{ .ptr = s, .check = cancelled }, self.marksOf(s, &keeps));
+        const step = try self.x.chunk(s.prompt(), at, !@import("cuda_prompt_solo.zig").othersDecode(&self.lanes, s), from, .{ .ptr = s, .check = cancelled }, prompt_room.before(s, self.marksOf(s, &keeps), at));
         if (step.first) |first| {
             lanes.prefill_widths.completed(self.x.e.gpa, s, step.rows);
             l.first = self.take(first);
@@ -271,7 +272,7 @@ pub const Lanes = struct {
         if (at <= s.cached or s.reuse.hook == null) return;
         try self.x.bind(l.slot);
         var keeps: share_mod.Keeps = undefined;
-        _ = self.x.chunk(s.prompt(), at, false, null, .{ .ptr = null, .check = cancelNow }, self.marksOf(s, &keeps)) catch |err| {
+        _ = self.x.chunk(s.prompt(), at, false, null, .{ .ptr = null, .check = cancelNow }, prompt_room.interrupted(s, self.marksOf(s, &keeps), at)) catch |err| {
             if (err == error.Cancelled) return;
             return err;
         };

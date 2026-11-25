@@ -89,7 +89,7 @@ pub fn reserve(s: *pc.Store, prompt: []const u32, born: u32, from: ?*pc.Entry, m
         if (exists(s, prompt, at, spans)) return;
         const need = s.family.vtable.bytes(s.family.ptr, at);
         if (need > s.budget or s.most == 0) return;
-        defer @import("prompt_tier.zig").prepareRoom(s, need);
+        defer if (!s.room_at_mark) @import("prompt_tier.zig").prepareRoom(s, need);
         const credit = reclaimable(s, from, prompt, born);
         const promised = s.reservation_guard.?.promised;
         // Preserve deficits: freeing a state must pay the other jobs' promises before this endpoint can fit.
@@ -112,7 +112,7 @@ pub fn reserve(s: *pc.Store, prompt: []const u32, born: u32, from: ?*pc.Entry, m
         need += s.family.vtable.bytes(s.family.ptr, at);
         new += 1;
     };
-    defer @import("prompt_tier.zig").prepareRoom(s, need);
+    defer if (!s.room_at_mark) @import("prompt_tier.zig").prepareRoom(s, need);
     while (s.held + need > s.budget or s.entries.items.len + @min(new, s.most) > s.most) {
         const i = others.victim(s, from, prompt, born, need, @min(new, s.most)) orelse return;
         s.remove(i);

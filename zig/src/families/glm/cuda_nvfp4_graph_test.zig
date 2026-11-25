@@ -65,7 +65,34 @@ test "FFN graphs: NVFP4 startup refuses incompatible configuration before alloca
     try t.expectEqual(@as(u32, 4608), graph.capacityFor(opt.wide(o.settings)));
     try t.expect(graph.capacityFor(opt.wide(o.settings)) >= 45 * (32 + 64));
     o.settings.nvfp4_ffn_graphs = false;
-    try t.expectError(error.FfnWarmScope, warm.require(o, 4));
+    // The settings are legal for EXL3; checkpoint validation separately refuses NVFP4 without the opt-in.
+    try warm.require(o, 4);
+}
+
+test "FFN graphs: FP8 pages and the tuned EXL3 decode options reach TP2 and TP4 startup" {
+    const scope = @import("cuda_engine_scope.zig");
+    const Options = @import("cuda_engine_types.zig").Options;
+    for ([_]usize{ 2, 4 }) |world| for ([_][2]u8{ .{ 16, 16 }, .{ 8, 16 }, .{ 4, 16 }, .{ 4, 8 } }) |pair| {
+        const o: Options = .{ .capacity = 1 << 20, .mtp = true, .drafter = true, .settings = .{
+            .pages = true,
+            .kv8 = true,
+            .verify_rows = 32,
+            .first_copy_tokens = 31,
+            .dense_bits = pair[0],
+            .head_bits = pair[1],
+            .q4_affine_mse = pair[0] == 4,
+            .q4_head_fp8 = pair[1] == 8,
+            .ffn_graphs = true,
+            .ffn_warm = true,
+            .dense_segments = true,
+            .kda_segments = true,
+            .retain_sequence_slots = true,
+            .prewarm_sequence_slots = true,
+            .exl3_fused_decode = true,
+            .admission_us = 4000,
+        } };
+        _ = try scope.validate(o, world);
+    };
 }
 
 test "FFN graphs: NVFP4 declaration is required and the legacy nonEXL3 refusal remains" {

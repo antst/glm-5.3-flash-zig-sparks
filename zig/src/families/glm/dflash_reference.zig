@@ -6,7 +6,7 @@ const df = @import("dflash.zig");
 pub fn scope(s: anytype, world: usize, has_drafter: bool, bits: u8) !void {
     if (!s.dflash_reference) return;
     const heads_ok = (world == 4 and s.dflash_attn_tp4) or (world == 2 and !s.dflash_attn_tp4);
-    const pages_ok = !s.pages or (world == 2 and s.kv8 and s.dflash_only_head);
+    const pages_ok = !s.pages or (s.kv8 and (world == 4 or s.dflash_only_head));
     if (!heads_ok or !has_drafter or bits != 4 or !s.dflash_mlp_wide or
         !s.dflash_confidence_only or !pages_ok or s.kv_host != 0 or s.verify_graphs or
         !@import("cuda_target_precision.zig").supported(s))
@@ -117,6 +117,17 @@ test "drafter reference: strict default, fingerprint disagreement and initial sc
     try std.testing.expectError(error.DrafterReferenceScope, scope(s, 4, true, 0));
     s.pages = true;
     try std.testing.expectError(error.DrafterReferenceScope, scope(s, 4, true, 4));
+    s.kv8 = true;
+    s.dflash_only_head = true;
+    s.dense_bits = 4;
+    s.head_bits = 8;
+    s.q4_head_fp8 = true;
+    s.q4_affine_mse = true;
+    try scope(s, 4, true, 4);
+    s.head_bits = 16;
+    s.q4_head_fp8 = false;
+    s.q4_affine_mse = false;
+    s.dflash_only_head = false;
     s.pages = false;
     s.dense_bits = 4;
     try scope(s, 4, true, 4);

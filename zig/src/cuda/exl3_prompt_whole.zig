@@ -52,6 +52,7 @@ pub const Kernels = struct {
     rotate: Function,
     gateup: Function,
     down: Function,
+    order: ?Function = null,
     pub fn resolve(mod: Module) !Kernels {
         return .{ .rotate = try mod.function("tf_exl3_prompt_rotate"), .gateup = try mod.function("tf_exl3_prompt_gu"), .down = try mod.function("tf_exl3_prompt_down") };
     }
@@ -72,7 +73,16 @@ pub const Kernels = struct {
             try launch.launch(e.rot_in, .{ .grid = .{ .x = @intCast(pairs), .y = @intCast(l.dims / 128), .z = 2 }, .block = .{ .x = 32 } }, s, &args);
         }
         const items = grouped.maxItems(pairs, count, tile);
-        try go(k.gateup, s, .{ l.width / 128, items, 1 }, 256, .{ sc.xg, sc.xu, l.gate, l.up, p.items, p.counts, p.members, l.svh_g, l.svh_u, l.suh_d, sc.xd, i(l.dims), i(l.width), i(if (l.shared_input) sc.slots else 1), l.limit, l.act_mode, skip_id });
-        try go(k.down, s, .{ l.dims / 256, items, 1 }, 256, .{ sc.xd, l.down, p.items, p.counts, p.members, l.svh_d, y, i(l.width), i(l.dims), skip_id });
+        const order = if (pairs > grouped.small and items <= pairs / 3) k.order else null;
+        const selected_items = if (order) |kernel| blk: {
+            // The wide router has already consumed its pairs-wide rank scratch on this stream.
+            try go(kernel, s, .{ 1, 1, 1 }, 1024, .{ p.items, p.counts, p.rank, i(items), skip_id });
+            break :blk p.rank;
+        } else p.items;
+        try go(k.gateup, s, .{ l.width / 128, items, 1 }, 256, .{ sc.xg, sc.xu, l.gate, l.up, selected_items, p.counts, p.members, l.svh_g, l.svh_u, l.suh_d, sc.xd, i(l.dims), i(l.width), i(if (l.shared_input) sc.slots else 1), l.limit, l.act_mode, skip_id });
+        try go(k.down, s, .{ l.dims / 256, items, 1 }, 256, .{ sc.xd, l.down, selected_items, p.counts, p.members, l.svh_d, y, i(l.width), i(l.dims), skip_id });
+        if (order != null) if (e.whole_order_calls) |calls| {
+            calls.* += 1;
+        };
     }
 };

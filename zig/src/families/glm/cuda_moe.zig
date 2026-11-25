@@ -82,6 +82,23 @@ pub fn fill(k: Kernels, stream: cuda.Stream, l: Layer, s: Scratch, x: u64, x_str
     try projection.matmul(k.set, stream, l.shared_gu, x + lo * x_stride * 2, x_stride, s.sgu + lo * 2 * l.shared * 2, s.mm_part, n, 2 * l.shared, d, false);
     try glue.swiglu(k.set, stream, s.sgu + lo * 2 * l.shared * 2, s.sact + lo * l.shared * 2, s.sxs + lo * (l.shared / 64) * 4, l.routed.limit, n, l.shared);
     try projection.matmul(k.set, stream, l.shared_down, s.sact + lo * l.shared * 2, l.shared, s.sy + lo * d * 4, s.mm_part, n, d, l.shared, true);
+    if (prompt and l.exl3 != null and n > 0 and slots == 9 and d == 4096) {
+        if (k.exl3.whole) |whole| if (whole.combine) |combine| {
+            const routed = s.ey + lo * slots * d * eb;
+            const shared = s.sy + lo * d * 4;
+            const weights = s.wts + lo * slots * 4;
+            if ((routed | shared | out) % 16 == 0) {
+                var args: cuda.Args = .{};
+                inline for (.{ routed, shared, weights, out, @as(i64, @intCast(d)) }) |arg| args.add(arg);
+                try cuda.launch.launch(combine.function, .{
+                    .grid = .{ .x = @intCast(n), .y = @intCast(d / 1024) },
+                    .block = .{ .x = 128 },
+                }, stream, &args);
+                if (k.exl3.whole_direct_calls) |calls| calls.* += 1;
+                return;
+            }
+        };
+    }
     var a: cuda.Args = .{};
     a.add(s.sy + lo * d * 4);
     a.add(s.ey + lo * slots * d * eb);

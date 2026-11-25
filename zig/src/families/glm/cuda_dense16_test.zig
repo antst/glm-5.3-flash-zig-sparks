@@ -63,7 +63,7 @@ test "dense segment rows16 strict cached setting and agreement refuse unsupporte
     const FP = ranks.Fingerprint;
     const a = FP.of(4, 0, off, 4096, true, @splat(0), @splat(0), @splat(0));
     const b = FP.of(4, 1, on, 4096, true, @splat(0), @splat(0), @splat(0));
-    try t.expectEqual(@as(u32, 85), a.layout);
+    try t.expectEqual(@as(u32, 86), a.layout);
     try t.expectEqual(FP.Field.dense_rows16, ranks.mismatch(&.{ a, b }).?.field);
     Env.width = "32";
     try t.expect((try ranks.Settings.read(Env.get, &problem)).dense_rows16);

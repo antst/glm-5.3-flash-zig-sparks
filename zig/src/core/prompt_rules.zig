@@ -30,6 +30,8 @@ pub const Rules = struct {
     repeat_keyed: bool = false,
     /// Keep one before where the prompt parts from the one it resumed (a miss: the longest kept one), however near.
     fork: bool = false,
+    /// Keep a fitting earlier cut when the full endpoint exceeds the snapshot budget.
+    fit_oversize: bool = false,
     /// Spacing of a bounded ladder of checkpoints under the history (0: off; only chunk-invariant families opt in).
     intermediate: u32 = 0,
     /// Checkpoints kept from the ladder at most, the largest positions first.

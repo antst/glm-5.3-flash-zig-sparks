@@ -71,7 +71,7 @@ pub fn blankAs(e: anytype, id: u64, at: usize) !void {
     errdefer pool.give(&lease);
     const cur = try e.gpa.alloc(u1, e.cur.st.cur.len);
     @memset(cur, 0);
-    e.snaps.putAssumeCapacityNoClobber(id, .{ .lease = lease, .len = 0, .pos = at, .mtp_len = 0, .cur = cur, .bases = .{ 0, 0 } });
+    e.snaps.putAssumeCapacityNoClobber(id, .{ .lease = lease, .len = 0, .pos = at, .mtp_len = 0, .cur = cur, .bases = .{ 0, 0 }, .shared = heldPages(e, at) });
 }
 
 /// Whether an index ring of `rows` rows based at `base` holds every row up to `len`, as the image's ring bytes do.
@@ -151,6 +151,7 @@ pub fn drop(e: anytype, id: u64) void {
 
 pub fn free(e: anytype, s: *types.Snap) void {
     std.debug.assert(s.pins == 0);
+    clearTierIds(e, s);
     e.snap_pages.?.give(&s.lease);
     e.gpa.free(s.cur);
 }
@@ -166,7 +167,30 @@ pub fn unpin(e: anytype, id: u64) void {
     const s = e.snaps.getPtr(id) orelse unreachable;
     std.debug.assert(s.pins > 0);
     s.pins -= 1;
+    if (s.pins == 0) clearTierIds(e, s);
     if (s.pins == 0 and s.retired) drop(e, id);
+}
+
+/// Pin just the page IDs for a read or write. Only rank zero owns pool credits.
+pub fn attachTierIds(e: anytype, id: u64, ids: []const u32) !void {
+    const s = e.snaps.getPtr(id) orelse return error.NoKeptState;
+    const p = e.pages orelse return error.NvmePageLayout;
+    if (s.tier_ids.len != 0 or s.shared == 0 or s.shared != ids.len) return error.NvmePageLayout;
+    for (ids) |page| {
+        if (page >= p.pool.total() or (p.leader and p.pool.holders(page) == 0)) return error.NvmePageLayout;
+    }
+    s.tier_ids = try e.gpa.dupe(u32, ids);
+    if (p.leader) for (ids) |page| p.pool.retain(page);
+}
+
+pub fn clearTierIds(e: anytype, s: *types.Snap) void {
+    if (s.tier_ids.len == 0) return;
+    if (comptime @hasField(@TypeOf(e.*), "pages")) {
+        const p = e.pages.?;
+        if (p.leader) for (s.tier_ids) |id| p.pool.release(id);
+    } else unreachable;
+    e.gpa.free(s.tier_ids);
+    s.tier_ids = &.{};
 }
 
 /// Memory no RAM entry accounts for, still held by the tier; this remains inside the preallocated cache budget.

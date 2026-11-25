@@ -338,8 +338,9 @@ fn openWith(comptime F: type, a: Allocator, gpa: Allocator, io: std.Io, asked: a
         return null;
     }
     const share = try prompt_pages.wanted(F, loaded); // TF_KV_SHARE: the cache is pool pages, kept by the family's store
-    if (o.learn_conversations and share) {
-        problem.* = "--learn-conversations writes the host prompt cache's states, and TF_KV_SHARE keeps prompts as pool pages instead: serve with one of the two";
+    const share_nvme = F == glm.native and o.learn_conversations and share and try glm.nvme_options.wanted();
+    if (o.learn_conversations and share and !share_nvme) {
+        problem.* = "TF_KV_SHARE with --learn-conversations requires GLM's native NVMe tier";
         return null;
     }
     const taps = record.taps(loaded); // --record is refused before the host is made, so a refusal holds nothing
@@ -435,6 +436,11 @@ fn openWith(comptime F: type, a: Allocator, gpa: Allocator, io: std.Io, asked: a
         h.prompts = try prompt_pages.Adapter.open(F, gpa, loaded.target, @intCast(layout.?.page_tokens), share_limit);
     };
     errdefer if (h.prompts) |x| x.close();
+    if (comptime F == glm.native) if (share_nvme) {
+        const adapter = h.prompts orelse return error.NvmeTierConflict;
+        const root = o.learn orelse return error.NvmeTierConflict;
+        try @import("cuda_glm_nvme.zig").attachPaged(a, io, &g.ctx, o, root, loaded.target, adapter);
+    };
     var conversations = false;
     if (@hasDecl(F, "slide")) if (loaded.learns != null) {
         const Slide = slide_adapter.Adapter(F.slide);

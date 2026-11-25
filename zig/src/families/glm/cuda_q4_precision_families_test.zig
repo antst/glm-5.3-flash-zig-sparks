@@ -66,7 +66,7 @@ test "Q4 precision families: strict startup mask default scope cached value and 
             before.q4_bf16_families = 0;
             const a = ranks.Fingerprint.of(2, 0, before, 8192, true, @splat(0), @splat(0), @splat(0));
             const b = ranks.Fingerprint.of(2, 1, on, 8192, true, @splat(0), @splat(0), @splat(0));
-            try t.expectEqual(@as(u32, 85), b.layout);
+            try t.expectEqual(@as(u32, 86), b.layout);
             try t.expectEqual(ranks.Fingerprint.Field.q4_bf16_families, ranks.mismatch(&.{ a, b }).?.field);
         }
     }

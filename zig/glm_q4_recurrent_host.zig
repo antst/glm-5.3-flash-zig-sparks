@@ -40,6 +40,6 @@ test "Q4 recurrent BF16: cached strict choice, inherited calibration scope, and 
     previous.q4_recurrent_bf16 = 0;
     const a = FP.of(2, 0, previous, 8192, true, @splat(0), @splat(0), @splat(0));
     const b = FP.of(2, 1, on, 8192, true, @splat(0), @splat(0), @splat(0));
-    try t.expectEqual(@as(u32, 85), b.layout);
+    try t.expectEqual(@as(u32, 86), b.layout);
     try t.expectEqual(FP.Field.q4_recurrent_bf16, glm.ranks.mismatch(&.{ a, b }).?.field);
 }

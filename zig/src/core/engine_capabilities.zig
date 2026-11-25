@@ -34,9 +34,10 @@ pub inline fn read(info: anytype, comptime capability: Capability) bool {
     return if (@TypeOf(value) == bool) value else value != null;
 }
 
-test "engine capability reader: every Info boolean is published from its actual value" {
+test "engine capability reader: every public Info boolean is published from its actual value" {
     const Info = @import("engine_api.zig").Info;
     inline for (@typeInfo(Info).@"struct".field_names) |name| if (@FieldType(Info, name) == bool) {
+        if (comptime std.mem.eql(u8, name, "greedy_unconstrained_drafts")) continue; // internal request policy
         const key = @field(Capability, name);
         var info: Info = .{};
         @field(info, name) = false;

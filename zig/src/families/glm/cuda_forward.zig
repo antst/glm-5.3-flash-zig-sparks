@@ -36,6 +36,7 @@ pub const Buffers = state.Buffers;
 /// The modules a forward launches from: our fatbins.
 pub const Modules = struct {
     latent_mma: ?@import("cuda_latent_mma.zig").Owner = null,
+    prefill: ?@import("cuda_prefill_opt.zig").Images = null,
     affine_prompt: ?@import("cuda_affine_prompt_owner.zig").Owner = null,
     ffn_graphs: ?*@import("cuda_ffn_graph.zig").Graphs = null,
     glue: glue.Kernels,
@@ -97,6 +98,7 @@ pub const Modules = struct {
         m.ffn_graphs = null;
         m.affine_prompt = null;
         m.latent_mma = null;
+        m.prefill = null;
         m.tiled = false;
         m.packs = null; // `m` starts undefined: the field default does not apply
         return m;
@@ -119,6 +121,7 @@ pub const Modules = struct {
     pub fn deinit(m: *Modules) void {
         m.freeFfnGraphs();
         if (m.latent_mma) |*owner| owner.deinit();
+        if (m.prefill) |*owner| owner.deinit();
         if (m.affine_prompt) |*owner| owner.deinit();
         if (m.index) |*x| x.unload();
         m.exl3.unload();
@@ -324,15 +327,16 @@ pub const Forward = struct {
     }
 
     const exchangePieces = @import("cuda_forward_pieces.zig").exchangePieces;
-
-    /// hc_post of rows lo..hi from partials `g` [world][hi - lo][D] (a gathered room or a split one's own rows).
-    fn postRows(f: *const Forward, r: Rank, lo: usize, hi: usize, g: u64) !void {
+    /// hc_post of rows lo..hi from ranked partials g; nonzero own replaces only rank me's gathered slot.
+    fn postRows(f: *const Forward, r: Rank, lo: usize, hi: usize, g: u64, own: u64) !void {
         const c = &r.w.config;
         const b = r.b;
         const S: usize = c.hc;
         const D: usize = c.hidden;
         const x = b.x + lo * S * D * 2;
-        try glue.hcPost(f.set(), f.stream, x, x, g, b.post + lo * S * 4, b.comb + lo * S * S * 4, hi - lo, D, S, r.w.share.world);
+        if (own != 0 and f.m.glue.hc_post_own != null)
+            return glue.hcPostOwn(f.set(), f.stream, x, x, g, b.post + lo * S * 4, b.comb + lo * S * S * 4, hi - lo, D, S, r.w.share.world, own, r.w.share.rank);
+        return glue.hcPost(f.set(), f.stream, x, x, g, b.post + lo * S * 4, b.comb + lo * S * S * 4, hi - lo, D, S, r.w.share.world);
     }
 
     /// forward._pre of rows lo..hi.
@@ -345,12 +349,12 @@ pub const Forward = struct {
     }
 
     /// One piece's glue after a site: hc_post, then the next layer's hc_pre or (after the last layer) the stream mean.
-    pub fn glueRows(f: *const Forward, r: Rank, j: usize, site: Site, lo: usize, hi: usize, g: u64) !void {
+    pub fn glueRows(f: *const Forward, r: Rank, j: usize, site: Site, lo: usize, hi: usize, g: u64, own: u64) !void {
         const stamp = prof_mod.span(f.prof, f.stream, .glue);
         defer stamp.end();
         const c = &r.w.config;
         const layers = r.w.layers;
-        try f.postRows(r, lo, hi, g);
+        try f.postRows(r, lo, hi, g, own);
         if (site == .mixer) return f.preRows(r, layers[j].ffn_hc, layers[j].post_norm, lo, hi);
         if (j + 1 < layers.len) return f.preRows(r, layers[j + 1].attn_hc, layers[j + 1].in_norm, lo, hi);
         try glue.streamMean(f.set(), f.stream, r.b.x + lo * c.hc * c.hidden * 2, r.b.hidden + lo * c.hidden * 2, hi - lo, c.hidden, c.hc);
@@ -359,7 +363,6 @@ pub const Forward = struct {
     const gluePieces = @import("cuda_forward_pieces.zig").gluePieces;
     const tapPieces = @import("cuda_forward_pieces.zig").tapPieces;
     const shareTaps = @import("cuda_forward_pieces.zig").shareTaps;
-
     /// forward.pieced_layers: a prompt chunk's layers with exchanges in row pieces; same kernels and bits as unpieced.
     pub fn pieced(f: *const Forward, p: *const Pieces, R: usize, cut: []const [2]usize) !void {
         const layers = f.ranks[0].w.layers;

@@ -122,12 +122,33 @@ pub const Experts = struct {
     decode_calls: ?*u64 = null,
     whole: ?Whole = null,
     whole_calls: ?*u64 = null,
+    whole_order_calls: ?*u64 = null,
+    whole_direct_calls: ?*u64 = null,
 
-    pub const Whole = struct { module: Module, kernels: prompt_whole.Kernels };
+    pub const Whole = struct {
+        module: Module,
+        kernels: prompt_whole.Kernels,
+        order_module: ?Module = null,
+        combine: ?Combine = null,
+    };
+    pub const Combine = struct { module: Module, function: Function };
     pub fn enableWhole(e: *Experts, mod: Module) !void {
         if (e.whole != null) return error.Exl3WholeAlreadyEnabled;
         const k = try prompt_whole.Kernels.resolve(mod);
         e.whole = .{ .module = mod, .kernels = k };
+    }
+
+    pub fn enableWholeOrder(e: *Experts, mod: Module) !void {
+        const whole = if (e.whole) |*value| value else return error.Exl3WholeOrderScope;
+        if (whole.order_module != null) return error.Exl3WholeOrderAlreadyEnabled;
+        whole.kernels.order = try mod.function("tf_glm_exl3_prompt_ordered_items");
+        whole.order_module = mod;
+    }
+
+    pub fn enableWholeCombine(e: *Experts, mod: Module) !void {
+        const whole = if (e.whole) |*value| value else return error.Exl3WholeCombineScope;
+        if (whole.combine != null) return error.Exl3WholeCombineAlreadyEnabled;
+        whole.combine = .{ .module = mod, .function = try mod.function("tf_glm_combine_shared_exl3") };
     }
 
     const Decode = struct { module: Module, gateup_shared: Function, down: Function };
@@ -169,7 +190,11 @@ pub const Experts = struct {
     }
 
     pub fn unload(e: *Experts) void {
-        if (e.whole) |*x| x.module.unload();
+        if (e.whole) |*x| {
+            if (x.order_module) |*mod| mod.unload();
+            if (x.combine) |*combine| combine.module.unload();
+            x.module.unload();
+        }
         if (e.decode) |*x| x.module.unload();
         e.mod.unload();
     }

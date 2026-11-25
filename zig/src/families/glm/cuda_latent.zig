@@ -32,15 +32,27 @@ pub fn absorbQ(set: glue.Set, stream: cuda.Stream, q: u64, wk: u64, out: u64, ro
     if (d != 256 or lw != 512) return error.LatentShape;
     if (set.latent_mma) |k| if (@import("cuda_latent_mma.zig").eligible(set.prompt, rows, .{ q, wk, out }))
         return k.launch(.absorb, stream, q, heads * d, wk, out, heads * lw, rows, heads);
+    if (prefillProjection(set, rows, heads, wk)) |selected|
+        return projectionBlocks(selected.absorb, stream, q, wk, out, rows, heads, lw / 32, false);
     try rowBlocks(set.glue.absorb_q, stream, q, wk, out, rows, heads, lw / 32);
 }
 
 /// The absorb and expand launches: rows in one block in decode windows, prompt_rb a block in prompt chunks.
 fn rowBlocks(f: cuda.Function, stream: cuda.Stream, in: u64, w: u64, out: u64, rows: usize, heads: usize, cols: usize) !void {
+    return projectionBlocks(f, stream, in, w, out, rows, heads, cols, true);
+}
+
+fn prefillProjection(set: glue.Set, rows: usize, heads: usize, vector_sources: u64) ?glue.LatentPrompt {
+    return if (set.prompt and rows >= prompt_rows and (heads == heads_tile or heads == heads_tile_wide) and vector_sources % 16 == 0) set.glue.latent_prompt else null;
+}
+
+fn projectionBlocks(f: cuda.Function, stream: cuda.Stream, in: u64, w: u64, out: u64, rows: usize, heads: usize, cols: usize, use_pdl: bool) !void {
     const rb = if (rows >= prompt_rows) prompt_rb else rows;
     var a: cuda.Args = .{};
     inline for (.{ in, w, out, @as(i64, @intCast(rows)), @as(i64, @intCast(heads)), @as(i64, @intCast(rb)) }) |v| a.add(v);
-    try cuda_pdl.launch(f, .{ .grid = .{ .x = @intCast(heads), .y = @intCast(cols), .z = cdiv(rows, rb) }, .block = .{ .x = 128 } }, stream, &a);
+    const config: cuda.launch.Config = .{ .grid = .{ .x = @intCast(heads), .y = @intCast(cols), .z = cdiv(rows, rb) }, .block = .{ .x = 128 } };
+    if (use_pdl) return cuda_pdl.launch(f, config, stream, &a);
+    return cuda.launch.launch(f, config, stream, &a);
 }
 
 /// latent.expand_v (BF16 kv_b): out [rows][heads][dv] bf16 = o_lat [rows][heads][lw] . wv [heads][dv][lw].
@@ -48,6 +60,8 @@ pub fn expandV(set: glue.Set, stream: cuda.Stream, ol: u64, wv: u64, out: u64, r
     if (dv != 256 or lw != 512) return error.LatentShape;
     if (set.latent_mma) |k| if (@import("cuda_latent_mma.zig").eligible(set.prompt, rows, .{ ol, wv, out }))
         return k.launch(.expand, stream, ol, heads * lw, wv, out, heads * dv, rows, heads);
+    if (prefillProjection(set, rows, heads, ol | wv)) |selected|
+        return projectionBlocks(selected.expand, stream, ol, wv, out, rows, heads, dv / 16, false);
     try rowBlocks(set.glue.expand_v, stream, ol, wv, out, rows, heads, dv / 16);
 }
 
@@ -132,6 +146,13 @@ pub fn sparseAttention(set: glue.Set, stream: cuda.Stream, qa: u64, cache: u64, 
 
 pub fn sparseAttentionFormat(set: glue.Set, stream: cuda.Stream, qa: u64, cache: u64, scales: u64, t: Table, tokens: u64, counts: u64, w: usize, p: Partials, out: u64, rows: usize, heads: usize, lw: usize, scale: f32) !void {
     const nch = chunksFor(w);
+    if (set.prompt and rows >= prompt_rows and lw == 512 and scales != 0 and t.pt == 0) {
+        if (set.glue.sparse_prompt_fp8) |k| if (k.tiles(heads)) |tiles| {
+            var a: cuda.Args = .{};
+            inline for (.{ qa, cache, scales, tokens, counts, out, @as(i64, @intCast(rows)), @as(i64, @intCast(w)), scale, @as(c_int, @intCast(nch)) }) |v| a.add(v);
+            return cuda.launch.launch(k.function, .{ .grid = .{ .x = @intCast(rows), .y = tiles }, .block = .{ .x = 256 }, .shared = glue.compact_sparse_smem }, stream, &a);
+        };
+    }
     try chunks(set, stream, qa, cache, scales, t, 0, tokens, counts, p, rows, heads, lw, nch, w, scale, headBlock(rows), true);
     try merge(set, stream, p, out, counts, rows, heads, lw, nch, true);
 }

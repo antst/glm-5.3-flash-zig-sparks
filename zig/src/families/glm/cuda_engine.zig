@@ -67,6 +67,8 @@ pub const Engine = struct {
     packs: mm_mod.Packed = .{}, // the linears packed at load and their bits (TF_GLM_DENSE_BITS, _HEAD_BITS)
     expert_fused_calls: u64 = 0,
     expert_fact_calls: u64 = 0,
+    expert_prompt_order_calls: u64 = 0,
+    expert_prompt_direct_calls: u64 = 0,
     expert_prompt_whole_calls: u64 = 0,
     prompt_batch_calls: u64 = 0,
     drafter: ?*dflash.Drafter = null, // --drafter: DFlash2 (every rank runs its passes; rank 0 selects the drafts)
@@ -166,6 +168,8 @@ pub const Engine = struct {
         if (o.settings.dscore and m.index == null) return error.DecodeScoresNeedsIndex;
         m.dscore = o.settings.dscore;
         try @import("cuda_latent_mma.zig").install(&m, gpa, io, d, ctx, o.settings.absorb_mma);
+        if (o.settings.prefill_opt)
+            m.prefill = try @import("cuda_prefill_opt.zig").install(&m.glue, &m.kda, gpa, io, d, ctx, share, o.settings);
         try @import("cuda_exl3_whole_owner.zig").install(gpa, io, d, &m.exl3, o.settings.exl3_prompt_whole, exl3.isExl3(gpa, text));
         try @import("cuda_tile_affine.zig").prepare(&m, o.settings.q4_affine_mse);
         try @import("cuda_affine_prompt_owner.zig").selectSplits(&m, o.settings.q4_python_splits);

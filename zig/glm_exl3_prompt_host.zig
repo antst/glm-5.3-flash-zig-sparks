@@ -66,6 +66,10 @@ fn run(rows: usize, prompt: bool, shared: bool, count: usize) !void {
     inline for (.{ "group", "rot_in", "gateup", "down_combine" }, .{ 9, 5, 13, 14 }) |field, id| @field(k, field) = Record.function(&d, id);
     k.grouped = .{ Record.function(&d, 10), Record.function(&d, 11), Record.function(&d, 12) };
     k.prompt = .{ .rotate = Record.function(&d, 6), .gateup = Record.function(&d, 7), .down = Record.function(&d, 8) };
+    k.whole = .{ .module = undefined, .kernels = .{ .rotate = Record.function(&d, 6), .gateup = Record.function(&d, 7), .down = Record.function(&d, 8) } };
+    k.whole_calls = null;
+    k.whole_order_calls = null;
+    k.whole_direct_calls = null;
     var ek: glm.experts.Kernels = undefined;
     inline for (.{ "plan_small", "plan_rows", "plan_rank", "plan_offsets", "plan_scatter", "plan_rank_rows", "plan_scatter_rows" }, .{ 1, 18, 2, 3, 4, 19, 20 }) |field, id| @field(ek.router, field) = Record.function(&d, id);
     const w = glm.exl3.Experts{ .gt = 101, .ut = 102, .dt = 103, .k2 = 104, .suh_g = 105, .suh_u = 106, .svh_g = 107, .svh_u = 108, .suh_d = 109, .svh_d = 110, .shx = shared };

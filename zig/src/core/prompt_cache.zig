@@ -135,6 +135,7 @@ pub const Store = struct {
     imprint: ?*imprint.Imprint = null, // --learn: shared cuts' states on disk, read back by later sessions and servers
     disk: ?*rows.Rows = null, // --learn-conversations: every kept state written behind to disk, read back where it pays
     tier: ?tier.Tier = null, // a family's bounded per-rank NVMe tier (exclusive with disk)
+    room_at_mark: bool = false, // optionally defer physical tier room until the backend can service the mark
     active_rewind_at: u32 = 0, // the last lookup's rewind state (0: none); hosts keep a pass's states before the next lookup
     active_rewind_key: u64 = 0, // the selected rewind prefix, so interleaved keeps tag only its token path
     links_lost: bool = false, // an allocation failure left the extension links incomplete: `extended` scans
@@ -311,9 +312,18 @@ pub const Store = struct {
     fn lookupUserAt(s: *Store, a: Allocator, prompt: []const u32, born: u32, history_len: u32, rewind_len: u32, user_end: u32, shared: []const u32, starts: []const u32, spans: []const modes.Span, disk: bool) !Lookup {
         s.resume_carry = .{};
         s.collectExpired();
-        const endpoint = if (s.rules.planned) s.startAt(starts, history_len) else history_len;
+        var endpoint = if (s.rules.planned) s.startAt(starts, history_len) else history_len;
         const rewind = if (s.rules.planned) s.startAt(starts, rewind_len -| s.rules.lookahead) else rewind_len -| s.rules.lookahead;
-        const endpoint_bytes = if (endpoint > 0 and (endpoint < prompt.len or (s.rules.warm != .off and endpoint == prompt.len)) and endpoint + s.rules.lookahead <= prompt.len) s.family.vtable.bytes(s.family.ptr, endpoint) else 0;
+        var endpoint_bytes = if (endpoint > 0 and (endpoint < prompt.len or (s.rules.warm != .off and endpoint == prompt.len)) and endpoint + s.rules.lookahead <= prompt.len) s.family.vtable.bytes(s.family.ptr, endpoint) else 0;
+        // Raw requests can omit a history watermark. Only use this extra cut when their whole tail will not fit.
+        if (s.rules.fit_oversize and s.rules.planned and history_len == 0 and s.budget > 0) {
+            const tail = s.startAt(starts, @intCast(prompt.len -| @max(1, s.rules.lookahead)));
+            const bytes = if (tail > 0) s.family.vtable.bytes(s.family.ptr, tail) else 0;
+            if (bytes > s.budget) {
+                endpoint = tail;
+                endpoint_bytes = bytes;
+            }
+        }
         const rewind_bytes = if (rewind > 0 and rewind < prompt.len and rewind + s.rules.lookahead <= prompt.len and s.usable(rewind, starts)) s.family.vtable.bytes(s.family.ptr, rewind) else 0;
         const priority_bytes = if (endpoint_bytes <= s.budget) endpoint_bytes else 0;
         s.active_rewind_at = if (prompt.len >= s.rules.min_prompt and rewind_bytes > 0 and rewind != endpoint and rewind_bytes <= s.budget - priority_bytes) rewind else 0;
@@ -353,9 +363,14 @@ pub const Store = struct {
             for (marked) |m| if (m == at or (m < at and !s.rules.planned and prompt.len < s.rules.min_prompt)) s.noteShared(prompt[0 .. m + s.rules.lookahead]);
         }
         var primary = @import("prompt_cache_reserve.zig").endpointFor(s, prompt, from, history_len, starts, spans);
-        if (history_len == 0 and primary == 0) for (marked) |at| {
-            if (at != s.active_rewind_at) primary = @max(primary, at);
-        };
+        if ((history_len == 0 and primary == 0) or (s.rules.fit_oversize and e == null and endpoint_bytes > s.budget and
+            marked.len == 1 and marked[0] < endpoint and s.active_rewind_at == 0))
+        {
+            primary = 0;
+            for (marked) |at| {
+                if (at != s.active_rewind_at) primary = @max(primary, at);
+            }
+        }
         s.reserve(prompt, born, e, marked, spans, primary);
         const fitted = try @import("prompt_cache_reserve.zig").fitting(s, a, prompt, marked, spans, e, born, primary);
         if (e) |entry| entry.borrowers += 1;
