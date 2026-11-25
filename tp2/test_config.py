@@ -139,6 +139,9 @@ class DirectRecipeTests(unittest.TestCase):
                             payload = node['payload']
                             self.assertIn('TF_GLM_LINEAR_PAGING=1', payload['Env'])
                             self.assertIn('TF_KV_PAGES=off', payload['Env'])
+                            if tp == 2:
+                                self.assertFalse(any(row.startswith(('TENSORFOLD_MEMORY_RESERVE_GIB=',
+                                    'TENSORFOLD_CUDA_MEMORY_LIMIT_GB=')) for row in payload['Env']))
                             self.assertIn(dict(Type='bind', Source=str(binary), Target=payload['Entrypoint'][0],
                                                ReadOnly=True), payload['HostConfig']['Mounts'])
             manifest.write_text(json.dumps(dict(receipt, base_source_commit='d' * 40)))

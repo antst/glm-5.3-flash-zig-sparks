@@ -162,6 +162,11 @@ ledger queues requests whose combined context reservations exceed the
 available backing. Linear addresses allow the optimized prefill and decode
 kernels to use the same layout.
 
+The TP2 candidate uses TensorFold's automatic memory reserve. If the full
+snapshot budget and all prewarmed private sequence buffers cannot fit together,
+the runtime can allocate the additional buffers when requests are admitted.
+The lane limit, full context and NVMe settings still apply.
+
 ## Source builds
 
 Use `engine/unified` for all eight EXL3 configurations. The release archives contain the same executable used for the performance tables. The signed source snapshot records the exact source tree.

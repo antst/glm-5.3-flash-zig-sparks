@@ -104,6 +104,8 @@ def construct(args, recipe, sources, create_command, cache_budget, paging_build=
     if paging:
         source = dict(source, **{key: paging[key] for key in ('source_commit', 'source_manifest_sha256', 'native_sha256')})
         env['TF_GLM_LINEAR_PAGING'] = '1'
+        env.pop('TENSORFOLD_MEMORY_RESERVE_GIB', None)
+        env.pop('TENSORFOLD_CUDA_MEMORY_LIMIT_GB', None)
     require(tuple(env.get(k, '0') for k in ('TF_GLM_DENSE_BITS', 'TF_GLM_HEAD_BITS', 'TF_GLM_Q4_HEAD_FP8'))
             == HEADS[args.precision], 'Projection and head settings disagree')
     require(env['TF_GLM_WORLD'] == '2' and env['NCCL_IB_TC'] == '104' and
@@ -137,7 +139,7 @@ def construct(args, recipe, sources, create_command, cache_budget, paging_build=
                       nvme_staging_mib=int(env['TF_GLM_NVME_STAGING_MIB']),
                       nvme_index_mib=int(env['TF_GLM_NVME_INDEX_MIB']))
     if paging:
-        config['kv_mode'] = 'linear-paged'
+        config.update(kv_mode='linear-paged', memory_budget='native')
     cache_identity = dict(config, prompt_cache_gib=1.75)
     if tiered:
         # Preserve the previous default namespace. Capacity limits do not change on-disk compatibility.
