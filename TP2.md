@@ -10,21 +10,21 @@ Exact sources for the published runtime archives are identified by signed tags.
 
 | Precision | Archive source commit | Runtime archive | Startup packing |
 |---|---|---|---|
-| BF16/BF16 | `26e17d87` | `glm53-tp2-bf16-unified-runtime.tar.gz` | BF16 projections and head |
-| Q4/BF16 | `26e17d87` | `glm53-tp2-q4-unified-runtime.tar.gz` | C24 activation-aware Q4, BF16 head |
-| Q4/FP8 (default) | `26e17d87` | `glm53-tp2-q4-unified-runtime.tar.gz` | C24 activation-aware Q4, grouped FP8 head |
-| Q8/BF16 | `26e17d87` | `glm53-tp2-q8-unified-runtime.tar.gz` | Activation-aware Q8 with correlated rounding |
+| BF16/BF16 | `daf5ce6b` | `glm53-tp2-bf16-paged-runtime.tar.gz` | BF16 projections and head |
+| Q4/BF16 | `daf5ce6b` | `glm53-tp2-q4-paged-runtime.tar.gz` | C24 activation-aware Q4, BF16 head |
+| Q4/FP8 (default) | `daf5ce6b` | `glm53-tp2-q4-paged-runtime.tar.gz` | C24 activation-aware Q4, grouped FP8 head |
+| Q8/BF16 | `daf5ce6b` | `glm53-tp2-q8-paged-runtime.tar.gz` | Activation-aware Q8 with correlated rounding |
 
 The Q4 and Q8 bundles include rank-specific calibration data used at weight load. Keep the
 calibration and correlation directories with the matching runtime. All four profiles use the
 same [EXL3 4.0 bpw weights and DFlash2 drafter](TP4.md#weights-and-dependencies).
 
 Download the matching archive and verify its SHA256 before extracting it.
-[TP2 runtime downloads](https://github.com/antst/glm-5.3-flash-zig-sparks/releases/tag/v1.3.0-tp2-tp4) · [Archive hashes](tp2/RELEASE-ASSETS.json)
+[TP2 runtime downloads](https://github.com/antst/glm-5.3-flash-zig-sparks/releases/tag/v1.3.1-tp2-tp4) · [Archive hashes](tp2/RELEASE-ASSETS.json)
 
 Extract the Q4 archive into `/srv/glm/tp2`, then render two ranks and verify the
 bundle. The serving defaults are Q4/FP8, four active lanes with 1,048,576 tokens
-each, optimized prefill, and native NVMe snapshots. For another profile, use its runtime archive and pass `--precision bf16`,
+each, linear KV paging, optimized prefill, and native NVMe snapshots. For another profile, use its runtime archive and pass `--precision bf16`,
 `--precision q4`, or `--precision q8`.
 
 ```sh
@@ -40,8 +40,9 @@ Use `--master` and `--roce-address-range` for your direct links. The renderer us
 (NCCL port +1) and gather-bootstrap ports must be distinct. Each rank has its own
 writable cache directory and the borrowed gather CPU is included in the process cpuset.
 
-The throughput benchmark uses `--context 196608 --parallel 8 --prompt-cache-gib 0 --tier off`.
-Both serving and benchmark configurations use stepped prefill and 32 verification rows.
+The historical throughput benchmark uses the v1.3.0 recipe with
+`--context 196608 --parallel 8 --prompt-cache-gib 0 --tier off`. Both the current
+serving recipe and the benchmark use stepped prefill and 32 verification rows.
 The attention KV and recurrent state share the host's UMA capacity.
 
 Each additional lane and snapshot budget uses memory alongside the model. The
@@ -146,7 +147,9 @@ The same 62,027- and 299,992-token requests run one at a time at the full 1,048,
 
 ## RAM and NVMe
 
-The packaged TP2 profiles use contiguous FP8 live KV in memory. `--prompt-cache-gib`
+The packaged TP2 profiles allocate FP8 latent KV pages on demand. TensorFold
+sets the memory reserve automatically and can allocate additional private
+sequence buffers on admission. `--prompt-cache-gib`
 budgets reusable prompt snapshots in RAM. Set `--prompt-cache-gib 0 --tier off` for
 cold-prefill measurements with both prompt-cache tiers disabled.
 
@@ -168,18 +171,18 @@ was 3.65/2.89 s on those two requests, compared with 112.21/134.18 s cold. The c
 See the
 [TP4 cache documentation](TP4.md#ram-and-nvme-prompt-cache-tiers) for the shared cache model.
 
-### Paged FP8 testing
+### Historical paged FP8 testing
 
 A separate TP2 Q8 build at `fe09d039` tested paged FP8 live KV with disk caching off.
 It processed one 1,041,491-token prompt at 1,310 prompt tok/s and matched the native
 output hash of the contiguous run. In a separate 60,952-token test, a shared RAM
 prefix recovered 59,392 tokens and reduced native prefill from 41.59 s to 1.18 s.
-These measurements cover the paged test build. The packaged profiles and
-`c829c30e` speed runs use contiguous KV.
+These measurements cover the older paged test build. The `c829c30e` speed
+runs used contiguous KV. [Current paging qualification](README.md#linear-paging-qualification)
 
 ### Native tiered KV cache
 
-The packaged Q8 runtime `847757c2` supplied the cold, seed, and reopen timings.
+The historical Q8 runtime `847757c2` supplied the cold, seed, and reopen timings.
 
 | Case | Role | Prompt tokens | Cached tokens | Native prefill s | Native TTFT s | Full request s |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |

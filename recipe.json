@@ -1,10 +1,10 @@
 {
   "schema": "glm53-zig-switch-tp4/v3",
   "created_utc": "2026-11-16T16:23:10.101437+00:00",
-  "release_status": "UNIFIED_EXL3_RELEASE_CONTENT",
-  "source_commit": "26e17d87954d29a0dfbd31d8e6dc7453fd564d61",
-  "native_sha256": "025ce1efce4a1d341b1b75d04e5bf0d998d25dfc7f56a98cb255e5b988c24907",
-  "source_manifest_sha256": "270170a49b5d008576fcd2ade5f0b4424d588f683752447300ed1cdee7645b17",
+  "release_status": "UNIFIED_EXL3_LINEAR_PAGING_RELEASE",
+  "source_commit": "daf5ce6b13e6aba594f85048533d69e32c132188",
+  "native_sha256": "8f5b6aaa4b6fee632bb0733ee66cfd6c5d92945a9dc6c6e073943f4d747856f3",
+  "source_manifest_sha256": "9ed03777b73b8e7916ac04826a7a14d550215c353b7f6f43a1cfb5314f342d8f",
   "runtime_assets": [
     {
       "name": "dflash_reference.fatbin",
@@ -115,8 +115,8 @@
         "exl3-q4",
         "exl3-q4-fp8"
       ],
-      "bytes": 55973808,
-      "sha256": "025ce1efce4a1d341b1b75d04e5bf0d998d25dfc7f56a98cb255e5b988c24907"
+      "bytes": 56008112,
+      "sha256": "8f5b6aaa4b6fee632bb0733ee66cfd6c5d92945a9dc6c6e073943f4d747856f3"
     },
     {
       "name": "libtfgrammar.so",
@@ -221,7 +221,7 @@
       "--context",
       "1048576",
       "--parallel",
-      "6",
+      "8",
       "--kv-cache",
       "fp8",
       "--drafter",
@@ -486,9 +486,10 @@
         "TF_GLM_PREFILL_OPT": "1",
         "TF_GLM_HEAD_FP8_IMAGE": "/opt/glm/glm_head_fp8.fatbin",
         "TF_KV_PAGES": "off",
-        "TF_KV_SHARE": "0"
+        "TF_KV_SHARE": "0",
+        "TF_GLM_LINEAR_PAGING": "1"
       },
-      "qualification": "CLOSED_UNIFIED_MIA_BALANCED_PREFILL_TP4",
+      "qualification": "CLOSED_LINEAR_PAGING_SERVING_MATRIX",
       "KV_cache": "FP8",
       "quality_score": {
         "correct": 881,
@@ -530,9 +531,10 @@
         "TF_GLM_PREFILL_OPT": "1",
         "TF_GLM_HEAD_FP8_IMAGE": "/opt/glm/glm_head_fp8_g64.fatbin",
         "TF_KV_PAGES": "off",
-        "TF_KV_SHARE": "0"
+        "TF_KV_SHARE": "0",
+        "TF_GLM_LINEAR_PAGING": "1"
       },
-      "qualification": "CLOSED_UNIFIED_MIA_BALANCED_PREFILL_TP4",
+      "qualification": "CLOSED_LINEAR_PAGING_SERVING_MATRIX",
       "KV_cache": "FP8",
       "quality_score": {
         "correct": 878,
@@ -574,9 +576,10 @@
         "TF_GLM_PREFILL_GLUE_IMAGE": "/opt/glm/prefill-glue.fatbin",
         "TF_GLM_PREFILL_OPT": "1",
         "TF_KV_PAGES": "off",
-        "TF_KV_SHARE": "0"
+        "TF_KV_SHARE": "0",
+        "TF_GLM_LINEAR_PAGING": "1"
       },
-      "qualification": "CLOSED_UNIFIED_MIA_BALANCED_PREFILL_TP4",
+      "qualification": "CLOSED_LINEAR_PAGING_SERVING_MATRIX",
       "KV_cache": "FP8",
       "quality_score": {
         "correct": 882,
@@ -652,9 +655,10 @@
         "TF_GLM_PREFILL_OPT": "1",
         "TF_GLM_HEAD_FP8_IMAGE": "/opt/glm/glm_head_fp8.fatbin",
         "TF_KV_PAGES": "off",
-        "TF_KV_SHARE": "0"
+        "TF_KV_SHARE": "0",
+        "TF_GLM_LINEAR_PAGING": "1"
       },
-      "qualification": "CLOSED_UNIFIED_MIA_BALANCED_PREFILL_TP4",
+      "qualification": "CLOSED_LINEAR_PAGING_SERVING_MATRIX",
       "KV_cache": "FP8",
       "quality_score": {
         "correct": 878,
@@ -690,12 +694,12 @@
     "precision": "q4-fp8",
     "verify_rows": 32,
     "context": 1048576,
-    "parallel": 6,
+    "parallel": 8,
     "prompt_cache_gib": 8,
     "tier": "nvme",
     "prefill": "stepped",
     "warm_turns": false,
-    "learn_gib": 32,
+    "learn_gib": 256,
     "http_port": 18888,
     "nccl_port": 28664,
     "plan_port": 28651,
@@ -743,6 +747,6 @@
     "scope": "Original Mia Zig source and runtime; only switched-network/traffic-class104 configuration supplied. Separate controlled BF16 run is a quality reference, not the actual-default speed row."
   },
   "profile_specific_runtime_supported": true,
-  "source_tree": "d9d2e0f73a874c2f87445bf033efa30055f7eb5d",
+  "source_tree": "77ad5365dea2cacfd3d00b3a7a72cca14ab15126",
   "default_reference": "Untouched actual-default Mia Zig 80be4d6; EXL3/Q8/BF16,FP8 KV,P4,pagesON,8GiB RAM prompt cache configured; actual timedhits0."
 }

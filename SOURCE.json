@@ -1,15 +1,15 @@
 {
   "primary": {
-    "source_commit": "26e17d87954d29a0dfbd31d8e6dc7453fd564d61",
-    "source_tree": "56bd5d3f53d435f6a16bc4db7229eb9df04ffaf7",
-    "source_manifest_sha256": "270170a49b5d008576fcd2ade5f0b4424d588f683752447300ed1cdee7645b17",
-    "native_sha256": "025ce1efce4a1d341b1b75d04e5bf0d998d25dfc7f56a98cb255e5b988c24907",
+    "source_commit": "daf5ce6b13e6aba594f85048533d69e32c132188",
+    "native_sha256": "8f5b6aaa4b6fee632bb0733ee66cfd6c5d92945a9dc6c6e073943f4d747856f3",
+    "source_tree": "77ad5365dea2cacfd3d00b3a7a72cca14ab15126",
+    "source_manifest_sha256": "9ed03777b73b8e7916ac04826a7a14d550215c353b7f6f43a1cfb5314f342d8f",
     "branch": "engine/unified",
-    "tag": "v1.3.0-tp2-tp4-engine",
-    "signed_snapshot_commit": "97d47c56dba254f0ef183cfb3fec90eeb84edd81",
-    "source_archive": "tensorfold-glm53-unified-source.tar.gz",
+    "tag": "v1.3.1-tp2-tp4-engine",
+    "signed_snapshot_commit": "2a21701028cb04041d7c7078221372610f60a07b",
+    "source_archive": "tensorfold-glm53-paged-source.tar.gz",
     "source_manifest": "source-sha256.json",
-    "files": 12797,
+    "files": 12807,
     "signature_verified": true
   },
   "supplementary_NVFP4": {
@@ -25,7 +25,7 @@
     "all_git_blob_bytes_match_manifest": true,
     "posthoc_source_snapshot_not_bit_identical_rebuild_claim": true
   },
-  "primary_native_sha256": "025ce1efce4a1d341b1b75d04e5bf0d998d25dfc7f56a98cb255e5b988c24907",
+  "primary_native_sha256": "8f5b6aaa4b6fee632bb0733ee66cfd6c5d92945a9dc6c6e073943f4d747856f3",
   "public_signing_key": "SIGNING-KEY.pub",
   "allowed_signers": "ALLOWED_SIGNERS",
   "user_authorized_temporary_Ed25519_key": true,

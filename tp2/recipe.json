@@ -4,7 +4,7 @@
   },
   "bundles": {
     "bf16": {
-      "archive": "glm53-tp2-bf16-unified-runtime.tar.gz",
+      "archive": "glm53-tp2-bf16-paged-runtime.tar.gz",
       "files": [
         {
           "path": "dflash_reference.fatbin",
@@ -113,8 +113,8 @@
         },
         {
           "path": "tensorfold-native",
-          "bytes": 55973808,
-          "sha256": "025ce1efce4a1d341b1b75d04e5bf0d998d25dfc7f56a98cb255e5b988c24907"
+          "bytes": 56008112,
+          "sha256": "8f5b6aaa4b6fee632bb0733ee66cfd6c5d92945a9dc6c6e073943f4d747856f3"
         },
         {
           "path": "thinking-off.jinja",
@@ -135,7 +135,7 @@
       "mounts": []
     },
     "q4": {
-      "archive": "glm53-tp2-q4-unified-runtime.tar.gz",
+      "archive": "glm53-tp2-q4-paged-runtime.tar.gz",
       "files": [
         {
           "path": "calibration/manifest.json",
@@ -269,8 +269,8 @@
         },
         {
           "path": "tensorfold-native",
-          "bytes": 55973808,
-          "sha256": "025ce1efce4a1d341b1b75d04e5bf0d998d25dfc7f56a98cb255e5b988c24907"
+          "bytes": 56008112,
+          "sha256": "8f5b6aaa4b6fee632bb0733ee66cfd6c5d92945a9dc6c6e073943f4d747856f3"
         },
         {
           "path": "thinking-off.jinja",
@@ -296,7 +296,7 @@
       ]
     },
     "q8": {
-      "archive": "glm53-tp2-q8-unified-runtime.tar.gz",
+      "archive": "glm53-tp2-q8-paged-runtime.tar.gz",
       "files": [
         {
           "path": "calibration/manifest.json",
@@ -450,8 +450,8 @@
         },
         {
           "path": "tensorfold-native",
-          "bytes": 55973808,
-          "sha256": "025ce1efce4a1d341b1b75d04e5bf0d998d25dfc7f56a98cb255e5b988c24907"
+          "bytes": 56008112,
+          "sha256": "8f5b6aaa4b6fee632bb0733ee66cfd6c5d92945a9dc6c6e073943f4d747856f3"
         },
         {
           "path": "thinking-off.jinja",
@@ -535,9 +535,7 @@
     "SC_POSTER_CPUS": "8",
     "SC_TF_ENABLE": "0",
     "SPARKCOMM_TF_SLOTS": "4",
-    "TENSORFOLD_CUDA_MEMORY_LIMIT_GB": "100",
     "TENSORFOLD_LOG_TIME": "1",
-    "TENSORFOLD_MEMORY_RESERVE_GIB": "16",
     "TENSORFOLD_PREFILL_SHARE": "0.68",
     "TENSORFOLD_WIRE": "spark",
     "TF_COMPARE_NATIVE_CONTROL": "1",
@@ -615,7 +613,8 @@
     "TF_KV_SHARE": "0",
     "TF_NCCL_LIB": "/opt/glm/libnccl.so.2",
     "TF_ROCE": "0",
-    "TF_TP_PLAN_TIMEOUT": "30"
+    "TF_TP_PLAN_TIMEOUT": "30",
+    "TF_GLM_LINEAR_PAGING": "1"
   },
   "payload_template": {
     "Cmd": [

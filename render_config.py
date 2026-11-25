@@ -96,35 +96,6 @@ def cache_budget(requested, context, expert_checkpoint):
     return max(1.75, math.ceil(8 * context / MAX_CONTEXT))
 
 
-def paging_build(args, released):
-    receipt = getattr(args, 'paging_build', None)
-    if receipt is None:
-        return None
-    require(args.expert_checkpoint == 'exl3', 'Linear KV paging requires the EXL3 checkpoint')
-    require(receipt.is_absolute() and receipt.is_file(), 'Use an absolute paging build receipt')
-    candidate = json.loads(receipt.read_text())
-    require(candidate.get('feature') == 'glm-linear-paging-1', 'Not a GLM linear paging build receipt')
-    require(candidate.get('base_source_commit') == released['source_commit'] and
-            candidate.get('base_native_sha256') == released['native_sha256'],
-            'The paging build must extend this profile’s published engine and assets')
-    for key, width in [('source_commit', 40), ('source_manifest_sha256', 64), ('native_sha256', 64)]:
-        require(isinstance(candidate.get(key), str) and re.fullmatch(r'[0-9a-f]{%d}' % width, candidate[key]),
-                'Invalid paging build identity field ' + key)
-    binary = pathlib.Path(candidate['native'])
-    require(binary.is_absolute() and binary.is_file() and binary.stat().st_mode & 0o111,
-            'The paging build executable must be an executable absolute file on the rank hosts')
-    require(not any(c in str(binary) for c in (',', '\n', '\r', '\x00')), 'Invalid paging build path')
-    require(sha(binary) == candidate['native_sha256'], 'Paging executable digest mismatch')
-    return candidate
-
-
-def paging_mount(payload, candidate):
-    if candidate is None:
-        return
-    payload['HostConfig']['Mounts'].append(dict(Type='bind', Source=candidate['native'],
-        Target=payload['Entrypoint'][0], ReadOnly=True))
-
-
 def construct(args, recipe):
     require(args.expert_checkpoint in ('exl3', 'nvfp4'), 'Choose exl3 or nvfp4 experts')
     require(args.precision in ('bf16', 'q4', 'q4-fp8', 'q8'), 'Unknown projection/head precision')
@@ -177,10 +148,9 @@ def construct(args, recipe):
     names = {item['name'] for item in assets}
     require(runtime['native_binary'] in names, 'Profile executable is outside its runtime asset scope')
     environment = dict(recipe['common_environment'], **selected['environment'])
-    paging = paging_build(args, runtime)
-    if paging:
-        runtime.update({key: paging[key] for key in ('source_commit', 'source_manifest_sha256', 'native_sha256')})
-        environment['TF_GLM_LINEAR_PAGING'] = '1'
+    paging = environment.get('TF_GLM_LINEAR_PAGING') == '1'
+    require(paging == (args.expert_checkpoint == 'exl3') and environment['TF_KV_PAGES'] == 'off',
+        'Unexpected live KV layout for this expert checkpoint')
     environment.update(TF_GLM_VERIFY_ROWS=str(args.verify_rows),
         TF_GLM_FIRST_COPY_TOKENS=str(args.verify_rows - 1),
         TF_GLM_PROMPT_STEPS='1' if args.prefill == 'stepped' else '0',
@@ -234,7 +204,6 @@ def construct(args, recipe):
             target = mount['Source'].strip('@').lower()
             require(target in roots, 'Unknown recipe mount placeholder')
             mount['Source'] = str(cache if target == 'cache' else roots[target])
-        paging_mount(payload, paging)
         if grammar := selected.get('grammar_override'):
             require(grammar in names, 'The retained grammar library is outside its profile asset scope')
             payload['HostConfig']['Mounts'].append(dict(Type='bind',
@@ -259,8 +228,7 @@ def construct(args, recipe):
         source_manifest_sha256=runtime['source_manifest_sha256'], native_binary=runtime['native_binary'],
         rank_control_port=args.nccl_port + 1,
         **settings, prompt_cache_gib=prompt_cache_gib, namespace=namespace, commands=commands,
-        release_status='PAGING_CANDIDATE' if paging else recipe['release_status'],
-        profile_qualification='PAGING_CANDIDATE' if paging else selected['qualification'],
+        release_status=recipe['release_status'], profile_qualification=selected['qualification'],
         context_and_parallel_match_measured_scope=(args.context == 196608 and parallel == 8),
         rendered_only=True, deployed=False, proxy_registration_changed=False)
 
@@ -274,10 +242,9 @@ def main(args):
         from tp2 import config
         path = P / 'tp2/recipe.json'
         source = json.loads((P / 'tp2/SOURCE.json').read_text())
-        nodes, report = config.construct(args, json.loads(path.read_text()), source, create_command, cache_budget,
-                                         paging_build, paging_mount)
+        nodes, report = config.construct(args, json.loads(path.read_text()), source, create_command, cache_budget)
         report['recipe_sha256'] = sha(path)
-        report['release_status'] = 'PAGING_CANDIDATE' if report.get('kv_mode') else 'UNIFIED_EXL3_RELEASE_CONTENT'
+        report['release_status'] = 'UNIFIED_EXL3_LINEAR_PAGING_RELEASE'
         write_configuration(args, nodes, report)
         return
     path = P / 'recipe.json'
@@ -320,8 +287,6 @@ def parser():
     p.add_argument('--warm-turns', action='store_true')
     for name in ('runtime', 'model', 'drafter', 'cache'):
         p.add_argument('--' + name + '-root', type=pathlib.Path, required=True)
-    p.add_argument('--paging-build', type=pathlib.Path,
-                   help='Opt into an exact linear paging build for this release via its build receipt')
     p.add_argument('--output', type=pathlib.Path, required=True)
     p.add_argument('--verify-runtime', action=argparse.BooleanOptionalAction, default=True,
                    help='Check installed runtime files against the selected archive inventory (default: on)')

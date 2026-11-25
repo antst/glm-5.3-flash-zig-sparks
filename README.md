@@ -32,14 +32,14 @@ retained NVFP4 expert option. [TP2 profiles](TP2.md#runtime) · [TP4 precision o
 ## Install and serve
 
 The EXL3 serving defaults are **1,048,576 tokens per lane** and **four active requests
-on TP2** or **six on TP4**. That context includes the prompt and generated tokens.
-The launch examples enable optimized prefill and native NVMe snapshots. At 1M
+on TP2** or **eight on TP4**. That context includes the prompt and generated tokens.
+The launch examples enable linear KV paging, optimized prefill and native NVMe snapshots. At 1M
 context, all eight EXL3 profiles request an **8 GiB RAM snapshot budget per rank**,
 verify that a full-window snapshot fits at startup, and allow **256 GiB of NVMe
 history per rank**. Use `--learn-gib` to set the history limit to suit your disk.
 
 1. Download the pinned model and drafter once per host and mount them read-only. [Weights and dependencies](TP4.md#weights-and-dependencies)
-2. Install the shared ARM64 runtime image and the current archive for your topology and profile. The renderer checks the installed runtime against its inventory by default. [Current runtime downloads](https://github.com/antst/glm-5.3-flash-zig-sparks/releases/tag/v1.3.0-tp2-tp4) · [TP2 hashes](tp2/RELEASE-ASSETS.json) · [TP4 hashes](RELEASE-ASSETS.json) · [Shared ARM64 runtime image](https://github.com/antst/glm-5.3-flash-zig-sparks/releases/tag/v1.2.12-tp4)
+2. Install the shared ARM64 runtime image and the current archive for your topology and profile. The renderer checks the installed runtime against its inventory by default. [Current runtime downloads](https://github.com/antst/glm-5.3-flash-zig-sparks/releases/tag/v1.3.1-tp2-tp4) · [TP2 hashes](tp2/RELEASE-ASSETS.json) · [TP4 hashes](RELEASE-ASSETS.json) · [Shared ARM64 runtime image](https://github.com/antst/glm-5.3-flash-zig-sparks/releases/tag/v1.2.12-tp4)
 3. Run `python3 render_config.py --tp 2` or `--tp 4` with the paths and network settings in the launch guide. Use `--verify-runtime` to check the extracted assets. The renderer writes per-rank Docker commands and cache paths into the output directory.
 4. Run the generated commands on their assigned hosts. Start the followers before rank 0. Connect clients to rank 0 and use `GLM-5.3-Flash` as the API model name. Stop rank 0 first to let the followers close.
 
@@ -130,10 +130,15 @@ Identical 62,027- and 299,992-token prompts, at the 1M context setting with one 
 
 ## Context and KV cache
 
-Both topologies keep active FP8 KV in memory. `--prompt-cache-gib` budgets reusable
-prefix snapshots in RAM. The budget scales with context and is checked after
-stream admission. The NVMe tier stores snapshots across restarts and restores a hit into memory before
-attention resumes. Use `--prompt-cache-gib 0 --tier off` for cold-prefill measurements.
+Both topologies allocate active FP8 latent KV pages as requests grow.
+Concurrent forks can share a resident prefix through copy-on-write. The memory
+ledger queues requests if their combined reservations exceed the available
+backing. Linear CUDA addresses let prefill and decode use the optimized kernels.
+
+`--prompt-cache-gib` budgets reusable prefix snapshots in RAM. The NVMe tier
+persists snapshots across restarts and restores a hit into memory before
+attention resumes. Use `--prompt-cache-gib 0 --tier off` to disable the snapshot tiers
+for cold-prefill measurements. Active KV still uses linear paging.
 
 | Topology | Long-context evidence | Qualified NVMe profile |
 |---|---|---|
@@ -142,32 +147,21 @@ attention resumes. Use `--prompt-cache-gib 0 --tier off` for cold-prefill measur
 
 Context, lane count, and snapshots share memory. Use `--parallel` to override
 the lane count when sharing memory with other workloads. To reproduce the
-throughput benchmarks, use `--context 196608 --parallel 8 --prompt-cache-gib 0 --tier off`.
+throughput tables above, use the [v1.3.0 runtime and recipe](https://github.com/antst/glm-5.3-flash-zig-sparks/releases/tag/v1.3.0-tp2-tp4)
+with `--context 196608 --parallel 8 --prompt-cache-gib 0 --tier off`.
 The topology guides give measured settings, cache restore times, and per-rank
 overhead. [TP2 cache settings](TP2.md#ram-and-nvme) · [TP4 cache settings](TP4.md#ram-and-nvme-prompt-cache-tiers)
 
-### Linear KV paging candidate
+### Linear paging qualification
 
-For an EXL3 paging build that extends the published runtime, pass
-`--paging-build /absolute/path/to/PAGING-BUILD.json` to the same renderer.
-All four precision profiles on both topologies use the candidate's shared KV
-implementation. The renderer verifies the executable digest and uses a
-dedicated snapshot namespace. Put the candidate executable at the path in the
-receipt on every rank host.
-
-The runtime backs the FP8 latent KV as requests grow. Concurrent forks can
-share a resident prefix and copy pages they write to. Restores from an idle
-snapshot and across restarts use the RAM or NVMe snapshot tier. The memory
-ledger queues requests whose combined context reservations exceed the
-available backing. Linear addresses allow the optimized prefill and decode
-kernels to use the same layout.
-
-The TP2 candidate uses TensorFold's automatic memory reserve. If the full
-snapshot budget and all prewarmed private sequence buffers cannot fit together,
-the runtime can allocate the additional buffers when requests are admitted.
-The lane limit, full context and NVMe settings still apply.
+All eight EXL3 profiles completed the serving matrix with their default lane
+limits and 1,048,576-token context. In the TP4 Q4/FP8 test, a fresh process
+restored 1,046,528 tokens from NVMe and returned the first token in 10.37 s
+with exact output token parity. Matched TP4 Q4/FP8 decode waves were within
+0.6% of the contiguous control, with exact outputs for those requests.
+[Paging qualification](benchmarks/linear-paging-qualification.json)
 
 ## Source builds
 
-Use `engine/unified` for all eight EXL3 configurations. The release archives contain the same executable used for the performance tables. The signed source snapshot records the exact source tree.
+Use `engine/unified` for all eight EXL3 configurations. The release archives contain the executable used for the linear paging qualification. The signed source snapshot records the exact source tree.
 [Build instructions](BUILDING.md) · [Unified engine source](https://github.com/antst/glm-5.3-flash-zig-sparks/tree/engine/unified) · [TP2 archive sources](tp2/SOURCE.json) · [TP4 archive sources](SOURCE.json) · [Signatures](SIGNING.md) · [Licenses](RECIPE-NOTICE.md)

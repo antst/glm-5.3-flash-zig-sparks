@@ -1,24 +1,24 @@
 # Building the native engine
 
 Both topologies and all four EXL3 precision profiles use TensorFold native
-1.3.0. The measured source commit is `26e17d87` and the tree is
-`56bd5d3f53d435f6a16bc4db7229eb9df04ffaf7`. The signed archive snapshot preserves
-every file in that tree. The measured executable SHA-256 is
-`025ce1efce4a1d341b1b75d04e5bf0d998d25dfc7f56a98cb255e5b988c24907`.
+1.3.0 with linear KV paging. The tested source commit is `daf5ce6b13e6aba594f85048533d69e32c132188`
+and its tree is `77ad5365dea2cacfd3d00b3a7a72cca14ab15126`. The signed archive snapshot
+preserves that tree. The qualified executable SHA-256 is
+`8f5b6aaa4b6fee632bb0733ee66cfd6c5d92945a9dc6c6e073943f4d747856f3`.
 [Signed source and manifest](SOURCE.json) · [Build inputs](BUILD-RECEIPTS.json)
 
 ## Native executable and CUDA assets
 
 Use Zig 0.17.0 for Linux x86_64. The recorded compiler SHA-256 is
 `7c61539af19fa4082c94848f1c2b57b89e76dc6cfd5bd4c57764c3caf8f82272`.
-Extract `tensorfold-glm53-unified-source.tar.gz` and
+Extract `tensorfold-glm53-paged-source.tar.gz` and
 `glm53-unified-embedded-images157.tar.gz` beside one another as `source/`
 and `fatbins/`. From `source/`:
 
 ```sh
 zig build native --prefix ../build-out -j1 --summary all \
   -Dtarget=aarch64-linux-gnu.2.28 -Doptimize=safe \
-  -Dversion=1.3.0 -Dstrip=true -Dfatbins=../fatbins -Dsm=121
+  -Dstrip=true -Dfatbins=../fatbins -Dsm=121
 ```
 
 The output is `build-out/native/bin/tensorfold-native`. Use the published
@@ -29,7 +29,7 @@ The optimized prefill modules load from the runtime archive. Their translation
 units, local includes and per-module build information are supplied in
 `glm53-unified-prefill-sources.tar.gz`. TP2 loads the 32-head module. The Q4
 profiles load row-staged latent projection, while BF16 and Q8 use latent MMA.
-[Release downloads](https://github.com/antst/glm-5.3-flash-zig-sparks/releases/tag/v1.3.0-tp2-tp4)
+[Release downloads](https://github.com/antst/glm-5.3-flash-zig-sparks/releases/tag/v1.3.1-tp2-tp4)
 
 ## Retained NVFP4 executable
 

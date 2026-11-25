@@ -47,7 +47,7 @@ Source and model licenses are separate. Read the pinned model cards before use. 
 specifies CC BY-NC-ND4.0 for research/evaluation and separate commercial licensing from its provider.
 Weights are downloaded separately and are not redistributed in the runtime package.
 
-Current EXL3 runtime archive and checksums. [Download](https://github.com/antst/glm-5.3-flash-zig-sparks/releases/tag/v1.3.0-tp2-tp4) · [Archive hashes](RELEASE-ASSETS.json)
+Current EXL3 runtime archive and checksums. [Download](https://github.com/antst/glm-5.3-flash-zig-sparks/releases/tag/v1.3.1-tp2-tp4) · [Archive hashes](RELEASE-ASSETS.json)
 
 ## Serving configuration
 
@@ -61,9 +61,10 @@ See [SIGNING.md](SIGNING.md) for the release's signing identity and verification
 The configuration generator writes four rank payloads and shell commands. It does not start
 containers or change a proxy registration.
 
-The EXL3 serving defaults are Q4/FP8, six active lanes with 1,048,576 tokens
-each, optimized prefill, and native NVMe snapshots. Use `--parallel 8` when all
-four hosts have room for eight full-window lanes and the snapshot budget.
+The EXL3 serving defaults are Q4/FP8, eight active lanes with a 1,048,576-token
+context per lane, linear KV paging, optimized prefill, and native NVMe snapshots.
+The runtime grows live KV on demand and queues work when memory is committed.
+Use `--parallel` to reduce concurrency on hosts shared with other workloads.
 
 ```sh
 python3 render_config.py --tp 4 \
@@ -194,8 +195,10 @@ The same 62,027- and 299,992-token requests run one at a time at the full 1,048,
 
 ## RAM and NVMe prompt-cache tiers
 
-The active attention KV state resides in memory during inference. The optional disk tier stores
-prompt snapshots for later reuse. A cache hit restores the snapshot into the active state; attention
+The active attention KV state resides in memory during inference. The EXL3
+profiles allocate FP8 latent KV pages on demand and can share a resident
+prefix across concurrent forks. The disk tier stores prompt snapshots for
+later reuse. A cache hit restores the snapshot into the active state; attention
 does not fetch NVMe blocks on each KV access or each generated token.
 
 `--prompt-cache-gib` budgets reusable RAM snapshots. At 1M context the renderer
@@ -223,7 +226,7 @@ changing source, precision, checkpoint or snapshot layout. Do not reuse older ex
 prefixes merely because a directory has the same model name. Cleanup should target closed,
 unreferenced cache roots after verifying their ownership; weight directories are separate.
 
-The current long-context matrix qualifies the coherent BF16 executable with disk-off, disk seed,
+The historical long-context matrix qualifies the coherent BF16 executable with disk-off, disk seed,
 fresh-process disk reopen, RAM, eviction, cancellation and a real single-bit corrupted snapshot.
 It verifies native token IDs and text against independently cold requests. Corruption causes a
 failed-read fallback and subsequent reuse remains exact. This is finite tested fault coverage,

@@ -1,29 +1,29 @@
 {
-  "release_tag": "v1.3.0-tp2-tp4",
-  "release_url": "https://github.com/antst/glm-5.3-flash-zig-sparks/releases/tag/v1.3.0-tp2-tp4",
+  "release_tag": "v1.3.1-tp2-tp4",
+  "release_url": "https://github.com/antst/glm-5.3-flash-zig-sparks/releases/tag/v1.3.1-tp2-tp4",
   "archives": {
     "bf16": {
-      "name": "glm53-tp2-bf16-unified-runtime.tar.gz",
-      "bytes": 75642004,
-      "sha256": "031ec74e22113476efefc7f997ebf26f53a107974a626cb78ea269d7f78186c7",
-      "source_commit": "26e17d87954d29a0dfbd31d8e6dc7453fd564d61",
-      "native_sha256": "025ce1efce4a1d341b1b75d04e5bf0d998d25dfc7f56a98cb255e5b988c24907"
+      "name": "glm53-tp2-bf16-paged-runtime.tar.gz",
+      "bytes": 75658442,
+      "sha256": "931b459f7c72546020c3245e16433459313b0b3477b1ad760e9d5c038d8c5aab",
+      "source_commit": "daf5ce6b13e6aba594f85048533d69e32c132188",
+      "native_sha256": "8f5b6aaa4b6fee632bb0733ee66cfd6c5d92945a9dc6c6e073943f4d747856f3"
     },
     "q4": {
-      "name": "glm53-tp2-q4-unified-runtime.tar.gz",
-      "bytes": 86748050,
-      "sha256": "25ac34dc26cec4117d25daab43b8e5bd4c96516f31aa1b00a0ee247f6733b939",
-      "source_commit": "26e17d87954d29a0dfbd31d8e6dc7453fd564d61",
-      "native_sha256": "025ce1efce4a1d341b1b75d04e5bf0d998d25dfc7f56a98cb255e5b988c24907"
+      "name": "glm53-tp2-q4-paged-runtime.tar.gz",
+      "bytes": 86764622,
+      "sha256": "ebf188ce1812a4e951dac693a1e7afdaf090c08d6b31475c9f4eccc6e955d955",
+      "source_commit": "daf5ce6b13e6aba594f85048533d69e32c132188",
+      "native_sha256": "8f5b6aaa4b6fee632bb0733ee66cfd6c5d92945a9dc6c6e073943f4d747856f3"
     },
     "q8": {
-      "name": "glm53-tp2-q8-unified-runtime.tar.gz",
-      "bytes": 409250057,
-      "sha256": "a561db1b82bab827107d1bf33e63ad5658343d5f83cc4cb386806bf3aabfee79",
-      "source_commit": "26e17d87954d29a0dfbd31d8e6dc7453fd564d61",
-      "native_sha256": "025ce1efce4a1d341b1b75d04e5bf0d998d25dfc7f56a98cb255e5b988c24907"
+      "name": "glm53-tp2-q8-paged-runtime.tar.gz",
+      "bytes": 409266055,
+      "sha256": "eb27f3a96d879e42d54c71962526ac5d9937311b4b282cd20cfaf14cc451e1a2",
+      "source_commit": "daf5ce6b13e6aba594f85048533d69e32c132188",
+      "native_sha256": "8f5b6aaa4b6fee632bb0733ee66cfd6c5d92945a9dc6c6e073943f4d747856f3"
     }
   },
-  "source_commit": "26e17d87954d29a0dfbd31d8e6dc7453fd564d61",
-  "native_sha256": "025ce1efce4a1d341b1b75d04e5bf0d998d25dfc7f56a98cb255e5b988c24907"
+  "source_commit": "daf5ce6b13e6aba594f85048533d69e32c132188",
+  "native_sha256": "8f5b6aaa4b6fee632bb0733ee66cfd6c5d92945a9dc6c6e073943f4d747856f3"
 }

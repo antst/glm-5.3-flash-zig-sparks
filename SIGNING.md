@@ -22,12 +22,13 @@ This example checks the main TP4 engine:
 ssh-keygen -lf SIGNING-KEY.pub
 git -c gpg.format=ssh -c gpg.ssh.program=ssh-keygen \
   -c gpg.ssh.allowedSignersFile="$PWD/ALLOWED_SIGNERS" \
-  verify-commit 97d47c56dba254f0ef183cfb3fec90eeb84edd81
+  verify-commit 2a21701028cb04041d7c7078221372610f60a07b
 ```
 
 The same settings work with `verify-tag` for the release tag. Complete source archives
-retain Git's commit identifier in their PAX metadata, and every source-file SHA256 was
-compared with its frozen build manifest before the source snapshot was signed.
+retain Git's commit identifier in their PAX metadata. The public engine snapshot
+has the same Git tree as the tested commit, and the source manifest lists a
+SHA-256 digest for each archived file.
 The snapshots were created after the measured builds; signatures attest the recorded
 source bytes, without claiming a new bit-identical build or changing the tested executables.
 

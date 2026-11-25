@@ -1,5 +1,4 @@
 """Offline regression checks for the unified rank renderer."""
-import hashlib
 import json
 from pathlib import Path
 import tempfile
@@ -61,6 +60,7 @@ class DirectRecipeTests(unittest.TestCase):
         self.assertEqual((report['learn_gib'], other['learn_gib']), (256, 48))
         off, _ = self.render('--precision','q8','--tier','off')
         self.assertIn('TF_GLM_NVME_STAGING_MIB=192',off[0]['payload']['Env'])
+        self.assertIn('TF_GLM_LINEAR_PAGING=1',off[0]['payload']['Env'])
 
     def test_refuses_mismatched_topology_and_ports(self):
         with self.assertRaisesRegex(ValueError,'two distinct'):
@@ -102,62 +102,53 @@ class DirectRecipeTests(unittest.TestCase):
                                       '--roce-address-range', '10.78.0.0/15',
                                       '--precision', precision)
                 nodes, report = render_config.construct(args, switch)
-                self.assert_full_context(nodes, report, 6)
-        for recipe, lanes in ((self.recipe, 4), (switch, 6)):
+                self.assert_full_context(nodes, report, 8)
+        for recipe, lanes in ((self.recipe, 4), (switch, 8)):
             self.assert_full_context_args(recipe['payload_template']['Cmd'], lanes)
 
-    def test_linear_paging_build_is_pinned_for_every_exl3_profile(self):
+    def test_all_exl3_profiles_use_the_packaged_paging_runtime(self):
         switch = json.loads((ROOT.parent / 'recipe.json').read_text())
-        default = render_config.profile_runtime(switch, switch['profiles']['exl3-q4-fp8'])
-        with tempfile.TemporaryDirectory() as tmp:
-            binary = Path(tmp) / 'tensorfold-native'
-            binary.write_bytes(b'paging binary')
-            binary.chmod(0o755)
-            manifest = Path(tmp) / 'build.json'
-            receipt = dict(feature='glm-linear-paging-1', base_source_commit=default['source_commit'],
-                           base_native_sha256=default['native_sha256'], source_commit='a' * 40,
-                           source_manifest_sha256='b' * 64, native=str(binary),
-                           native_sha256=hashlib.sha256(binary.read_bytes()).hexdigest())
-            manifest.write_text(json.dumps(receipt))
-            for tp, master, network in [(2, '10.79.12.1', '10.79.0.0/16'),
-                                         (4, '192.168.2.201', '10.78.0.0/15')]:
-                for precision in ('bf16', 'q4', 'q4-fp8', 'q8'):
-                    with self.subTest(tp=tp, precision=precision):
-                        args = self.arguments('--tp', str(tp), '--master', master, '--roce-address-range', network,
-                                              '--precision', precision, '--paging-build', str(manifest))
+        published = json.loads((ROOT.parent / 'SOURCE.json').read_text())['primary']
+        switch_args = ('--tp', '4', '--master', '192.168.2.201', '--roce-address-range', '10.78.0.0/15')
+        for precision in config.HEADS:
+            direct = self.render('--precision', precision)
+            switched = render_config.construct(self.arguments(*switch_args, '--precision', precision), switch)
+            for tp, (nodes, report) in ((2, direct), (4, switched)):
+                with self.subTest(tp=tp, precision=precision):
+                    for key in ('source_commit', 'native_sha256', 'source_manifest_sha256'):
+                        self.assertEqual(report[key], published[key])
+                    self.assertEqual(report['kv_mode'], 'linear-paged')
+                    for node in nodes:
+                        payload = node['payload']
+                        env = dict(value.split('=', 1) for value in payload['Env'])
+                        self.assertEqual(env['TF_GLM_LINEAR_PAGING'], '1')
                         if tp == 2:
-                            nodes, report = config.construct(args, self.recipe, self.sources,
-                                render_config.create_command, render_config.cache_budget,
-                                render_config.paging_build, render_config.paging_mount)
-                        else:
-                            nodes, report = render_config.construct(args, switch)
-                        self.assertEqual(report['source_commit'], receipt['source_commit'])
-                        self.assertEqual(report['native_sha256'], receipt['native_sha256'])
-                        self.assertEqual(report['context'], 1048576)
-                        self.assertEqual(report['learn_gib'], 256)
-                        for node in nodes:
-                            payload = node['payload']
-                            self.assertIn('TF_GLM_LINEAR_PAGING=1', payload['Env'])
-                            self.assertIn('TF_KV_PAGES=off', payload['Env'])
-                            if tp == 2:
-                                self.assertFalse(any(row.startswith(('TENSORFOLD_MEMORY_RESERVE_GIB=',
-                                    'TENSORFOLD_CUDA_MEMORY_LIMIT_GB=')) for row in payload['Env']))
-                            self.assertIn(dict(Type='bind', Source=str(binary), Target=payload['Entrypoint'][0],
-                                               ReadOnly=True), payload['HostConfig']['Mounts'])
-            manifest.write_text(json.dumps(dict(receipt, base_source_commit='d' * 40)))
-            with self.assertRaisesRegex(ValueError, 'must extend'):
-                render_config.paging_build(args, default)
-            manifest.write_text(json.dumps(receipt))
-            binary.write_bytes(b'other binary')
-            with self.assertRaisesRegex(ValueError, 'digest mismatch'):
-                render_config.paging_build(args, default)
+                            self.assertEqual(report['memory_budget'], 'native')
+                            self.assertNotIn('TENSORFOLD_MEMORY_RESERVE_GIB', env)
+                            self.assertNotIn('TENSORFOLD_CUDA_MEMORY_LIMIT_GB', env)
+                        self.assertEqual(payload['Entrypoint'], ['/opt/glm/tensorfold-native'])
+                        self.assertFalse(any(mount['Target'] == payload['Entrypoint'][0]
+                                             for mount in payload['HostConfig']['Mounts']))
+
+    def test_nvfp4_keeps_its_separate_runtime_and_layout(self):
+        switch = json.loads((ROOT.parent / 'recipe.json').read_text())
+        args = self.arguments('--tp', '4', '--master', '192.168.2.201', '--roce-address-range', '10.78.0.0/15',
+                              '--expert-checkpoint', 'nvfp4', '--precision', 'bf16')
+        nodes, report = render_config.construct(args, switch)
+        self.assertEqual(report['parallel'], 1)
+        self.assertEqual(report['tier'], 'off')
+        self.assertNotIn('kv_mode', report)
+        for node in nodes:
+            payload = node['payload']
+            self.assertNotIn('TF_GLM_LINEAR_PAGING=1', payload['Env'])
+            self.assertEqual(payload['Entrypoint'], ['/opt/glm/tensorfold-native-nvfp4'])
 
     def test_default_precision_is_q4_fp8_on_both_topologies(self):
         switch = json.loads((ROOT.parent/'recipe.json').read_text())
         switch_args = ('--tp', '4', '--master', '192.168.2.201',
                        '--roce-address-range', '10.78.0.0/15')
         tp4 = render_config.construct(self.arguments(*switch_args), switch)
-        for topology, (nodes, report), lanes in (('tp2', self.render(), 4), ('tp4', tp4, 6)):
+        for topology, (nodes, report), lanes in (('tp2', self.render(), 4), ('tp4', tp4, 8)):
             with self.subTest(topology=topology):
                 self.assertEqual(report['precision'], 'q4-fp8')
                 self.assert_full_context(nodes, report, lanes)
@@ -166,7 +157,7 @@ class DirectRecipeTests(unittest.TestCase):
                     self.assertEqual((env['TF_GLM_DENSE_BITS'], env['TF_GLM_HEAD_BITS'],
                                       env['TF_GLM_Q4_HEAD_FP8']), ('4', '8', '1'))
         self.assertEqual(tuple(switch['defaults'][field] for field in
-                               ('precision', 'context', 'parallel')), ('q4-fp8', 1048576, 6))
+                               ('precision', 'context', 'parallel')), ('q4-fp8', 1048576, 8))
 
     def test_explicit_lane_overrides(self):
         _, serving = self.render('--parallel', '1')
@@ -193,6 +184,7 @@ class DirectRecipeTests(unittest.TestCase):
             env = dict(item.split('=', 1) for item in node['payload']['Env'])
             self.assertEqual(env['TF_GLM_PREFILL_OPT'], '1')
             self.assertEqual(env['TF_KV_PAGES'], 'off')
+            self.assertEqual(env['TF_GLM_LINEAR_PAGING'], '1')
             self.assertEqual(env['TF_GLM_NVME_TIER'], 'native-tiered')
             self.assertEqual(env['TF_GLM_NVME_MIN_CACHE_TOKENS'], '1048576')
             self.assertIn('--learn-conversations', node['payload']['Cmd'])
