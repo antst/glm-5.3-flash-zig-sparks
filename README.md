@@ -146,6 +146,22 @@ throughput benchmarks, use `--context 196608 --parallel 8 --prompt-cache-gib 0 -
 The topology guides give measured settings, cache restore times, and per-rank
 overhead. [TP2 cache settings](TP2.md#ram-and-nvme) · [TP4 cache settings](TP4.md#ram-and-nvme-prompt-cache-tiers)
 
+### Linear KV paging candidate
+
+For an EXL3 paging build that extends the published runtime, pass
+`--paging-build /absolute/path/to/PAGING-BUILD.json` to the same renderer.
+All four precision profiles on both topologies use the candidate's shared KV
+implementation. The renderer verifies the executable digest and uses a
+dedicated snapshot namespace. Put the candidate executable at the path in the
+receipt on every rank host.
+
+The runtime backs the FP8 latent KV as requests grow. Concurrent forks can
+share a resident prefix and copy pages they write to. Restores from an idle
+snapshot and across restarts use the RAM or NVMe snapshot tier. The memory
+ledger queues requests whose combined context reservations exceed the
+available backing. Linear addresses allow the optimized prefill and decode
+kernels to use the same layout.
+
 ## Source builds
 
 Use `engine/unified` for all eight EXL3 configurations. The release archives contain the same executable used for the performance tables. The signed source snapshot records the exact source tree.

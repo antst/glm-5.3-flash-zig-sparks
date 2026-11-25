@@ -79,7 +79,7 @@ def verify_runtime(root, inventory):
             require(file.stat().st_mode & 0o111, 'Restore the executable permissions from the archive')
 
 
-def construct(args, recipe, sources, create_command, cache_budget):
+def construct(args, recipe, sources, create_command, cache_budget, paging_build=None, paging_mount=None):
     hosts = args.hosts or recipe['rank_hosts']
     ports = [args.port, args.nccl_port, args.nccl_port + 1, args.plan_port]
     parallel = recipe['defaults']['parallel'] if args.parallel is None else args.parallel
@@ -100,6 +100,10 @@ def construct(args, recipe, sources, create_command, cache_budget):
     require(len(assets) == len(bundle['files']) and assets.get('tensorfold-native') == source['native_sha256'],
             'Runtime and engine source identities disagree')
     env = dict(recipe['common_environment'], **selected['environment'])
+    paging = paging_build(args, source) if paging_build else None
+    if paging:
+        source = dict(source, **{key: paging[key] for key in ('source_commit', 'source_manifest_sha256', 'native_sha256')})
+        env['TF_GLM_LINEAR_PAGING'] = '1'
     require(tuple(env.get(k, '0') for k in ('TF_GLM_DENSE_BITS', 'TF_GLM_HEAD_BITS', 'TF_GLM_Q4_HEAD_FP8'))
             == HEADS[args.precision], 'Projection and head settings disagree')
     require(env['TF_GLM_WORLD'] == '2' and env['NCCL_IB_TC'] == '104' and
@@ -132,6 +136,8 @@ def construct(args, recipe, sources, create_command, cache_budget):
         config.update(learn_gib=args.learn_gib, require_cache_tokens=required_tokens,
                       nvme_staging_mib=int(env['TF_GLM_NVME_STAGING_MIB']),
                       nvme_index_mib=int(env['TF_GLM_NVME_INDEX_MIB']))
+    if paging:
+        config['kv_mode'] = 'linear-paged'
     cache_identity = dict(config, prompt_cache_gib=1.75)
     if tiered:
         # Preserve the previous default namespace. Capacity limits do not change on-disk compatibility.
@@ -148,6 +154,8 @@ def construct(args, recipe, sources, create_command, cache_budget):
         for mount in mounts:
             key = mount['Source'].strip('@').lower()
             mount['Source'] = str(cache if key == 'cache' else roots[key])
+        if paging:
+            paging_mount(payload, paging)
         for mount in bundle['mounts']:
             mounts.append(dict(Type='bind', Source=str(roots['runtime'] / mount['path']),
                                Target=mount['target'], ReadOnly=True))
@@ -172,7 +180,8 @@ def construct(args, recipe, sources, create_command, cache_budget):
         commands.append(dict(host=host, rank=rank, prepare_cache=shlex.join(prepare),
                              create=shlex.join(create_command(name, payload)), start=shlex.join(['docker','start',name])))
     return nodes, dict(**config, commands=commands, namespace=namespace, rank_control_port=args.nccl_port + 1,
-                       source_branch=source['branch'], source_tag=source.get('tag'),
+                       source_branch=None if paging else source['branch'],
+                       source_tag=None if paging else source.get('tag'),
                        source_manifest_sha256=source['source_manifest_sha256'],
                        runtime_archive=bundle['archive'], runtime_assets_required=sorted(assets),
                        runtime_file_hashes_checked=args.verify_runtime, rendered_only=True, deployed=False)
