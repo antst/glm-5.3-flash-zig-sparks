@@ -47,6 +47,8 @@ Source and model licenses are separate. Read the pinned model cards before use. 
 specifies CC BY-NC-ND4.0 for research/evaluation and separate commercial licensing from its provider.
 Weights are downloaded separately and are not redistributed in the runtime package.
 
+Current EXL3 runtime archive and checksums. [Download](https://github.com/antst/glm-5.3-flash-zig-sparks/releases/tag/v1.3.0-tp2-tp4) · [Archive hashes](RELEASE-ASSETS.json)
+
 ## Serving configuration
 
 The release provides hash-pinned ARM64 runtime assets and `recipe.json`. Download/extract the
@@ -59,7 +61,7 @@ See [SIGNING.md](SIGNING.md) for the release's signing identity and verification
 The configuration generator writes four rank payloads and shell commands. It does not start
 containers or change a proxy registration.
 
-This EXL3 command defaults to Q4/FP8, a 1,048,576-token context and one active request.
+This EXL3 command defaults to Q4/FP8, a 1,048,576-token context and one active request. It enables optimized prefill and native NVMe snapshots.
 
 ```sh
 python3 render_config.py --tp 4 \
@@ -99,7 +101,7 @@ disable drafting. The NVMe measurements below cover 160K and 192K prompts.
 
 ## Quality and performance
 
-Our TP4 speed measurements use TensorFold `c829c30e`. The Mia row uses its original Zig engine `80be4d68`. The decode runs use the switched setup at traffic class 104, an eight-request limit, 196,608-token context, FP8 KV, and both prompt-cache tiers off. The quality tables identify the revisions used for scoring.
+Our TP4 speed results use unified TensorFold `26e17d87` over a RoCE switch at traffic class 104. Our decode and `bench2` runs use eight admission slots, a 196,608-token context, the unified prefill fast path, and contiguous FP8 KV with both prompt-cache tiers off. The Mia reference uses its original Zig engine `80be4d68`. Quality scores are tied to their test revisions. [Quality table](TP4.md#quality-by-category)
 
 ### Original Mia Zig benchmark
 
@@ -107,10 +109,10 @@ C1 shows per-stream decode rates. C4, C6, and C8 show whole-wave throughput. All
 
 | Profile | C1 prose | C1 code | C4 prose | C6 prose | C8 prose | Quality /959 | Small code / structured |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| Ours BF16/BF16 | 54.37 | 77.91 | 128.85 | 153.51 | 169.99 | 881 | 8/8 · 5/8 |
-| Ours Q4/BF16 | 76.93 | 91.99 | 154.19 | 178.31 | 197.27 | 878 | 8/8 · 7/8 |
-| Ours Q4/FP8 | 80.17 | 96.13 | 152.11 | 183.88 | 200.71 | 882 | 8/8 · 7/8 |
-| Ours Q8/BF16 | 72.60 | 93.75 | 144.95 | 168.43 | 192.79 | 878 | 8/8 · 5/8 |
+| Ours BF16/BF16 | 53.80 | 76.98 | 127.14 | 150.19 | 173.29 | 881 | 8/8 · 5/8 |
+| Ours Q4/BF16 | 76.84 | 92.32 | 149.05 | 179.48 | 198.19 | 878 | 8/8 · 7/8 |
+| Ours Q4/FP8 | 80.24 | 96.16 | 158.83 | 181.59 | 202.06 | 882 | 8/8 · 7/8 |
+| Ours Q8/BF16 | 72.37 | 93.33 | 140.87 | 168.33 | 192.94 | 878 | 8/8 · 5/8 |
 | Mia Zig Q8/BF16 | 63.54 | 85.16 | 129.69 | 162.56 | 175.63 | 878 | 8/8 · 5/8 |
 
 ### Balanced benchmark
@@ -119,20 +121,20 @@ The same fixed prompts run twice at each concurrency, with 400 completion tokens
 
 | Profile | C1 tok/s | C4 tok/s | C8 tok/s |
 | --- | ---: | ---: | ---: |
-| Ours BF16/BF16 | 70.38 | 120.59 | 159.48 |
-| Ours Q4/BF16 | 93.09 | 138.66 | 173.88 |
-| Ours Q4/FP8 | 96.08 | 143.22 | 178.57 |
-| Ours Q8/BF16 | 90.73 | 141.60 | 182.10 |
+| Ours BF16/BF16 | 69.49 | 119.51 | 158.00 |
+| Ours Q4/BF16 | 92.99 | 138.32 | 173.09 |
+| Ours Q4/FP8 | 95.62 | 142.48 | 178.35 |
+| Ours Q8/BF16 | 89.64 | 140.50 | 180.30 |
 | Mia Zig Q8/BF16 | 80.40 | 128.70 | 166.24 |
 
 ### Whole-wave throughput
 
 | Profile | C4 tok/s | C6 tok/s | C8 tok/s |
 | --- | ---: | ---: | ---: |
-| Ours BF16/BF16 | 128.85 | 153.51 | 169.99 |
-| Ours Q4/BF16 | 154.19 | 178.31 | 197.27 |
-| Ours Q4/FP8 | 152.11 | 183.88 | 200.71 |
-| Ours Q8/BF16 | 144.95 | 168.43 | 192.79 |
+| Ours BF16/BF16 | 127.14 | 150.19 | 173.29 |
+| Ours Q4/BF16 | 149.05 | 179.48 | 198.19 |
+| Ours Q4/FP8 | 158.83 | 181.59 | 202.06 |
+| Ours Q8/BF16 | 140.87 | 168.33 | 192.94 |
 | Mia Zig Q8/BF16 | 129.69 | 162.56 | 175.63 |
 
 ### Quality by category
@@ -155,10 +157,10 @@ Mia’s recorded bench2 run used a four-request limit and 8 GiB of RAM prompt ca
 
 | Profile | 16K tokens | TTFT s | Prompt tok/s | 64K tokens | TTFT s | Prompt tok/s |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| Ours BF16/BF16 | 15882 | 7.909 | 2008.2 | 63533 | 31.101 | 2042.8 |
-| Ours Q4/BF16 | 16041 | 8.052 | 1992.2 | 64361 | 31.819 | 2022.7 |
-| Ours Q4/FP8 | 16093 | 8.098 | 1987.4 | 64369 | 31.871 | 2019.6 |
-| Ours Q8/BF16 | 16026 | 7.973 | 2010.0 | 64347 | 31.537 | 2040.4 |
+| Ours BF16/BF16 | 15990 | 6.613 | 2418.0 | 64288 | 25.209 | 2550.2 |
+| Ours Q4/BF16 | 15849 | 6.201 | 2555.8 | 63861 | 23.770 | 2686.6 |
+| Ours Q4/FP8 | 16008 | 6.216 | 2575.2 | 64560 | 23.848 | 2707.1 |
+| Ours Q8/BF16 | 15822 | 6.385 | 2478.0 | 63484 | 24.395 | 2602.3 |
 | Mia Zig Q8/BF16 | 16046 | 8.980 | 1786.9 | 64596 | 33.867 | 1907.4 |
 
 ### Original Mia bench2 mixed and paired requests
@@ -167,13 +169,26 @@ A roughly 50K-token prefill runs beside one or three decoders. Gaps are the wors
 
 | Profile | 50K +1 decoder TTFT s | 50K +3 decoders TTFT s | Worst p95 gap ms | Worst maximum gap ms | 30K alone TTFT s | 30K pair TTFT s |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| Ours BF16/BF16 | 36.61 | 36.83 | 1054 | 1286 | 14.93 | 29.93 / 15.76 |
-| Ours Q4/BF16 | 36.89 | 37.40 | 1057 | 1314 | 15.14 | 16.06 / 30.36 |
-| Ours Q4/FP8 | 37.03 | 37.77 | 1070 | 1302 | 15.20 | 17.40 / 30.55 |
-| Ours Q8/BF16 | 36.71 | 37.07 | 1054 | 1340 | 15.09 | 17.20 / 30.39 |
+| Ours BF16/BF16 | 31.14 | 31.68 | 912 | 1130 | 12.23 | 14.04 / 24.53 |
+| Ours Q4/BF16 | 30.18 | 30.43 | 871 | 1099 | 11.55 | 14.68 / 23.19 |
+| Ours Q4/FP8 | 30.07 | 30.36 | 858 | 1101 | 11.58 | 23.48 / 11.68 |
+| Ours Q8/BF16 | 30.71 | 30.78 | 883 | 1199 | 11.89 | 15.22 / 23.91 |
 | Mia Zig Q8/BF16 | 44.07 | 44.37 | 77 | 2610 | 16.39 | 33.56 / 16.38 |
 
-[Measurement record](measurements.json)
+[Earlier measurement record](measurements.json)
+
+### Matched cold prefill
+
+The same 62,027- and 299,992-token requests run one at a time at the full 1,048,576-token context. Every request retrieved the expected receipt code with zero cache hits. Rates use the engine's prefill timer. TTFT uses the client clock. Paging, RAM prompt caching, and NVMe caching are disabled.
+
+| Profile | 62K tok/s | 62K TTFT s | 300K tok/s | 300K TTFT s |
+| --- | ---: | ---: | ---: | ---: |
+| BF16/BF16 | 2,593.3 | 23.95 | 2,587.4 | 116.03 |
+| Q4/BF16 | 2,680.8 | 23.16 | 2,684.2 | 111.85 |
+| Q4/FP8 | 2,673.6 | 23.23 | 2,673.3 | 112.31 |
+| Q8/BF16 | 2,536.9 | 24.48 | 2,579.4 | 116.37 |
+
+[Unified benchmark measurements](benchmarks/unified-measurements.json)
 
 ## RAM and NVMe prompt-cache tiers
 
@@ -181,7 +196,7 @@ The active attention KV state resides in memory during inference. The optional d
 prompt snapshots for later reuse. A cache hit restores the snapshot into the active state; attention
 does not fetch NVMe blocks on each KV access or each generated token.
 
-`--prompt-cache-gib` limits useful RAM prompt-cache storage. `--tier nvme` adds persistent snapshots
+`--prompt-cache-gib` limits useful RAM prompt-cache storage. Native NVMe snapshots are enabled by default for the four EXL3 profiles. `--tier off` disables them. The tier keeps persistent snapshots
 under the per-rank cache root, and `--learn-gib` limits their disk footprint per rank. Separate
 metadata/index and staging limits bound the maintenance allocations. They are not useful cache
 capacity and should not be added to the useful-cache budget as if they were prompt data.

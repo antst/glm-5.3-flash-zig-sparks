@@ -1,16 +1,16 @@
 {
   "primary": {
-    "source_commit": "1e3ba2cf32cb1dea035e38ad41adffc7ea402c6d",
-    "source_tree": "d9d2e0f73a874c2f87445bf033efa30055f7eb5d",
-    "source_manifest_sha256": "40c907eee2dc870b0744ab1e29e007b816b25c98bb65275f5919b70bc1a2ab0a",
-    "files": 11137,
-    "author": "Anton Starikov <2550573+antst@users.noreply.github.com>",
-    "committer": "Anton Starikov <2550573+antst@users.noreply.github.com>",
-    "signature_verified": true,
-    "signer_fingerprint": "SHA256:Cvk54dwEpcJjiuIiqlXrwstNKnXtDMh8tXDKpdD+LD4",
-    "explicit_commit_tree_S": true,
-    "all_git_blob_bytes_match_manifest": true,
-    "posthoc_source_snapshot_not_bit_identical_rebuild_claim": true
+    "source_commit": "26e17d87954d29a0dfbd31d8e6dc7453fd564d61",
+    "source_tree": "56bd5d3f53d435f6a16bc4db7229eb9df04ffaf7",
+    "source_manifest_sha256": "270170a49b5d008576fcd2ade5f0b4424d588f683752447300ed1cdee7645b17",
+    "native_sha256": "025ce1efce4a1d341b1b75d04e5bf0d998d25dfc7f56a98cb255e5b988c24907",
+    "branch": "engine/unified",
+    "tag": "v1.3.0-tp2-tp4-engine",
+    "signed_snapshot_commit": "97d47c56dba254f0ef183cfb3fec90eeb84edd81",
+    "source_archive": "tensorfold-glm53-unified-source.tar.gz",
+    "source_manifest": "source-sha256.json",
+    "files": 12797,
+    "signature_verified": true
   },
   "supplementary_NVFP4": {
     "source_commit": "bbc3b2dd12bc8f63b58f7709bc855210afc3ba55",
@@ -25,7 +25,7 @@
     "all_git_blob_bytes_match_manifest": true,
     "posthoc_source_snapshot_not_bit_identical_rebuild_claim": true
   },
-  "primary_native_sha256": "9c877e091f0aa4aa8f489576b9640d346c1d1056987a2a16e9d6605823ad5259",
+  "primary_native_sha256": "025ce1efce4a1d341b1b75d04e5bf0d998d25dfc7f56a98cb255e5b988c24907",
   "public_signing_key": "SIGNING-KEY.pub",
   "allowed_signers": "ALLOWED_SIGNERS",
   "user_authorized_temporary_Ed25519_key": true,

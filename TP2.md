@@ -4,27 +4,27 @@ Use two Sparks with the second ports connected directly. The measured setup uses
 
 ## Runtime
 
-Build and develop all four profiles from [`engine/tp2`](https://github.com/antst/glm-5.3-flash-zig-sparks/tree/engine/tp2).
+Build and develop all four profiles from [`engine/unified`](https://github.com/antst/glm-5.3-flash-zig-sparks/tree/engine/unified).
 Exact sources for the published runtime archives are identified by signed tags.
 [Archive sources](tp2/SOURCE.json)
 
 | Precision | Archive source commit | Runtime archive | Startup packing |
 |---|---|---|---|
-| BF16/BF16 | `4c286e54` | `glm53-tp2-bf16-runtime.tar.gz` | BF16 projections and head |
-| Q4/BF16 | `920e5fd2` | `glm53-tp2-q4-runtime.tar.gz` | C24 activation-aware Q4, BF16 head |
-| Q4/FP8 (default) | `920e5fd2` | `glm53-tp2-q4-runtime.tar.gz` | C24 activation-aware Q4, grouped FP8 head |
-| Q8/BF16 | `847757c2` | `glm53-tp2-q8-runtime.tar.gz` | Activation-aware Q8 with correlated rounding |
+| BF16/BF16 | `26e17d87` | `glm53-tp2-bf16-unified-runtime.tar.gz` | BF16 projections and head |
+| Q4/BF16 | `26e17d87` | `glm53-tp2-q4-unified-runtime.tar.gz` | C24 activation-aware Q4, BF16 head |
+| Q4/FP8 (default) | `26e17d87` | `glm53-tp2-q4-unified-runtime.tar.gz` | C24 activation-aware Q4, grouped FP8 head |
+| Q8/BF16 | `26e17d87` | `glm53-tp2-q8-unified-runtime.tar.gz` | Activation-aware Q8 with correlated rounding |
 
 The Q4 and Q8 bundles include rank-specific calibration data used at weight load. Keep the
 calibration and correlation directories with the matching runtime. All four profiles use the
 same [EXL3 4.0 bpw weights and DFlash2 drafter](TP4.md#weights-and-dependencies).
 
 Download the matching archive and verify its SHA256 before extracting it.
-[TP2 runtime downloads](https://github.com/antst/glm-5.3-flash-zig-sparks/releases/tag/v1.2.12-tp2-tp4) · [Archive hashes](tp2/RELEASE-ASSETS.json)
+[TP2 runtime downloads](https://github.com/antst/glm-5.3-flash-zig-sparks/releases/tag/v1.3.0-tp2-tp4) · [Archive hashes](tp2/RELEASE-ASSETS.json)
 
 Extract the Q4 archive into `/srv/glm/tp2`, then render two ranks and verify the
 bundle. The command defaults to Q4/FP8, a 1,048,576-token context and one active
-request. For another profile, use its runtime archive and pass `--precision bf16`,
+request, with optimized prefill and native NVMe snapshots enabled. For another profile, use its runtime archive and pass `--precision bf16`,
 `--precision q4`, or `--precision q8`.
 
 ```sh
@@ -55,7 +55,7 @@ measurements below cover 160K and 192K prompts.
 
 ## Quality and performance
 
-Our TP2 speed measurements use TensorFold `c829c30e`. The Mia row uses its original Zig engine `80be4d68`. The decode runs use the direct-link setup at traffic class 104, an eight-request limit, 196,608-token context, FP8 KV, and both prompt-cache tiers off. The quality tables identify the revisions used for scoring.
+Our TP2 speed results use unified TensorFold `26e17d87` over direct links at traffic class 104. Our decode and `bench2` runs use eight admission slots, a 196,608-token context, the unified prefill fast path, and contiguous FP8 KV with both prompt-cache tiers off. The Mia reference uses its original Zig engine `80be4d68`. Quality scores are tied to their test revisions. [Quality table](TP2.md#quality-by-category)
 
 ### Original Mia Zig benchmark
 
@@ -63,10 +63,10 @@ C1 shows per-stream decode rates. C4, C6, and C8 show whole-wave throughput. All
 
 | Profile | C1 prose | C1 code | C4 prose | C6 prose | C8 prose | Quality /959 | Small code / structured |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| Ours BF16/BF16 | 31.48 | 49.83 | 74.58 | 89.32 | 101.83 | 884 | 8/8 · 5/8 |
-| Ours Q4/BF16 | 46.59 | 65.64 | 89.11 | 109.88 | 122.35 | 881 | 8/8 · 7/8 |
-| Ours Q4/FP8 | 49.75 | 74.90 | 95.75 | 110.28 | 122.22 | 882 | 8/8 · 7/8 |
-| Ours Q8/BF16 | 41.03 | 62.27 | 89.03 | 104.71 | 118.98 | 879 | 8/8 · 5/8 |
+| Ours BF16/BF16 | 31.19 | 49.43 | 74.09 | 89.68 | 102.81 | 884 | 8/8 · 5/8 |
+| Ours Q4/BF16 | 46.01 | 64.71 | 91.23 | 107.07 | 119.09 | 881 | 8/8 · 7/8 |
+| Ours Q4/FP8 | 48.94 | 74.14 | 93.32 | 111.19 | 123.88 | 882 | 8/8 · 7/8 |
+| Ours Q8/BF16 | 40.11 | 61.09 | 86.32 | 102.13 | 115.21 | 879 | 8/8 · 5/8 |
 | Mia Zig Q8/BF16 | 39.40 | 49.54 | 80.32 | 95.71 | 107.28 | 872 | 8/8 · 5/8 |
 
 ### Balanced benchmark
@@ -75,20 +75,20 @@ The same fixed prompts run twice at each concurrency, with 400 completion tokens
 
 | Profile | C1 tok/s | C4 tok/s | C8 tok/s |
 | --- | ---: | ---: | ---: |
-| Ours BF16/BF16 | 41.43 | 71.47 | 96.53 |
-| Ours Q4/BF16 | 55.32 | 82.84 | 103.83 |
-| Ours Q4/FP8 | 58.29 | 86.42 | 107.53 |
-| Ours Q8/BF16 | 51.29 | 81.45 | 105.56 |
+| Ours BF16/BF16 | 41.60 | 71.01 | 95.49 |
+| Ours Q4/BF16 | 55.03 | 82.18 | 102.98 |
+| Ours Q4/FP8 | 57.92 | 85.37 | 106.53 |
+| Ours Q8/BF16 | 50.81 | 80.50 | 104.34 |
 | Mia Zig Q8/BF16 | 49.17 | 75.84 | 95.25 |
 
 ### Whole-wave throughput
 
 | Profile | C4 tok/s | C6 tok/s | C8 tok/s |
 | --- | ---: | ---: | ---: |
-| Ours BF16/BF16 | 74.58 | 89.32 | 101.83 |
-| Ours Q4/BF16 | 89.11 | 109.88 | 122.35 |
-| Ours Q4/FP8 | 95.75 | 110.28 | 122.22 |
-| Ours Q8/BF16 | 89.03 | 104.71 | 118.98 |
+| Ours BF16/BF16 | 74.09 | 89.68 | 102.81 |
+| Ours Q4/BF16 | 91.23 | 107.07 | 119.09 |
+| Ours Q4/FP8 | 93.32 | 111.19 | 123.88 |
+| Ours Q8/BF16 | 86.32 | 102.13 | 115.21 |
 | Mia Zig Q8/BF16 | 80.32 | 95.71 | 107.28 |
 
 ### Quality by category
@@ -111,10 +111,10 @@ Each cell uses the measured prompt length and client time to first token. The cl
 
 | Profile | 16K tokens | TTFT s | Prompt tok/s | 64K tokens | TTFT s | Prompt tok/s |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| Ours BF16/BF16 | 15802 | 10.966 | 1441.0 | 63629 | 43.619 | 1458.8 |
-| Ours Q4/BF16 | 15743 | 11.112 | 1416.8 | 64082 | 44.582 | 1437.4 |
-| Ours Q4/FP8 | 16018 | 11.166 | 1434.5 | 64408 | 44.481 | 1448.0 |
-| Ours Q8/BF16 | 15944 | 11.150 | 1430.0 | 63739 | 44.107 | 1445.1 |
+| Ours BF16/BF16 | 15710 | 9.746 | 1612.0 | 63135 | 38.253 | 1650.4 |
+| Ours Q4/BF16 | 16075 | 9.539 | 1685.2 | 64338 | 37.147 | 1732.0 |
+| Ours Q4/FP8 | 16067 | 9.555 | 1681.6 | 64484 | 37.437 | 1722.5 |
+| Ours Q8/BF16 | 15742 | 9.864 | 1595.9 | 63840 | 38.963 | 1638.5 |
 | Mia Zig Q8/BF16 | 15845 | 9.571 | 1655.5 | 63531 | 37.811 | 1680.2 |
 
 ### Original Mia bench2 mixed and paired requests
@@ -123,13 +123,26 @@ A roughly 50K-token prefill runs beside one or three decoders. Gaps are the wors
 
 | Profile | 50K +1 decoder TTFT s | 50K +3 decoders TTFT s | Worst p95 gap ms | Worst maximum gap ms | 30K alone TTFT s | 30K pair TTFT s |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| Ours BF16/BF16 | 51.10 | 51.67 | 1499 | 1764 | 20.82 | 41.87 / 22.14 |
-| Ours Q4/BF16 | 51.57 | 52.06 | 1487 | 1776 | 21.06 | 42.43 / 22.46 |
-| Ours Q4/FP8 | 51.59 | 52.21 | 1481 | 1767 | 21.15 | 42.37 / 22.39 |
-| Ours Q8/BF16 | 51.51 | 52.21 | 1498 | 1771 | 21.00 | 42.20 / 22.32 |
+| Ours BF16/BF16 | 45.92 | 46.31 | 1357 | 1624 | 18.37 | 37.10 / 21.16 |
+| Ours Q4/BF16 | 44.94 | 45.33 | 1299 | 1577 | 17.84 | 17.85 / 35.93 |
+| Ours Q4/FP8 | 45.85 | 45.35 | 1295 | 1597 | 18.03 | 36.23 / 22.98 |
+| Ours Q8/BF16 | 46.79 | 47.16 | 1363 | 1643 | 18.63 | 18.62 / 37.54 |
 | Mia Zig Q8/BF16 | 45.33 | 45.45 | 2549 | 2792 | 18.20 | 36.76 / 23.27 |
 
-[Measurement record](tp2/refresh-measurements-20261120.json)
+[Earlier measurement record](tp2/refresh-measurements-20261120.json)
+
+### Matched cold prefill
+
+The same 62,027- and 299,992-token requests run one at a time at the full 1,048,576-token context. Every request retrieved the expected receipt code with zero cache hits. Rates use the engine's prefill timer. TTFT uses the client clock. Paging, RAM prompt caching, and NVMe caching are disabled. BF16/BF16 ran on Sparks 1 and 2. Q4/BF16, Q4/FP8, Q8/BF16 ran on Sparks 3 and 4.
+
+| Profile | 62K tok/s | 62K TTFT s | 300K tok/s | 300K TTFT s |
+| --- | ---: | ---: | ---: | ---: |
+| BF16/BF16 | 1,651.1 | 37.59 | 1,614.3 | 185.92 |
+| Q4/BF16 | 1,755.8 | 35.36 | 1,703.8 | 176.16 |
+| Q4/FP8 | 1,739.5 | 35.68 | 1,694.1 | 177.16 |
+| Q8/BF16 | 1,638.1 | 37.89 | 1,610.3 | 186.38 |
+
+[Unified benchmark measurements](benchmarks/unified-measurements.json)
 
 ## RAM and NVMe
 
@@ -137,21 +150,21 @@ The packaged TP2 profiles use contiguous FP8 live KV in memory. `--prompt-cache-
 budgets reusable prompt snapshots in RAM. Set `--prompt-cache-gib 0 --tier off` for
 cold-prefill measurements with both prompt-cache tiers disabled.
 
-The packaged Q8/BF16 runtime has a
-measured optional NVMe tier. Set `--tier nvme --prompt-cache-gib 1.75 --learn-gib 32`
-to render it with a distinct cache directory per rank and configuration under a local
-NVMe cache root. A disk hit restores the snapshot into memory for subsequent attention.
-`--learn-gib` limits persistent snapshots per rank. `--require-cache-tokens` controls
-the minimum eligible prefix length and defaults to 137,216 tokens. This profile uses a
-256 MiB staging limit and a 64 MiB index limit per rank.
+Native NVMe snapshots are enabled by default for all four EXL3 profiles. Point
+`--cache-root` at a local NVMe filesystem. The renderer uses a distinct directory
+per rank and configuration. `--learn-gib` defaults to 32 GiB per rank.
+`--require-cache-tokens` defaults to 137,216 eligible prefix tokens. The NVMe
+worker uses a 256 MiB staging limit and a 64 MiB index limit per rank. A disk hit
+restores a snapshot into memory for subsequent attention. Use `--tier off` to
+disable persistent snapshots.
 
-The Q8 validation covered 160K/192K requests, cache reopening and checksum-failure
+The historical Q8 validation covered 160K/192K requests, cache reopening and checksum-failure
 fallback. Per-rank pinned buffers used 207.5 MiB and the index peaked at 3.12 MiB.
 With the tier on, cold 160K/192K native prefill measured 1,463/1,448 tok/s versus
 1,460/1,438 with it off. After reopening a seeded cache, native time to first token
 was 3.65/2.89 s on those two requests, compared with 112.21/134.18 s cold. The cold
 192K time to first token with the tier enabled was 138.17 s.
-The current TP2 BF16 and Q4 profiles are provided with `--tier off`. See the
+See the
 [TP4 cache documentation](TP4.md#ram-and-nvme-prompt-cache-tiers) for the shared cache model.
 
 ### Paged FP8 testing

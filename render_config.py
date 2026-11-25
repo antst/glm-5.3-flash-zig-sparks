@@ -94,11 +94,12 @@ def construct(args, recipe):
         f'TP4 requires 1 to 8 lanes and a context from 4096 to {MAX_CONTEXT}')
     require(math.isfinite(args.prompt_cache_gib) and 0 <= args.prompt_cache_gib <= 32, 'Invalid RAM cache size')
     require(math.isfinite(args.learn_gib) and 1 <= args.learn_gib <= 4096, 'Invalid NVMe cache size')
-    require(args.tier in ('off', 'nvme') and args.prefill in ('whole', 'stepped'), 'Unknown cache/prefill mode')
+    require(args.tier in (None, 'off', 'nvme') and args.prefill in ('whole', 'stepped'), 'Unknown cache/prefill mode')
+    tier = args.tier or ('nvme' if args.expert_checkpoint == 'exl3' else 'off')
     require(not args.warm_turns, 'Background warm turns have not passed activation qualification; keep them off')
-    require(args.tier != 'nvme' or args.prompt_cache_gib > 0, 'Persistent snapshots require useful RAM cache room')
+    require(tier != 'nvme' or args.prompt_cache_gib > 0, 'Persistent snapshots require useful RAM cache room')
     require(0 <= args.require_cache_tokens <= MAX_CONTEXT, 'Invalid required cached-prefix size')
-    require(args.tier != 'nvme' or args.require_cache_tokens <= args.context,
+    require(tier != 'nvme' or args.require_cache_tokens <= args.context,
         'Required cached prefix exceeds the context; choose --require-cache-tokens explicitly')
     ipaddress.IPv4Address(args.master)
     ipaddress.IPv4Network(args.roce_address_range, strict=True)
@@ -124,7 +125,7 @@ def construct(args, recipe):
     selected = recipe['profiles'][profile]
     require(selected['qualification'].startswith('CLOSED_'),
         'This executable/profile has not completed its quality and performance gates')
-    require(args.tier != 'nvme' or selected.get('NVMe_tier_qualification', True),
+    require(tier != 'nvme' or selected.get('NVMe_tier_qualification', True),
         'The retained NVFP4 executable has no qualified current NVMe worker; use --tier off')
     runtime = profile_runtime(recipe, selected)
     assets = required_assets(recipe, profile)
@@ -135,7 +136,7 @@ def construct(args, recipe):
         TF_GLM_FIRST_COPY_TOKENS=str(args.verify_rows - 1),
         TF_GLM_PROMPT_STEPS='1' if args.prefill == 'stepped' else '0',
         TF_GLM_WARM_TURNS='1' if args.warm_turns else '0',
-        TF_GLM_NVME_TIER='native-tiered' if args.tier == 'nvme' else '0',
+        TF_GLM_NVME_TIER='native-tiered' if tier == 'nvme' else '0',
         TF_GLM_NVME_MIN_CACHE_TOKENS=str(args.require_cache_tokens),
         TF_TP_MASTER=args.master, TF_TP_PLAN_PORT=str(args.plan_port),
         NCCL_IB_ADDR_RANGE=args.roce_address_range,
@@ -157,12 +158,14 @@ def construct(args, recipe):
             require(name in names, 'Runtime module is outside its profile asset scope: ' + key)
     settings = dict(source=runtime['source_commit'], binary_sha256=runtime['native_sha256'], expert_checkpoint=args.expert_checkpoint,
         precision=args.precision, verify_rows=args.verify_rows, context=args.context, parallel=args.parallel,
-        prefill=args.prefill, warm_turns=args.warm_turns, tier=args.tier,
+        prefill=args.prefill, warm_turns=args.warm_turns, tier=tier,
         model_repository=recipe['checkpoints'][args.expert_checkpoint]['repository'],
         model_revision=recipe['checkpoints'][args.expert_checkpoint]['revision'],
         drafter_repository=recipe['checkpoints']['drafter']['repository'],
         drafter_revision=recipe['checkpoints']['drafter']['revision'],
         model_root=str(roots['model']), drafter_root=str(roots['drafter']))
+    if tier == 'nvme':
+        settings.update(learn_gib=args.learn_gib, require_cache_tokens=args.require_cache_tokens)
     key = hashlib.sha256(json.dumps(settings, sort_keys=True).encode()).hexdigest()[:12]
     namespace = runtime['source_commit'][:12] + '-' + args.expert_checkpoint + '-' + args.precision + '-' + key
     nodes, commands = [], []
@@ -175,6 +178,10 @@ def construct(args, recipe):
             target = mount['Source'].strip('@').lower()
             require(target in roots, 'Unknown recipe mount placeholder')
             mount['Source'] = str(cache if target == 'cache' else roots[target])
+        if grammar := selected.get('grammar_override'):
+            require(grammar in names, 'The retained grammar library is outside its profile asset scope')
+            payload['HostConfig']['Mounts'].append(dict(Type='bind',
+                Source=str(roots['runtime'] / grammar), Target='/opt/glm/libtfgrammar.so', ReadOnly=True))
         env = dict(environment, TF_GLM_RANK=str(rank), TF_TP_RANK=str(rank))
         require(not any(k.startswith('GLM_') or k == 'TF_LANE_TRACE' for k in env),
             'Finite experiment controls must not enter serving')
@@ -182,7 +189,7 @@ def construct(args, recipe):
         for flag, value in [('--port', args.port), ('--context', args.context), ('--parallel', args.parallel),
             ('--prompt-cache-gib', args.prompt_cache_gib)]:
             set_arg(payload['Cmd'], flag, value)
-        if args.tier == 'nvme':
+        if tier == 'nvme':
             payload['Cmd'] += ['--learn-conversations', '--learn-dir', '/cache', '--learn-gib', str(args.learn_gib)]
         payload['Labels'].update({'glm.recipe.source': runtime['source_commit'],
             'glm.recipe.native': runtime['native_sha256'], 'glm.recipe.rank': str(rank),
@@ -211,7 +218,7 @@ def main(args):
         source = json.loads((P / 'tp2/SOURCE.json').read_text())
         nodes, report = config.construct(args, json.loads(path.read_text()), source, create_command)
         report['recipe_sha256'] = sha(path)
-        report['release_status'] = 'TP2_PROFILE_ASSEMBLY'
+        report['release_status'] = 'UNIFIED_EXL3_RELEASE_CONTENT'
         write_configuration(args, nodes, report)
         return
     path = P / 'recipe.json'
@@ -248,13 +255,15 @@ def parser():
     p.add_argument('--precision', choices=['bf16', 'q4', 'q4-fp8', 'q8'], default='q4-fp8',
                    help='Projection and output head profile (default: %(default)s)')
     p.add_argument('--verify-rows', type=int, choices=[16, 32], default=32)
-    p.add_argument('--tier', choices=['off', 'nvme'], default='off')
+    p.add_argument('--tier', choices=['off', 'nvme'],
+                   help='Persistent prompt snapshots (default: nvme for EXL3, off for retained NVFP4)')
     p.add_argument('--prefill', choices=['whole', 'stepped'], default='stepped')
     p.add_argument('--warm-turns', action='store_true')
     for name in ('runtime', 'model', 'drafter', 'cache'):
         p.add_argument('--' + name + '-root', type=pathlib.Path, required=True)
     p.add_argument('--output', type=pathlib.Path, required=True)
-    p.add_argument('--verify-runtime', action='store_true')
+    p.add_argument('--verify-runtime', action=argparse.BooleanOptionalAction, default=True,
+                   help='Check installed runtime files against the selected archive inventory (default: on)')
     p.add_argument('--instance', default='glm53')
     p.add_argument('--master', required=True, help='IPv4 bootstrap address on rank0')
     p.add_argument('--roce-address-range', required=True, help='IPv4 network containing the RoCE data addresses')

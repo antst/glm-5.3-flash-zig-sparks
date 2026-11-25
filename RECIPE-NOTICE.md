@@ -6,7 +6,7 @@ Its original Apache-2.0 license, notice, historical MIT notice and third-party a
 remain in the complete source archive. The separate dependency source archives and notice
 files retain their original authorship and applicable licenses.
 
-The primary native executable reports version `1.2.12`. Its exact measured source tree,
+The primary native executable reports version `1.3.0`. Its exact measured source tree,
 complete source manifest, build inputs and executable hashes are recorded in the release's
 `SOURCE.json` and `BUILD-RECEIPTS.json`. It contains local GLM execution, proposal-policy,
 graph, expert-kernel, decision batching, native-gather integration and tiered-cache changes,

@@ -22,7 +22,7 @@ This example checks the main TP4 engine:
 ssh-keygen -lf SIGNING-KEY.pub
 git -c gpg.format=ssh -c gpg.ssh.program=ssh-keygen \
   -c gpg.ssh.allowedSignersFile="$PWD/ALLOWED_SIGNERS" \
-  verify-commit 1e3ba2cf32cb1dea035e38ad41adffc7ea402c6d
+  verify-commit 97d47c56dba254f0ef183cfb3fec90eeb84edd81
 ```
 
 The same settings work with `verify-tag` for the release tag. Complete source archives

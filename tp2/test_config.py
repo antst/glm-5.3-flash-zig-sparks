@@ -20,7 +20,7 @@ class DirectRecipeTests(unittest.TestCase):
         return render_config.parser().parse_args([
             '--tp','2','--runtime-root','/srv/runtime','--model-root','/srv/model',
             '--drafter-root','/srv/drafter','--cache-root','/var/cache/glm53','--output','/tmp/rendered',
-            '--master','10.79.12.1','--roce-address-range','10.79.0.0/16',*extra])
+            '--master','10.79.12.1','--roce-address-range','10.79.0.0/16','--no-verify-runtime',*extra])
 
     def render(self,*extra):
         return config.construct(self.arguments(*extra),self.recipe,self.sources,render_config.create_command)
@@ -46,10 +46,8 @@ class DirectRecipeTests(unittest.TestCase):
                         self.assertTrue(mounts[target]['ReadOnly'])
         self.assertEqual(len(namespaces),4)
 
-    def test_nvme_only_on_qualified_profile(self):
-        with self.assertRaisesRegex(ValueError,'Q8/BF16'):
-            self.render('--precision','q4','--tier','nvme')
-        nodes, report = self.render('--precision','q8','--tier','nvme')
+    def test_nvme_defaults_and_explicit_off(self):
+        nodes, report = self.render('--precision','q8')
         for node in nodes:
             env = dict(value.split('=',1) for value in node['payload']['Env'])
             self.assertEqual(env['TF_GLM_NVME_TIER'],'native-tiered')
@@ -59,7 +57,7 @@ class DirectRecipeTests(unittest.TestCase):
             self.assertIn('--learn-conversations',node['payload']['Cmd'])
         _, other = self.render('--precision','q8','--tier','nvme','--learn-gib','48')
         self.assertNotEqual(report['namespace'],other['namespace'])
-        off, _ = self.render('--precision','q8')
+        off, _ = self.render('--precision','q8','--tier','off')
         self.assertIn('TF_GLM_NVME_STAGING_MIB=192',off[0]['payload']['Env'])
 
     def test_refuses_mismatched_topology_and_ports(self):
@@ -71,7 +69,7 @@ class DirectRecipeTests(unittest.TestCase):
             self.render('--master','192.168.2.201')
 
     def test_million_token_q8_profile(self):
-        flags = ('--precision','q8','--context','1048576','--parallel','1','--prompt-cache-gib','0')
+        flags = ('--precision','q8','--context','1048576','--parallel','1','--prompt-cache-gib','0','--tier','off')
         nodes, report = self.render(*flags)
         self.assertEqual((report['context'], report['parallel'], report['tier']), (1048576, 1, 'off'))
         for node in nodes:
@@ -86,7 +84,7 @@ class DirectRecipeTests(unittest.TestCase):
     def test_switch_recipe_accepts_model_context(self):
         recipe = json.loads((ROOT.parent/'recipe.json').read_text())
         args = self.arguments('--tp','4','--master','192.168.2.201','--roce-address-range','192.168.2.0/24',
-                              '--context','1048576','--parallel','1','--prompt-cache-gib','0')
+                              '--context','1048576','--parallel','1','--prompt-cache-gib','0','--tier','off')
         nodes, report = render_config.construct(args,recipe)
         self.assertEqual((len(nodes),report['context']), (4,1048576))
         self.assertFalse(report['context_and_parallel_match_measured_scope'])
@@ -124,8 +122,14 @@ class DirectRecipeTests(unittest.TestCase):
 
     def assert_full_context(self, nodes, report):
         self.assertEqual((report['context'], report['parallel']), (1048576, 1))
+        self.assertEqual(report['tier'], 'nvme')
         for node in nodes:
             self.assert_full_context_args(node['payload']['Cmd'])
+            env = dict(item.split('=', 1) for item in node['payload']['Env'])
+            self.assertEqual(env['TF_GLM_PREFILL_OPT'], '1')
+            self.assertEqual(env['TF_KV_PAGES'], 'off')
+            self.assertEqual(env['TF_GLM_NVME_TIER'], 'native-tiered')
+            self.assertIn('--learn-conversations', node['payload']['Cmd'])
 
     def assert_full_context_args(self, argv):
         self.assertEqual(argv[argv.index('--context') + 1], '1048576')

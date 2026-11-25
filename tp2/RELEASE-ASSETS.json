@@ -1,31 +1,29 @@
 {
+  "release_tag": "v1.3.0-tp2-tp4",
+  "release_url": "https://github.com/antst/glm-5.3-flash-zig-sparks/releases/tag/v1.3.0-tp2-tp4",
   "archives": {
     "bf16": {
-      "name": "glm53-tp2-bf16-runtime.tar.gz",
-      "bytes": 73247703,
-      "sha256": "a41fea8f88e3e5b01da9ff122f251461f2557d88feb32611e692cbaac7c92abc",
-      "source_commit": "4c286e54f0902b367b3d5def70c10668b8dbf98c",
-      "native_sha256": "b87140a3224ce706aa6624c971ec6665c61ef89dcbdcf63c821fe6ef8ce1d91b",
-      "download_url": "https://github.com/antst/glm-5.3-flash-zig-sparks/releases/download/v1.2.12-tp2-tp4/glm53-tp2-bf16-runtime.tar.gz"
+      "name": "glm53-tp2-bf16-unified-runtime.tar.gz",
+      "bytes": 75642004,
+      "sha256": "031ec74e22113476efefc7f997ebf26f53a107974a626cb78ea269d7f78186c7",
+      "source_commit": "26e17d87954d29a0dfbd31d8e6dc7453fd564d61",
+      "native_sha256": "025ce1efce4a1d341b1b75d04e5bf0d998d25dfc7f56a98cb255e5b988c24907"
     },
     "q4": {
-      "name": "glm53-tp2-q4-runtime.tar.gz",
-      "bytes": 84350579,
-      "sha256": "b40a8d4bb7212e6e96c1a5c4a1073b99b4d2bfae1b84443689b045ff84d26687",
-      "source_commit": "920e5fd29af96d04d9bfcd4c0ff499af765fb65c",
-      "native_sha256": "6b9c9a6f2206f878feb6d21b2bbd4c27873dd8c500cd4862a2e74f8053c49f40",
-      "download_url": "https://github.com/antst/glm-5.3-flash-zig-sparks/releases/download/v1.2.12-tp2-tp4/glm53-tp2-q4-runtime.tar.gz"
+      "name": "glm53-tp2-q4-unified-runtime.tar.gz",
+      "bytes": 86748050,
+      "sha256": "25ac34dc26cec4117d25daab43b8e5bd4c96516f31aa1b00a0ee247f6733b939",
+      "source_commit": "26e17d87954d29a0dfbd31d8e6dc7453fd564d61",
+      "native_sha256": "025ce1efce4a1d341b1b75d04e5bf0d998d25dfc7f56a98cb255e5b988c24907"
     },
     "q8": {
-      "name": "glm53-tp2-q8-runtime.tar.gz",
-      "bytes": 406893751,
-      "sha256": "f92986c13389c56d346efdc740af280216f294742b9adc9e7b2a3e201797a4dd",
-      "source_commit": "847757c2e612951263799ac1ffc91d2081cedcec",
-      "native_sha256": "b581b116e6d75ba387fb3629d96c51a159d6c3ba3f1d3c6aa446512316f5b624",
-      "download_url": "https://github.com/antst/glm-5.3-flash-zig-sparks/releases/download/v1.2.12-tp2-tp4/glm53-tp2-q8-runtime.tar.gz"
+      "name": "glm53-tp2-q8-unified-runtime.tar.gz",
+      "bytes": 409250057,
+      "sha256": "a561db1b82bab827107d1bf33e63ad5658343d5f83cc4cb386806bf3aabfee79",
+      "source_commit": "26e17d87954d29a0dfbd31d8e6dc7453fd564d61",
+      "native_sha256": "025ce1efce4a1d341b1b75d04e5bf0d998d25dfc7f56a98cb255e5b988c24907"
     }
   },
-  "publication": "GitHub release",
-  "release_tag": "v1.2.12-tp2-tp4",
-  "release_url": "https://github.com/antst/glm-5.3-flash-zig-sparks/releases/tag/v1.2.12-tp2-tp4"
+  "source_commit": "26e17d87954d29a0dfbd31d8e6dc7453fd564d61",
+  "native_sha256": "025ce1efce4a1d341b1b75d04e5bf0d998d25dfc7f56a98cb255e5b988c24907"
 }

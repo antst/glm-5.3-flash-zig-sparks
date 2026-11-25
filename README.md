@@ -33,10 +33,10 @@ retained NVFP4 expert option. [TP2 profiles](TP2.md#runtime) · [TP4 precision o
 
 The primary EXL3 profiles on TP2 and TP4 default to **1,048,576 tokens** and
 **one active request**. That context includes the prompt and generated tokens.
-The launch examples use those defaults.
+The launch examples use those defaults, with optimized prefill and native NVMe snapshots enabled.
 
 1. Download the pinned model and drafter once per host and mount them read-only. [Weights and dependencies](TP4.md#weights-and-dependencies)
-2. Install the shared ARM64 runtime image and the archive for your topology and profile. Verify the archive against its inventory. [TP2 downloads](https://github.com/antst/glm-5.3-flash-zig-sparks/releases/tag/v1.2.12-tp2-tp4) · [TP2 hashes](tp2/RELEASE-ASSETS.json) · [TP4 and shared downloads](https://github.com/antst/glm-5.3-flash-zig-sparks/releases/tag/v1.2.12-tp4) · [TP4 hashes](RELEASE-ASSETS.json)
+2. Install the shared ARM64 runtime image and the current archive for your topology and profile. The renderer checks the installed runtime against its inventory by default. [Current runtime downloads](https://github.com/antst/glm-5.3-flash-zig-sparks/releases/tag/v1.3.0-tp2-tp4) · [TP2 hashes](tp2/RELEASE-ASSETS.json) · [TP4 hashes](RELEASE-ASSETS.json) · [Shared ARM64 runtime image](https://github.com/antst/glm-5.3-flash-zig-sparks/releases/tag/v1.2.12-tp4)
 3. Run `python3 render_config.py --tp 2` or `--tp 4` with the paths and network settings in the launch guide. Use `--verify-runtime` to check the extracted assets. The renderer writes per-rank Docker commands and cache paths into the output directory.
 4. Run the generated commands on their assigned hosts. Start the followers before rank 0. Connect clients to rank 0 and use `GLM-5.3-Flash` as the API model name. Stop rank 0 first to let the followers close.
 
@@ -54,7 +54,7 @@ curl -fsS "$GLM53_URL/v1/chat/completions" \
 
 ### TP2
 
-Our TP2 speed measurements use TensorFold `c829c30e`. The Mia row uses its original Zig engine `80be4d68`. The decode runs use the direct-link setup at traffic class 104, an eight-request limit, 196,608-token context, FP8 KV, and both prompt-cache tiers off. The quality tables identify the revisions used for scoring.
+Our TP2 speed results use unified TensorFold `26e17d87` over direct links at traffic class 104. Our decode and `bench2` runs use eight admission slots, a 196,608-token context, the unified prefill fast path, and contiguous FP8 KV with both prompt-cache tiers off. The Mia reference uses its original Zig engine `80be4d68`. Quality scores are tied to their test revisions. [Quality table](TP2.md#quality-by-category)
 
 #### Original Mia Zig benchmark
 
@@ -62,10 +62,10 @@ Rates are measured tok/s. C4, C6, and C8 use whole-wave throughput.
 
 | Profile | C1 prose | C1 code | C4 prose | C6 prose | C8 prose | Quality /959 | Small code / structured |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| Ours BF16/BF16 | 31.48 | 49.83 | 74.58 | 89.32 | 101.83 | 884 | 8/8 · 5/8 |
-| Ours Q4/BF16 | 46.59 | 65.64 | 89.11 | 109.88 | 122.35 | 881 | 8/8 · 7/8 |
-| Ours Q4/FP8 | 49.75 | 74.90 | 95.75 | 110.28 | 122.22 | 882 | 8/8 · 7/8 |
-| Ours Q8/BF16 | 41.03 | 62.27 | 89.03 | 104.71 | 118.98 | 879 | 8/8 · 5/8 |
+| Ours BF16/BF16 | 31.19 | 49.43 | 74.09 | 89.68 | 102.81 | 884 | 8/8 · 5/8 |
+| Ours Q4/BF16 | 46.01 | 64.71 | 91.23 | 107.07 | 119.09 | 881 | 8/8 · 7/8 |
+| Ours Q4/FP8 | 48.94 | 74.14 | 93.32 | 111.19 | 123.88 | 882 | 8/8 · 7/8 |
+| Ours Q8/BF16 | 40.11 | 61.09 | 86.32 | 102.13 | 115.21 | 879 | 8/8 · 5/8 |
 | Mia Zig Q8/BF16 | 39.40 | 49.54 | 80.32 | 95.71 | 107.28 | 872 | 8/8 · 5/8 |
 
 #### Balanced benchmark
@@ -74,17 +74,17 @@ Fixed prompt bodies and 400 completion tokens per request.
 
 | Profile | C1 tok/s | C4 tok/s | C8 tok/s |
 | --- | ---: | ---: | ---: |
-| Ours BF16/BF16 | 41.43 | 71.47 | 96.53 |
-| Ours Q4/BF16 | 55.32 | 82.84 | 103.83 |
-| Ours Q4/FP8 | 58.29 | 86.42 | 107.53 |
-| Ours Q8/BF16 | 51.29 | 81.45 | 105.56 |
+| Ours BF16/BF16 | 41.60 | 71.01 | 95.49 |
+| Ours Q4/BF16 | 55.03 | 82.18 | 102.98 |
+| Ours Q4/FP8 | 57.92 | 85.37 | 106.53 |
+| Ours Q8/BF16 | 50.81 | 80.50 | 104.34 |
 | Mia Zig Q8/BF16 | 49.17 | 75.84 | 95.25 |
 
 [Full TP2 results](TP2.md#quality-and-performance)
 
 ### TP4
 
-Our TP4 speed measurements use TensorFold `c829c30e`. The Mia row uses its original Zig engine `80be4d68`. The decode runs use the switched setup at traffic class 104, an eight-request limit, 196,608-token context, FP8 KV, and both prompt-cache tiers off. The quality tables identify the revisions used for scoring.
+Our TP4 speed results use unified TensorFold `26e17d87` over a RoCE switch at traffic class 104. Our decode and `bench2` runs use eight admission slots, a 196,608-token context, the unified prefill fast path, and contiguous FP8 KV with both prompt-cache tiers off. The Mia reference uses its original Zig engine `80be4d68`. Quality scores are tied to their test revisions. [Quality table](TP4.md#quality-by-category)
 
 #### Original Mia Zig benchmark
 
@@ -92,10 +92,10 @@ Rates are measured tok/s. C4, C6, and C8 use whole-wave throughput.
 
 | Profile | C1 prose | C1 code | C4 prose | C6 prose | C8 prose | Quality /959 | Small code / structured |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| Ours BF16/BF16 | 54.37 | 77.91 | 128.85 | 153.51 | 169.99 | 881 | 8/8 · 5/8 |
-| Ours Q4/BF16 | 76.93 | 91.99 | 154.19 | 178.31 | 197.27 | 878 | 8/8 · 7/8 |
-| Ours Q4/FP8 | 80.17 | 96.13 | 152.11 | 183.88 | 200.71 | 882 | 8/8 · 7/8 |
-| Ours Q8/BF16 | 72.60 | 93.75 | 144.95 | 168.43 | 192.79 | 878 | 8/8 · 5/8 |
+| Ours BF16/BF16 | 53.80 | 76.98 | 127.14 | 150.19 | 173.29 | 881 | 8/8 · 5/8 |
+| Ours Q4/BF16 | 76.84 | 92.32 | 149.05 | 179.48 | 198.19 | 878 | 8/8 · 7/8 |
+| Ours Q4/FP8 | 80.24 | 96.16 | 158.83 | 181.59 | 202.06 | 882 | 8/8 · 7/8 |
+| Ours Q8/BF16 | 72.37 | 93.33 | 140.87 | 168.33 | 192.94 | 878 | 8/8 · 5/8 |
 | Mia Zig Q8/BF16 | 63.54 | 85.16 | 129.69 | 162.56 | 175.63 | 878 | 8/8 · 5/8 |
 
 #### Balanced benchmark
@@ -104,19 +104,32 @@ Fixed prompt bodies and 400 completion tokens per request.
 
 | Profile | C1 tok/s | C4 tok/s | C8 tok/s |
 | --- | ---: | ---: | ---: |
-| Ours BF16/BF16 | 70.38 | 120.59 | 159.48 |
-| Ours Q4/BF16 | 93.09 | 138.66 | 173.88 |
-| Ours Q4/FP8 | 96.08 | 143.22 | 178.57 |
-| Ours Q8/BF16 | 90.73 | 141.60 | 182.10 |
+| Ours BF16/BF16 | 69.49 | 119.51 | 158.00 |
+| Ours Q4/BF16 | 92.99 | 138.32 | 173.09 |
+| Ours Q4/FP8 | 95.62 | 142.48 | 178.35 |
+| Ours Q8/BF16 | 89.64 | 140.50 | 180.30 |
 | Mia Zig Q8/BF16 | 80.40 | 128.70 | 166.24 |
 
 [Full TP4 results](TP4.md#quality-and-performance)
+
+### Matched cold prefill
+
+Identical 62,027- and 299,992-token prompts, at the 1M context setting with one active request and no cache hits. See the topology guides for TTFT and test conditions.
+
+| Profile | TP2 62K tok/s | TP2 300K tok/s | TP4 62K tok/s | TP4 300K tok/s |
+| --- | ---: | ---: | ---: | ---: |
+| BF16/BF16 | 1,651.1 | 1,614.3 | 2,593.3 | 2,587.4 |
+| Q4/BF16 | 1,755.8 | 1,703.8 | 2,680.8 | 2,684.2 |
+| Q4/FP8 | 1,739.5 | 1,694.1 | 2,673.6 | 2,673.3 |
+| Q8/BF16 | 1,638.1 | 1,610.3 | 2,536.9 | 2,579.4 |
+
+[Unified benchmark measurements](benchmarks/unified-measurements.json)
 
 ## Context and KV cache
 
 Both topologies keep active FP8 KV in memory. `--prompt-cache-gib` budgets reusable
 prefix snapshots in RAM. The default 1.75 GiB snapshot budget can skip saving
-very long prompts while the active request still uses its full context. The optional
+very long prompts while the active request still uses its full context. The
 NVMe tier stores snapshots across restarts and restores a hit into memory before
 attention resumes. Use `--prompt-cache-gib 0 --tier off` for cold-prefill measurements.
 
@@ -133,6 +146,5 @@ overhead. [TP2 cache settings](TP2.md#ram-and-nvme) · [TP4 cache settings](TP4.
 
 ## Source builds
 
-Use `engine/tp2` to build or develop any TP2 profile. The signed archive source
-tags identify the code and executable shipped in each runtime.
-[Build instructions](BUILDING.md) · [Shared TP2 source](https://github.com/antst/glm-5.3-flash-zig-sparks/tree/engine/tp2) · [TP2 archive sources](tp2/SOURCE.json) · [TP4 archive sources](SOURCE.json) · [Signatures](SIGNING.md) · [Licenses](RECIPE-NOTICE.md)
+Use `engine/unified` for all eight EXL3 configurations. The release archives contain the same executable used for the performance tables. The signed source snapshot records the exact source tree.
+[Build instructions](BUILDING.md) · [Unified engine source](https://github.com/antst/glm-5.3-flash-zig-sparks/tree/engine/unified) · [TP2 archive sources](tp2/SOURCE.json) · [TP4 archive sources](SOURCE.json) · [Signatures](SIGNING.md) · [Licenses](RECIPE-NOTICE.md)

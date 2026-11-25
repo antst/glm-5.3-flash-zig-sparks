@@ -84,9 +84,9 @@ def construct(args, recipe, sources, create_command):
     selected = recipe['profiles'][args.precision]
     bundle = recipe['bundles'][selected['bundle']]
     source = sources[selected['bundle']]
-    tiered = args.tier == 'nvme'
+    tier = args.tier or 'nvme'
+    tiered = tier == 'nvme'
     if tiered:
-        require(selected['qualified_nvme'], 'TP2 NVMe was qualified on the Q8/BF16 profile')
         require(args.prompt_cache_gib > 0 and args.require_cache_tokens <= args.context,
                 'NVMe needs a RAM prompt cache and a cache threshold within the context')
     if args.verify_runtime:
@@ -118,7 +118,7 @@ def construct(args, recipe, sources, create_command):
                   source_commit=source['source_commit'], native_sha256=source['native_sha256'],
                   model=recipe['checkpoints']['exl3'], drafter=recipe['checkpoints']['drafter'],
                   model_root=str(roots['model']), drafter_root=str(roots['drafter']),
-                  context=args.context, parallel=args.parallel, tier=args.tier, verify_rows=32,
+                  context=args.context, parallel=args.parallel, tier=tier, verify_rows=32,
                   context_and_parallel_match_measured_scope=(args.context == 196608 and args.parallel == 8),
                   prompt_cache_gib=args.prompt_cache_gib,
                   calibration_sha256=env.get('TF_GLM_CALIBRATION_SHA256'),

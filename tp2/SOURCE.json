@@ -1,38 +1,32 @@
 {
   "bf16": {
-    "branch": "engine/tp2",
-    "tag": "archive/tp2-bf16-v1.2.17",
-    "build_receipt_sha256": "62f44df123d4d8063879078d5c29e86af740df8ed910550c6f3a1220e94c7992",
-    "embedded_image_set": "glm53-embedded-images146.tar.gz",
-    "native_sha256": "b87140a3224ce706aa6624c971ec6665c61ef89dcbdcf63c821fe6ef8ce1d91b",
-    "source_commit": "4c286e54f0902b367b3d5def70c10668b8dbf98c",
-    "source_manifest": "tp2/source-sha256-bf16.json",
-    "source_manifest_sha256": "54d11e03dcfb18148c912e8e7e7f3e750cb59ac70b2df90b52a44471b6d58f13",
-    "source_tree": "2052cc7c01e57f48c593e5282be181d7bbbed989",
-    "version": "1.2.17"
+    "source_commit": "26e17d87954d29a0dfbd31d8e6dc7453fd564d61",
+    "source_tree": "56bd5d3f53d435f6a16bc4db7229eb9df04ffaf7",
+    "source_manifest_sha256": "270170a49b5d008576fcd2ade5f0b4424d588f683752447300ed1cdee7645b17",
+    "native_sha256": "025ce1efce4a1d341b1b75d04e5bf0d998d25dfc7f56a98cb255e5b988c24907",
+    "branch": "engine/unified",
+    "tag": "v1.3.0-tp2-tp4-engine",
+    "signed_snapshot_commit": "97d47c56dba254f0ef183cfb3fec90eeb84edd81",
+    "source_manifest": "../source-sha256.json"
   },
   "q4": {
-    "branch": "engine/tp2",
-    "tag": "archive/tp2-q4-v1.2.23",
-    "build_receipt_sha256": "92f00063611cb9af50c3decfdc65dae47435a946c4c00c5ccc418fa3287ac13c",
-    "embedded_image_set": "glm53-embedded-images146.tar.gz",
-    "native_sha256": "6b9c9a6f2206f878feb6d21b2bbd4c27873dd8c500cd4862a2e74f8053c49f40",
-    "source_commit": "920e5fd29af96d04d9bfcd4c0ff499af765fb65c",
-    "source_manifest": "tp2/source-sha256-q4.json",
-    "source_manifest_sha256": "c77287314a8d3c6e6a4f4386a116167d708c4814d41e0efe8d01f09f4bf62a7c",
-    "source_tree": "1b13ddc317aad5eacfba3f2a6f642f021d7c0bda",
-    "version": "1.2.23"
+    "source_commit": "26e17d87954d29a0dfbd31d8e6dc7453fd564d61",
+    "source_tree": "56bd5d3f53d435f6a16bc4db7229eb9df04ffaf7",
+    "source_manifest_sha256": "270170a49b5d008576fcd2ade5f0b4424d588f683752447300ed1cdee7645b17",
+    "native_sha256": "025ce1efce4a1d341b1b75d04e5bf0d998d25dfc7f56a98cb255e5b988c24907",
+    "branch": "engine/unified",
+    "tag": "v1.3.0-tp2-tp4-engine",
+    "signed_snapshot_commit": "97d47c56dba254f0ef183cfb3fec90eeb84edd81",
+    "source_manifest": "../source-sha256.json"
   },
   "q8": {
-    "branch": "engine/tp2",
-    "tag": "archive/tp2-q8-v1.2.47",
-    "build_receipt_sha256": "5739ac534759cdae37b1378ff6e57eccb36ccc4a94ac571dfb61333479550541",
-    "embedded_image_set": "glm53-embedded-images146.tar.gz",
-    "native_sha256": "b581b116e6d75ba387fb3629d96c51a159d6c3ba3f1d3c6aa446512316f5b624",
-    "source_commit": "847757c2e612951263799ac1ffc91d2081cedcec",
-    "source_manifest": "tp2/source-sha256-q8.json",
-    "source_manifest_sha256": "719e7cf176d4ecb2ae835650badba1dbb70e04498adaf904a2085e6d8a5623ac",
-    "source_tree": "c47a5e25265dc2e76a8f85760141dfd08ca46c59",
-    "version": "1.2.47"
+    "source_commit": "26e17d87954d29a0dfbd31d8e6dc7453fd564d61",
+    "source_tree": "56bd5d3f53d435f6a16bc4db7229eb9df04ffaf7",
+    "source_manifest_sha256": "270170a49b5d008576fcd2ade5f0b4424d588f683752447300ed1cdee7645b17",
+    "native_sha256": "025ce1efce4a1d341b1b75d04e5bf0d998d25dfc7f56a98cb255e5b988c24907",
+    "branch": "engine/unified",
+    "tag": "v1.3.0-tp2-tp4-engine",
+    "signed_snapshot_commit": "97d47c56dba254f0ef183cfb3fec90eeb84edd81",
+    "source_manifest": "../source-sha256.json"
   }
 }

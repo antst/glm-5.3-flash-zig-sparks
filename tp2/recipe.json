@@ -1,222 +1,287 @@
 {
   "bundles": {
     "bf16": {
-      "archive": "glm53-tp2-bf16-runtime.tar.gz",
+      "archive": "glm53-tp2-bf16-unified-runtime.tar.gz",
       "files": [
         {
-          "bytes": 851472,
           "path": "dflash_reference.fatbin",
+          "bytes": 851472,
           "sha256": "3ffdb516c366c10dced9e36a7abee27bc5484a2a690d992ff9ce36570c7fa9e0"
         },
         {
-          "bytes": 100712,
           "path": "dflash_reference_attention.cubin",
+          "bytes": 100712,
           "sha256": "b33690449f594947004f4fd11b2bb08825b56f9a00d779a4d3c8f167cdfc2098"
         },
         {
-          "bytes": 970896,
           "path": "exl3_prompt_whole.fatbin",
+          "bytes": 970896,
           "sha256": "65c062c3d9f46342c76a29dc844aa57e228dccbc08903c9f877e105b1bc6fc39"
         },
         {
-          "bytes": 3583904,
           "path": "glm_dense_segments.fatbin",
+          "bytes": 3583904,
           "sha256": "8dfd446605497436654d9926153478b93b19959ff79bbe042e2d598f69ae4669"
         },
         {
-          "bytes": 448496,
+          "path": "glm_exl3_combine_shared.fatbin",
+          "bytes": 7400,
+          "sha256": "0cbf2a88946b3c6e622c315f24adaabb00163932838f315031c134a1a8e19071"
+        },
+        {
           "path": "glm_exl3_decode_mcg4.fatbin",
+          "bytes": 448496,
           "sha256": "9d69cdcdd1bb97a7bb7aaf448b8df844227062a0db4ade4f7f6323e35e61f78b"
         },
         {
-          "bytes": 19392,
+          "path": "glm_exl3_prompt_ordered_items.fatbin",
+          "bytes": 21232,
+          "sha256": "790f9c700849162f1b990ed3c7658881f04ad2193743ef21a21ad1b960e53d5f"
+        },
+        {
           "path": "glm_head_fp8.fatbin",
+          "bytes": 19392,
           "sha256": "0f15d6c93183a3185680e0cdd8e61f7047c9b5c054ac0d5ba755d65ea6f15ab5"
         },
         {
-          "bytes": 80152,
           "path": "glm_head_fp8_g64.fatbin",
+          "bytes": 80152,
           "sha256": "0e3d6e28130225f7c7fb633d23b27f20f347e23b017599793d8e6d4e1a08a0ad"
         },
         {
-          "bytes": 539152,
+          "path": "glm_kda_async_step.fatbin",
+          "bytes": 33048,
+          "sha256": "1598b2092588300fe6c0ace6234b4b36c2f3f23d77e6d8345b15ab64c4b9362a"
+        },
+        {
+          "path": "glm_kda_prep_lane4.fatbin",
+          "bytes": 41840,
+          "sha256": "86a8fca9e8802a0fdd51aebe4b87f167938f27de1179240df72adca1e76cc1eb"
+        },
+        {
           "path": "glm_kda_segments.fatbin",
+          "bytes": 539152,
           "sha256": "1f2ef5524f67639f681e5a1a3334d0bc89bb4a456d067d7889a8e26be9ded07d"
         },
         {
-          "bytes": 207616,
           "path": "glm_latent_mma.fatbin",
+          "bytes": 207616,
           "sha256": "34e82c3d34080e41408fa4e2de24d229ffcbce55d3ad24bae953ffeeb9608650"
         },
         {
-          "bytes": 51256,
+          "path": "glm_prefill_fp8_h32.fatbin",
+          "bytes": 30072,
+          "sha256": "d8a23632ad033d1d4a0be4fbe5536f1d484cbfa3d7cb215c8716cd15103e52d8"
+        },
+        {
           "path": "glm_q4_mse.fatbin",
+          "bytes": 51256,
           "sha256": "fe539d130e29dcd6f90b53334cf5a931e51d2d9a3273f577109378ced84a9a8d"
         },
         {
-          "bytes": 996576,
           "path": "glm_q4_python_prompt.fatbin",
+          "bytes": 996576,
           "sha256": "20972abb31288a7cc4fb4865c7cece11b1d013fcbf82a0b6ecde49b7c93e2d5e"
         },
         {
-          "bytes": 79789200,
           "path": "libnccl.so.2",
+          "bytes": 79789200,
           "sha256": "01d04c83cf666155466c6a00368a40cd3caa50beca5265abb89d9f14ae99da87"
         },
         {
-          "bytes": 4826440,
           "path": "libtf_candidate.so",
+          "bytes": 4826440,
           "sha256": "1bf5042123f471a1c2c90ea67d262c2986e00a7eb34c98724a14f22945eba3b0"
         },
         {
-          "bytes": 2980008,
           "path": "libtfgrammar.so",
-          "sha256": "abad72a824800ec45e07d2c4416bf4249266f70bf86046a0f0770653068eb09e"
+          "bytes": 3009200,
+          "sha256": "983f2323288bde6e6a6486984bdc32e8870172a30077fbeb30e647d04ee2c0d2"
         },
         {
-          "bytes": 51640,
+          "path": "prefill-glue.fatbin",
+          "bytes": 1794008,
+          "sha256": "0671c791834fef7b9efcaf0cf2cb7fca1912790c26b6a2e78f029c8e54b026c5"
+        },
+        {
           "path": "rdma_gather_deployed.fatbin",
+          "bytes": 51640,
           "sha256": "23affd2303d7da3077ef6afc97f09e1c607f1325aacbb9a24842388389c3bd80"
         },
         {
-          "bytes": 51281800,
           "path": "tensorfold-native",
-          "sha256": "b87140a3224ce706aa6624c971ec6665c61ef89dcbdcf63c821fe6ef8ce1d91b"
+          "bytes": 55973808,
+          "sha256": "025ce1efce4a1d341b1b75d04e5bf0d998d25dfc7f56a98cb255e5b988c24907"
         },
         {
-          "bytes": 8723,
           "path": "thinking-off.jinja",
+          "bytes": 8723,
           "sha256": "693bb47a83abab82c973ed50719929ec88c4695cbb8d84feb1d91897b6837f23"
         },
         {
-          "bytes": 11357,
           "path": "xgrammar-LICENSE",
+          "bytes": 11357,
           "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
         },
         {
-          "bytes": 54,
           "path": "xgrammar-NOTICE",
+          "bytes": 54,
           "sha256": "769c6907073c65801bfcfe3ce1c0e80bf0ae4e124e2769d4f026c038ad583c0f"
         }
       ],
       "mounts": []
     },
     "q4": {
-      "archive": "glm53-tp2-q4-runtime.tar.gz",
+      "archive": "glm53-tp2-q4-unified-runtime.tar.gz",
       "files": [
         {
-          "bytes": 992,
           "path": "calibration/manifest.json",
+          "bytes": 992,
           "sha256": "10ba40b675840f9a7d5c88f1fb2ca254ce740d7b595dfe0fa5b4d0099aa1d55b"
         },
         {
-          "bytes": 6020208,
           "path": "calibration/rank-0.bin",
+          "bytes": 6020208,
           "sha256": "b03d18a7d29c1e44297e97578fcea7390513475719df5732d679a2e5943593f1"
         },
         {
-          "bytes": 6020208,
           "path": "calibration/rank-1.bin",
+          "bytes": 6020208,
           "sha256": "ee54510b2b49b148c532808326bd0e5c731096f2a12b02c67027978b6601aaf2"
         },
         {
-          "bytes": 851472,
           "path": "dflash_reference.fatbin",
+          "bytes": 851472,
           "sha256": "3ffdb516c366c10dced9e36a7abee27bc5484a2a690d992ff9ce36570c7fa9e0"
         },
         {
-          "bytes": 100712,
           "path": "dflash_reference_attention.cubin",
+          "bytes": 100712,
           "sha256": "b33690449f594947004f4fd11b2bb08825b56f9a00d779a4d3c8f167cdfc2098"
         },
         {
-          "bytes": 970896,
           "path": "exl3_prompt_whole.fatbin",
+          "bytes": 970896,
           "sha256": "65c062c3d9f46342c76a29dc844aa57e228dccbc08903c9f877e105b1bc6fc39"
         },
         {
-          "bytes": 3583904,
           "path": "glm_dense_segments.fatbin",
+          "bytes": 3583904,
           "sha256": "8dfd446605497436654d9926153478b93b19959ff79bbe042e2d598f69ae4669"
         },
         {
-          "bytes": 448496,
+          "path": "glm_exl3_combine_shared.fatbin",
+          "bytes": 7400,
+          "sha256": "0cbf2a88946b3c6e622c315f24adaabb00163932838f315031c134a1a8e19071"
+        },
+        {
           "path": "glm_exl3_decode_mcg4.fatbin",
+          "bytes": 448496,
           "sha256": "9d69cdcdd1bb97a7bb7aaf448b8df844227062a0db4ade4f7f6323e35e61f78b"
         },
         {
-          "bytes": 19392,
+          "path": "glm_exl3_prompt_ordered_items.fatbin",
+          "bytes": 21232,
+          "sha256": "790f9c700849162f1b990ed3c7658881f04ad2193743ef21a21ad1b960e53d5f"
+        },
+        {
           "path": "glm_head_fp8.fatbin",
+          "bytes": 19392,
           "sha256": "0f15d6c93183a3185680e0cdd8e61f7047c9b5c054ac0d5ba755d65ea6f15ab5"
         },
         {
-          "bytes": 80152,
           "path": "glm_head_fp8_g64.fatbin",
+          "bytes": 80152,
           "sha256": "0e3d6e28130225f7c7fb633d23b27f20f347e23b017599793d8e6d4e1a08a0ad"
         },
         {
-          "bytes": 539152,
+          "path": "glm_kda_async_step.fatbin",
+          "bytes": 33048,
+          "sha256": "1598b2092588300fe6c0ace6234b4b36c2f3f23d77e6d8345b15ab64c4b9362a"
+        },
+        {
+          "path": "glm_kda_prep_lane4.fatbin",
+          "bytes": 41840,
+          "sha256": "86a8fca9e8802a0fdd51aebe4b87f167938f27de1179240df72adca1e76cc1eb"
+        },
+        {
           "path": "glm_kda_segments.fatbin",
+          "bytes": 539152,
           "sha256": "1f2ef5524f67639f681e5a1a3334d0bc89bb4a456d067d7889a8e26be9ded07d"
         },
         {
-          "bytes": 207616,
           "path": "glm_latent_mma.fatbin",
+          "bytes": 207616,
           "sha256": "34e82c3d34080e41408fa4e2de24d229ffcbce55d3ad24bae953ffeeb9608650"
         },
         {
-          "bytes": 1016056,
+          "path": "glm_latent_row_stage.fatbin",
+          "bytes": 93920,
+          "sha256": "6be1a1a57695feebb78c1fa91cf3361be24d408445e3237e59a621449a1f22c7"
+        },
+        {
+          "path": "glm_prefill_fp8_h32.fatbin",
+          "bytes": 30072,
+          "sha256": "d8a23632ad033d1d4a0be4fbe5536f1d484cbfa3d7cb215c8716cd15103e52d8"
+        },
+        {
           "path": "glm_q4_activation_refine.fatbin",
+          "bytes": 1016056,
           "sha256": "c746268104167d9ec12d422a8f5f71d9c3ab9f81c7a5e583cc06e629ec22de86"
         },
         {
-          "bytes": 51256,
           "path": "glm_q4_mse.fatbin",
+          "bytes": 51256,
           "sha256": "fe539d130e29dcd6f90b53334cf5a931e51d2d9a3273f577109378ced84a9a8d"
         },
         {
-          "bytes": 996576,
           "path": "glm_q4_python_prompt.fatbin",
+          "bytes": 996576,
           "sha256": "20972abb31288a7cc4fb4865c7cece11b1d013fcbf82a0b6ecde49b7c93e2d5e"
         },
         {
-          "bytes": 79789200,
           "path": "libnccl.so.2",
+          "bytes": 79789200,
           "sha256": "01d04c83cf666155466c6a00368a40cd3caa50beca5265abb89d9f14ae99da87"
         },
         {
-          "bytes": 4826440,
           "path": "libtf_candidate.so",
+          "bytes": 4826440,
           "sha256": "1bf5042123f471a1c2c90ea67d262c2986e00a7eb34c98724a14f22945eba3b0"
         },
         {
-          "bytes": 2980008,
           "path": "libtfgrammar.so",
-          "sha256": "abad72a824800ec45e07d2c4416bf4249266f70bf86046a0f0770653068eb09e"
+          "bytes": 3009200,
+          "sha256": "983f2323288bde6e6a6486984bdc32e8870172a30077fbeb30e647d04ee2c0d2"
         },
         {
-          "bytes": 51640,
+          "path": "prefill-glue.fatbin",
+          "bytes": 1794008,
+          "sha256": "0671c791834fef7b9efcaf0cf2cb7fca1912790c26b6a2e78f029c8e54b026c5"
+        },
+        {
           "path": "rdma_gather_deployed.fatbin",
+          "bytes": 51640,
           "sha256": "23affd2303d7da3077ef6afc97f09e1c607f1325aacbb9a24842388389c3bd80"
         },
         {
-          "bytes": 51314824,
           "path": "tensorfold-native",
-          "sha256": "6b9c9a6f2206f878feb6d21b2bbd4c27873dd8c500cd4862a2e74f8053c49f40"
+          "bytes": 55973808,
+          "sha256": "025ce1efce4a1d341b1b75d04e5bf0d998d25dfc7f56a98cb255e5b988c24907"
         },
         {
-          "bytes": 8723,
           "path": "thinking-off.jinja",
+          "bytes": 8723,
           "sha256": "693bb47a83abab82c973ed50719929ec88c4695cbb8d84feb1d91897b6837f23"
         },
         {
-          "bytes": 11357,
           "path": "xgrammar-LICENSE",
+          "bytes": 11357,
           "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
         },
         {
-          "bytes": 54,
           "path": "xgrammar-NOTICE",
+          "bytes": 54,
           "sha256": "769c6907073c65801bfcfe3ce1c0e80bf0ae4e124e2769d4f026c038ad583c0f"
         }
       ],
@@ -228,146 +293,176 @@
       ]
     },
     "q8": {
-      "archive": "glm53-tp2-q8-runtime.tar.gz",
+      "archive": "glm53-tp2-q8-unified-runtime.tar.gz",
       "files": [
         {
-          "bytes": 905,
           "path": "calibration/manifest.json",
+          "bytes": 905,
           "sha256": "3f3566c55dfa5fff0b194fc53f8db0c6bb8a973f705d6e75e4219b6a919b64ce"
         },
         {
-          "bytes": 6020208,
           "path": "calibration/rank-0.bin",
+          "bytes": 6020208,
           "sha256": "ed0b931443ce93e09add92adcc09727d5ef9596c9e5e188832751daf960683d5"
         },
         {
-          "bytes": 6020208,
           "path": "calibration/rank-1.bin",
+          "bytes": 6020208,
           "sha256": "d856c03ff91a5d171117312ff006e33f0c8d0b2adc94ee4f35a223a6ab0926c6"
         },
         {
-          "bytes": 117637,
           "path": "correlation/manifest.json",
+          "bytes": 117637,
           "sha256": "9ada369e457fafb9032cdf673d324edbddd23b4e3c0f440f68ea5b760127a065"
         },
         {
-          "bytes": 195298416,
           "path": "correlation/rank-0.covariance.bin",
+          "bytes": 195298416,
           "sha256": "da0d065d9ba2bab9464b60741a10e96fbd23e4e12d1fd5891c01ece36b7e9316"
         },
         {
-          "bytes": 6020208,
           "path": "correlation/rank-0.diagonal.bin",
+          "bytes": 6020208,
           "sha256": "ed0b931443ce93e09add92adcc09727d5ef9596c9e5e188832751daf960683d5"
         },
         {
-          "bytes": 195298416,
           "path": "correlation/rank-1.covariance.bin",
+          "bytes": 195298416,
           "sha256": "61e3691b1eb6c9c3f785ad4f61f245f00933e04670f69a04df8a3dec7901b6f9"
         },
         {
-          "bytes": 6020208,
           "path": "correlation/rank-1.diagonal.bin",
+          "bytes": 6020208,
           "sha256": "d856c03ff91a5d171117312ff006e33f0c8d0b2adc94ee4f35a223a6ab0926c6"
         },
         {
-          "bytes": 851472,
           "path": "dflash_reference.fatbin",
+          "bytes": 851472,
           "sha256": "3ffdb516c366c10dced9e36a7abee27bc5484a2a690d992ff9ce36570c7fa9e0"
         },
         {
-          "bytes": 100712,
           "path": "dflash_reference_attention.cubin",
+          "bytes": 100712,
           "sha256": "b33690449f594947004f4fd11b2bb08825b56f9a00d779a4d3c8f167cdfc2098"
         },
         {
-          "bytes": 970896,
           "path": "exl3_prompt_whole.fatbin",
+          "bytes": 970896,
           "sha256": "65c062c3d9f46342c76a29dc844aa57e228dccbc08903c9f877e105b1bc6fc39"
         },
         {
-          "bytes": 3583904,
           "path": "glm_dense_segments.fatbin",
+          "bytes": 3583904,
           "sha256": "8dfd446605497436654d9926153478b93b19959ff79bbe042e2d598f69ae4669"
         },
         {
-          "bytes": 448496,
+          "path": "glm_exl3_combine_shared.fatbin",
+          "bytes": 7400,
+          "sha256": "0cbf2a88946b3c6e622c315f24adaabb00163932838f315031c134a1a8e19071"
+        },
+        {
           "path": "glm_exl3_decode_mcg4.fatbin",
+          "bytes": 448496,
           "sha256": "9d69cdcdd1bb97a7bb7aaf448b8df844227062a0db4ade4f7f6323e35e61f78b"
         },
         {
-          "bytes": 19392,
+          "path": "glm_exl3_prompt_ordered_items.fatbin",
+          "bytes": 21232,
+          "sha256": "790f9c700849162f1b990ed3c7658881f04ad2193743ef21a21ad1b960e53d5f"
+        },
+        {
           "path": "glm_head_fp8.fatbin",
+          "bytes": 19392,
           "sha256": "0f15d6c93183a3185680e0cdd8e61f7047c9b5c054ac0d5ba755d65ea6f15ab5"
         },
         {
-          "bytes": 80152,
           "path": "glm_head_fp8_g64.fatbin",
+          "bytes": 80152,
           "sha256": "0e3d6e28130225f7c7fb633d23b27f20f347e23b017599793d8e6d4e1a08a0ad"
         },
         {
-          "bytes": 539152,
+          "path": "glm_kda_async_step.fatbin",
+          "bytes": 33048,
+          "sha256": "1598b2092588300fe6c0ace6234b4b36c2f3f23d77e6d8345b15ab64c4b9362a"
+        },
+        {
+          "path": "glm_kda_prep_lane4.fatbin",
+          "bytes": 41840,
+          "sha256": "86a8fca9e8802a0fdd51aebe4b87f167938f27de1179240df72adca1e76cc1eb"
+        },
+        {
           "path": "glm_kda_segments.fatbin",
+          "bytes": 539152,
           "sha256": "1f2ef5524f67639f681e5a1a3334d0bc89bb4a456d067d7889a8e26be9ded07d"
         },
         {
-          "bytes": 207616,
           "path": "glm_latent_mma.fatbin",
+          "bytes": 207616,
           "sha256": "34e82c3d34080e41408fa4e2de24d229ffcbce55d3ad24bae953ffeeb9608650"
         },
         {
-          "bytes": 51256,
+          "path": "glm_prefill_fp8_h32.fatbin",
+          "bytes": 30072,
+          "sha256": "d8a23632ad033d1d4a0be4fbe5536f1d484cbfa3d7cb215c8716cd15103e52d8"
+        },
+        {
           "path": "glm_q4_mse.fatbin",
+          "bytes": 51256,
           "sha256": "fe539d130e29dcd6f90b53334cf5a931e51d2d9a3273f577109378ced84a9a8d"
         },
         {
-          "bytes": 996576,
           "path": "glm_q4_python_prompt.fatbin",
+          "bytes": 996576,
           "sha256": "20972abb31288a7cc4fb4865c7cece11b1d013fcbf82a0b6ecde49b7c93e2d5e"
         },
         {
-          "bytes": 211840,
           "path": "glm_q8_correlated.fatbin",
+          "bytes": 211840,
           "sha256": "767bcdc9b11a921ca23be9d6e99cd53c6718c919e3595a77842e84591c30829b"
         },
         {
-          "bytes": 79789200,
           "path": "libnccl.so.2",
+          "bytes": 79789200,
           "sha256": "01d04c83cf666155466c6a00368a40cd3caa50beca5265abb89d9f14ae99da87"
         },
         {
-          "bytes": 4826440,
           "path": "libtf_candidate.so",
+          "bytes": 4826440,
           "sha256": "1bf5042123f471a1c2c90ea67d262c2986e00a7eb34c98724a14f22945eba3b0"
         },
         {
-          "bytes": 3001576,
           "path": "libtfgrammar.so",
-          "sha256": "1b3c8574372447b3312c17ddd5e79fdfd8f3e3ae2f3e1d63a25fc39466658001"
+          "bytes": 3009200,
+          "sha256": "983f2323288bde6e6a6486984bdc32e8870172a30077fbeb30e647d04ee2c0d2"
         },
         {
-          "bytes": 51640,
+          "path": "prefill-glue.fatbin",
+          "bytes": 1794008,
+          "sha256": "0671c791834fef7b9efcaf0cf2cb7fca1912790c26b6a2e78f029c8e54b026c5"
+        },
+        {
           "path": "rdma_gather_deployed.fatbin",
+          "bytes": 51640,
           "sha256": "23affd2303d7da3077ef6afc97f09e1c607f1325aacbb9a24842388389c3bd80"
         },
         {
-          "bytes": 51346440,
           "path": "tensorfold-native",
-          "sha256": "b581b116e6d75ba387fb3629d96c51a159d6c3ba3f1d3c6aa446512316f5b624"
+          "bytes": 55973808,
+          "sha256": "025ce1efce4a1d341b1b75d04e5bf0d998d25dfc7f56a98cb255e5b988c24907"
         },
         {
-          "bytes": 8723,
           "path": "thinking-off.jinja",
+          "bytes": 8723,
           "sha256": "693bb47a83abab82c973ed50719929ec88c4695cbb8d84feb1d91897b6837f23"
         },
         {
-          "bytes": 11357,
           "path": "xgrammar-LICENSE",
+          "bytes": 11357,
           "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
         },
         {
-          "bytes": 54,
           "path": "xgrammar-NOTICE",
+          "bytes": 54,
           "sha256": "769c6907073c65801bfcfe3ce1c0e80bf0ae4e124e2769d4f026c038ad583c0f"
         }
       ],
@@ -545,7 +640,9 @@
       "--chat-template",
       "/opt/glm/thinking-off.jinja",
       "--temperature",
-      "0"
+      "0",
+      "--max-tokens",
+      "131072"
     ],
     "Entrypoint": [
       "/opt/glm/tensorfold-native"
@@ -649,9 +746,18 @@
         "TF_GLM_Q4_AFFINE_MSE": "0",
         "TF_GLM_Q4_HEAD_FP8": "0",
         "TF_GLM_Q4_PYTHON_PROMPT": "0",
-        "TF_GLM_Q4_PYTHON_SPLITS": "0"
-      },
-      "qualified_nvme": false
+        "TF_GLM_Q4_PYTHON_SPLITS": "0",
+        "TF_GLM_EXL3_PROMPT_DIRECT_SLOT_IMAGE": "/opt/glm/glm_exl3_combine_shared.fatbin",
+        "TF_GLM_EXL3_PROMPT_ORDER_IMAGE": "/opt/glm/glm_exl3_prompt_ordered_items.fatbin",
+        "TF_GLM_KDA_ASYNC_STEP_IMAGE": "/opt/glm/glm_kda_async_step.fatbin",
+        "TF_GLM_KDA_PREP_LANE4_IMAGE": "/opt/glm/glm_kda_prep_lane4.fatbin",
+        "TF_GLM_OVERLAP_PIECES": "3",
+        "TF_GLM_PREFILL_GLUE_IMAGE": "/opt/glm/prefill-glue.fatbin",
+        "TF_GLM_PREFILL_H32_IMAGE": "/opt/glm/glm_prefill_fp8_h32.fatbin",
+        "TF_GLM_PREFILL_OPT": "1",
+        "TF_KV_PAGES": "off",
+        "TF_KV_SHARE": "0"
+      }
     },
     "q4": {
       "bundle": "q4",
@@ -668,9 +774,19 @@
         "TF_GLM_Q4_HEAD_FP8": "0",
         "TF_GLM_Q4_PYTHON_PROMPT": "1",
         "TF_GLM_Q4_PYTHON_SPLITS": "1",
-        "TF_LOAD_PREFETCH": "0"
-      },
-      "qualified_nvme": false
+        "TF_LOAD_PREFETCH": "0",
+        "TF_GLM_EXL3_PROMPT_DIRECT_SLOT_IMAGE": "/opt/glm/glm_exl3_combine_shared.fatbin",
+        "TF_GLM_EXL3_PROMPT_ORDER_IMAGE": "/opt/glm/glm_exl3_prompt_ordered_items.fatbin",
+        "TF_GLM_KDA_ASYNC_STEP_IMAGE": "/opt/glm/glm_kda_async_step.fatbin",
+        "TF_GLM_KDA_PREP_LANE4_IMAGE": "/opt/glm/glm_kda_prep_lane4.fatbin",
+        "TF_GLM_LATENT_ROW_STAGE_IMAGE": "/opt/glm/glm_latent_row_stage.fatbin",
+        "TF_GLM_OVERLAP_PIECES": "3",
+        "TF_GLM_PREFILL_GLUE_IMAGE": "/opt/glm/prefill-glue.fatbin",
+        "TF_GLM_PREFILL_H32_IMAGE": "/opt/glm/glm_prefill_fp8_h32.fatbin",
+        "TF_GLM_PREFILL_OPT": "1",
+        "TF_KV_PAGES": "off",
+        "TF_KV_SHARE": "0"
+      }
     },
     "q4-fp8": {
       "bundle": "q4",
@@ -687,9 +803,19 @@
         "TF_GLM_Q4_HEAD_FP8": "1",
         "TF_GLM_Q4_PYTHON_PROMPT": "1",
         "TF_GLM_Q4_PYTHON_SPLITS": "1",
-        "TF_LOAD_PREFETCH": "0"
-      },
-      "qualified_nvme": false
+        "TF_LOAD_PREFETCH": "0",
+        "TF_GLM_EXL3_PROMPT_DIRECT_SLOT_IMAGE": "/opt/glm/glm_exl3_combine_shared.fatbin",
+        "TF_GLM_EXL3_PROMPT_ORDER_IMAGE": "/opt/glm/glm_exl3_prompt_ordered_items.fatbin",
+        "TF_GLM_KDA_ASYNC_STEP_IMAGE": "/opt/glm/glm_kda_async_step.fatbin",
+        "TF_GLM_KDA_PREP_LANE4_IMAGE": "/opt/glm/glm_kda_prep_lane4.fatbin",
+        "TF_GLM_LATENT_ROW_STAGE_IMAGE": "/opt/glm/glm_latent_row_stage.fatbin",
+        "TF_GLM_OVERLAP_PIECES": "3",
+        "TF_GLM_PREFILL_GLUE_IMAGE": "/opt/glm/prefill-glue.fatbin",
+        "TF_GLM_PREFILL_H32_IMAGE": "/opt/glm/glm_prefill_fp8_h32.fatbin",
+        "TF_GLM_PREFILL_OPT": "1",
+        "TF_KV_PAGES": "off",
+        "TF_KV_SHARE": "0"
+      }
     },
     "q8": {
       "bundle": "q8",
@@ -710,9 +836,18 @@
         "TF_GLM_Q8_CORRELATION_ROOT": "/opt/correlation",
         "TF_GLM_Q8_CORRELATION_SHA256": "9ada369e457fafb9032cdf673d324edbddd23b4e3c0f440f68ea5b760127a065",
         "TF_GLM_Q8_MSE": "1",
-        "TF_LOAD_PREFETCH": "0"
-      },
-      "qualified_nvme": true
+        "TF_LOAD_PREFETCH": "0",
+        "TF_GLM_EXL3_PROMPT_DIRECT_SLOT_IMAGE": "/opt/glm/glm_exl3_combine_shared.fatbin",
+        "TF_GLM_EXL3_PROMPT_ORDER_IMAGE": "/opt/glm/glm_exl3_prompt_ordered_items.fatbin",
+        "TF_GLM_KDA_ASYNC_STEP_IMAGE": "/opt/glm/glm_kda_async_step.fatbin",
+        "TF_GLM_KDA_PREP_LANE4_IMAGE": "/opt/glm/glm_kda_prep_lane4.fatbin",
+        "TF_GLM_OVERLAP_PIECES": "3",
+        "TF_GLM_PREFILL_GLUE_IMAGE": "/opt/glm/prefill-glue.fatbin",
+        "TF_GLM_PREFILL_H32_IMAGE": "/opt/glm/glm_prefill_fp8_h32.fatbin",
+        "TF_GLM_PREFILL_OPT": "1",
+        "TF_KV_PAGES": "off",
+        "TF_KV_SHARE": "0"
+      }
     }
   },
   "rank_hosts": [

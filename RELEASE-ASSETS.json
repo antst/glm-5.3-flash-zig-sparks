@@ -1,92 +1,58 @@
 {
-  "passed": true,
-  "published": false,
-  "source_snapshots": {
-    "tensorfold-glm53-coherent-1e3ba2cf32cb-source.tar.gz": {
-      "source_commit": "1e3ba2cf32cb1dea035e38ad41adffc7ea402c6d",
-      "source_tree": "d9d2e0f73a874c2f87445bf033efa30055f7eb5d",
-      "source_manifest_sha256": "40c907eee2dc870b0744ab1e29e007b816b25c98bb65275f5919b70bc1a2ab0a",
-      "all_archive_member_hashes_checked": true,
-      "files": 11137,
-      "explicit_root_directory_checked": true,
-      "Git_PAX_commit_identity_checked": true,
-      "preexisting_complete_archive_adopted": true,
-      "archive_sha256": "74dd2322273658e0e93d1e6c8560cb0ca8c08ae27cc31400482bf13cc35bb3ed"
-    },
-    "tensorfold-glm53-nvfp4-retained-bbc3b2dd12bc-source.tar.gz": {
-      "source_commit": "bbc3b2dd12bc8f63b58f7709bc855210afc3ba55",
-      "source_tree": "2915105a7936764e99063415283eb21ee5d1870b",
-      "source_manifest_sha256": "5b1e59fc40b3a633224db82b43314b0b8760fc522967be0f73918b919a4dca91",
-      "all_archive_member_hashes_checked": true,
-      "files": 11130,
-      "explicit_root_directory_checked": true,
-      "Git_PAX_commit_identity_checked": true,
-      "preexisting_complete_archive_adopted": false,
-      "archive_sha256": "7774eea882eceabe25308d934a173cdb4a86095bbe0095221acf0ff193106d94"
-    }
+  "release_tag": "v1.3.0-tp2-tp4",
+  "release_url": "https://github.com/antst/glm-5.3-flash-zig-sparks/releases/tag/v1.3.0-tp2-tp4",
+  "source": {
+    "source_commit": "26e17d87954d29a0dfbd31d8e6dc7453fd564d61",
+    "source_tree": "56bd5d3f53d435f6a16bc4db7229eb9df04ffaf7",
+    "source_manifest_sha256": "270170a49b5d008576fcd2ade5f0b4424d588f683752447300ed1cdee7645b17",
+    "native_sha256": "025ce1efce4a1d341b1b75d04e5bf0d998d25dfc7f56a98cb255e5b988c24907",
+    "branch": "engine/unified",
+    "tag": "v1.3.0-tp2-tp4-engine",
+    "signed_snapshot_commit": "97d47c56dba254f0ef183cfb3fec90eeb84edd81",
+    "source_archive": "tensorfold-glm53-unified-source.tar.gz",
+    "source_manifest": "source-sha256.json",
+    "files": 12797,
+    "signature_verified": true
   },
-  "resumed_partial_v5_assembly": true,
-  "source_archive_root_directory_validated": true,
-  "runtime_image": "sha256:567d5c7ec9cb19d5b91e8ed8df197d68cb8322f4c569453c00dd5a12a924028a",
   "assets": [
     {
-      "name": "borrowed-native-bridge-source.tar",
-      "bytes": 645120,
-      "sha256": "b8f34692ef6f013ade8a3f90b5fe8c444cc96fe92ce03f46c2930a6a9ff924ee"
+      "name": "glm53-tp2-bf16-unified-runtime.tar.gz",
+      "bytes": 75642004,
+      "sha256": "031ec74e22113476efefc7f997ebf26f53a107974a626cb78ea269d7f78186c7"
     },
     {
-      "name": "glm53-arm64-runtime-image.tar",
-      "bytes": 49604096,
-      "sha256": "8f79b3e8cf5f5a2ccdae7a1064e8c91aaf77c319b357b83eba78f93c06931fbe"
+      "name": "glm53-tp2-q4-unified-runtime.tar.gz",
+      "bytes": 86748050,
+      "sha256": "25ac34dc26cec4117d25daab43b8e5bd4c96516f31aa1b00a0ee247f6733b939"
     },
     {
-      "name": "glm53-embedded-images146.tar.gz",
-      "bytes": 19263321,
-      "sha256": "531cbc1e948d92704b6f412b440bd79db510812c0197fe30902664af2057614b"
+      "name": "glm53-tp2-q8-unified-runtime.tar.gz",
+      "bytes": 409250057,
+      "sha256": "a561db1b82bab827107d1bf33e63ad5658343d5f83cc4cb386806bf3aabfee79"
     },
     {
-      "name": "glm53-external-module-sources.tar.gz",
-      "bytes": 96037,
-      "sha256": "66c21ef646de984404d86fb69349cfbe258b69b947fae101bc9b921f44e90b55"
+      "name": "glm53-tp4-unified-runtime.tar.gz",
+      "bytes": 85622376,
+      "sha256": "ac513f4369dcd1ef9a04a2af0b5b78229def552363eb9dea30f8b62a2f71166d"
     },
     {
-      "name": "glm53-runtime-corresponding-sources.tar",
-      "bytes": 360591360,
-      "sha256": "e0b60e4b77738b65db4c391408f0e0209d52ea20540cf2af16ebdd29e242df99"
+      "name": "glm53-unified-embedded-images157.tar.gz",
+      "bytes": 19726207,
+      "sha256": "c01e921a3359079bed5d440dc33c93a755cd46d04ca7ed60f2dbd48361405ef0"
     },
     {
-      "name": "glm53-tp4-1.2.12-runtime.tar.gz",
-      "bytes": 82492297,
-      "sha256": "10a4c9914fd2e8b0807a67efdb447f5317d615ae1b29906ba04829824195cb7c"
+      "name": "glm53-unified-prefill-sources.tar.gz",
+      "bytes": 54994,
+      "sha256": "90b15f47c7043b80b4f4604e38bc34e52f5f2786302a5f9961ec2cbc35c30e1f"
     },
     {
-      "name": "nccl-2.32.3-dual-pci-source.tar",
-      "bytes": 19773440,
-      "sha256": "e856678a5f16ff479715761430bfaddae54fec5156cfc1c53852b0b9cc51465f"
-    },
-    {
-      "name": "runtime-overlay.tar",
-      "bytes": 29378560,
-      "sha256": "08f7b7f93f8441fcc4b4f93af9e35b72e8133c14ebeb8c469731c2acba305c48"
-    },
-    {
-      "name": "tensorfold-glm53-coherent-1e3ba2cf32cb-source.tar.gz",
-      "bytes": 36397840,
-      "sha256": "74dd2322273658e0e93d1e6c8560cb0ca8c08ae27cc31400482bf13cc35bb3ed"
-    },
-    {
-      "name": "tensorfold-glm53-nvfp4-retained-bbc3b2dd12bc-source.tar.gz",
-      "bytes": 36389518,
-      "sha256": "7774eea882eceabe25308d934a173cdb4a86095bbe0095221acf0ff193106d94"
+      "name": "tensorfold-glm53-unified-source.tar.gz",
+      "bytes": 41839546,
+      "sha256": "47b84df617288ec25bd103177e83ec6bc5e41acd12a9f98b99e434ae42bb917c"
     }
   ],
-  "all_files_rehashed": true,
-  "all_source_and_image_members_rehashed": true,
-  "native_executable_modes_checked": true,
-  "no_hardlinks": true,
-  "runtime_preassembly_proof_sha256": "8c7ad3f8f0ef07b08a72c57f3b195fbd2d4709271711721f5c3d8017a756dea8",
-  "runtime_preassembled_while_source_signing_pending": true,
-  "no_model_weights_bundled": true,
-  "no_GPU_or_ARM_execution": true,
-  "original_services_restoration_claim": false
+  "runtime_image": "sha256:567d5c7ec9cb19d5b91e8ed8df197d68cb8322f4c569453c00dd5a12a924028a",
+  "shared_dependencies_release": "https://github.com/antst/glm-5.3-flash-zig-sparks/releases/tag/v1.2.12-tp4",
+  "server_runtime": "glm53-tp4-unified-runtime.tar.gz",
+  "raw_benchmark_receipt": "benchmarks/unified-measurements.json"
 }

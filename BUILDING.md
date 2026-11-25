@@ -1,46 +1,35 @@
 # Building the native engine
 
-The main release executable supports all four EXL3 projection/head options. Its version is1.2.12,
-source tree is `d9d2e0f73a874c2f87445bf033efa30055f7eb5d`, and frozen source-manifest SHA256 is
-`40c907eee2dc870b0744ab1e29e007b816b25c98bb65275f5919b70bc1a2ab0a`.
-`SOURCE.json` maps this tree to the explicitly signed release snapshot.
-A tree is not a commit ID. Source notices and original upstream attribution are retained.
+Both topologies and all four EXL3 precision profiles use TensorFold native
+1.3.0. The measured source commit is `26e17d87` and the tree is
+`56bd5d3f53d435f6a16bc4db7229eb9df04ffaf7`. The signed archive snapshot preserves
+every file in that tree. The measured executable SHA-256 is
+`025ce1efce4a1d341b1b75d04e5bf0d998d25dfc7f56a98cb255e5b988c24907`.
+[Signed source and manifest](SOURCE.json) · [Build inputs](BUILD-RECEIPTS.json)
 
-The measured executable is SHA256
-`9c877e091f0aa4aa8f489576b9640d346c1d1056987a2a16e9d6605823ad5259`.
-Use the runtime archive for that measured identity. A rebuild has a new identity until verified and
-does not inherit numerical or performance qualification just because compilation succeeds.
+## Native executable and CUDA assets
 
-## Main native executable and device-test runner
-
-Use Zig0.17.0 for Linux x86_64. Its official archive SHA256 is
-`1cbe9df9f27e6b78d14ccbca43b6703a404ef79ef1c463de901d7f088d4e2026`,
-and the extracted compiler SHA256 is
+Use Zig 0.17.0 for Linux x86_64. The recorded compiler SHA-256 is
 `7c61539af19fa4082c94848f1c2b57b89e76dc6cfd5bd4c57764c3caf8f82272`.
-
-Extract the coherent source and the146 embedded-image archive beside one another as `source/`
-and `fatbins/`. From `source/`, the recorded native command with local paths substituted is:
+Extract `tensorfold-glm53-unified-source.tar.gz` and
+`glm53-unified-embedded-images157.tar.gz` beside one another as `source/`
+and `fatbins/`. From `source/`:
 
 ```sh
 zig build native --prefix ../build-out -j1 --summary all \
-  -Dtarget=aarch64-linux-gnu.2.28 -Doptimize=fast \
-  -Dversion=1.2.12 -Dstrip=true -Dfatbins=../fatbins -Dsm=121
+  -Dtarget=aarch64-linux-gnu.2.28 -Doptimize=safe \
+  -Dversion=1.3.0 -Dstrip=true -Dfatbins=../fatbins -Dsm=121
 ```
 
-The output is `build-out/native/bin/tensorfold-native`. The test-runner target uses the same inputs:
+The output is `build-out/native/bin/tensorfold-native`. Use the published
+runtime archives to reproduce the measured executable identity. A rebuild must
+be verified independently.
 
-```sh
-zig build cuda-test-runner --prefix ../runner-out -j1 --summary all \
-  -Dtarget=aarch64-linux-gnu.2.28 -Doptimize=fast \
-  -Dversion=1.2.12 -Dstrip=true -Dfatbins=../fatbins -Dsm=121
-```
-
-The measured runner SHA256 is
-`76abf350f61c2f4a424f97ec4dabc490859da8e2557af892360af6661913a0df`.
-Cross-building on x86 does not execute the AArch64 output. Device and model qualification run on
-the Sparks. The source package keeps small upstream contract fixtures but no deployable target or
-drafter checkpoint. The embedded-image archive contains the exact146 inputs used by this build;
-optional external modules are separate runtime assets.
+The optimized prefill modules load from the runtime archive. Their translation
+units, local includes and per-module build information are supplied in
+`glm53-unified-prefill-sources.tar.gz`. TP2 loads the 32-head module. The Q4
+profiles load row-staged latent projection, while BF16 and Q8 use latent MMA.
+[Release downloads](https://github.com/antst/glm-5.3-flash-zig-sparks/releases/tag/v1.3.0-tp2-tp4)
 
 ## Retained NVFP4 executable
 
@@ -53,31 +42,11 @@ requires NVMe off. Its release source snapshot must also be explicitly signed wi
 
 ## Structured-output library
 
-The measured runtime includes `libtfgrammar.so`, SHA-256
-`abad72a824800ec45e07d2c4416bf4249266f70bf86046a0f0770653068eb09e`.
-It uses xgrammar `v0.2.8`, commit `97787376faee5ed8466cfad57c99855e4ce2f6aa`.
-Clone that tagged checkout with its submodules and retain the original notices.
-The recorded submodule commits are:
-
-| Submodule | Commit |
-|---|---|
-| `3rdparty/cpptrace` | `6689d14c203eed390ae7bb64f56a983cfd7dff9c` |
-| `3rdparty/dlpack` | `bbd2f4d32427e548797929af08cfe2a9cbb3cf12` |
-| `3rdparty/googletest` | `df1544bcee0c7ce35cd5ea0b3eb8cc81855a4140` |
-
-The source build target is:
-
-```sh
-zig build grammar --prefix ../build-out -j1 \
-  -Dtarget=aarch64-linux-gnu.2.28 -Dxgrammar=/absolute/path/to/xgrammar
-```
-
-This target requires the actual pinned Git tag and its submodules; an unpacked
-directory without Git tag metadata is insufficient. The qualified library was
-reused after checking all three engine shim/header files for exact equality with
-its original build. The current engine's actual schema and required-tools model
-checks are separate from its textual structured-answer scores.
-
+The unified executable uses the measured `libtfgrammar.so`, SHA-256
+`983f2323288bde6e6a6486984bdc32e8870172a30077fbeb30e647d04ee2c0d2`. The exact supplied bytes accompany both topology archives.
+Build the grammar library from the unified source tree using the engine's
+`zig build grammar` target and its pinned xgrammar checkout. The retained
+NVFP4 archive uses the separate historical grammar library.
 
 ## Optional CUDA modules
 
@@ -148,31 +117,3 @@ GPU driver libraries come from the host's NVIDIA container runtime and are not
 redistributed in these archives. The supplied Dockerfile documents the portable
 runtime construction. The exact qualified image archive has its own checksum;
 a fresh package-manager rebuild may have a different image identity.
-
-
-## TP2 engine builds
-
-Use `engine/tp2` to build all four TP2 profiles. Its signed merge commit `a6842081`
-contains the three archive source histories and has the same source tree as
-measured TensorFold `c829c30e`. One SM121 executable built from that tree ran
-BF16/BF16, Q4/BF16, Q4/FP8 and Q8/BF16.
-[Shared TP2 source](https://github.com/antst/glm-5.3-flash-zig-sparks/tree/engine/tp2)
-
-The runtime archives pin signed source tags under `archive/tp2-*`. Each archive
-records its exact source tree, file manifest, native build version and measured
-executable. To rebuild an archive snapshot, check out its tag and use the ARM64
-target, Zig toolchain and pinned 146-image input above, with the build version
-listed for that tag. [TP2 archive source identities](tp2/SOURCE.json)
-
-The [TP2 recipe](tp2/recipe.json) declares the required external modules, libraries and
-calibration files. The measured archives preserve their directory layout and executable mode.
-To package a verified runtime directory from those exact files, run:
-
-```sh
-python3 -m tp2.package_runtime q4 --root /srv/glm/tp2-q4 \
-  --output /tmp/glm53-tp2-q4-runtime.tar.gz
-```
-
-The TP2 and TP4 runtimes use the same ARM64 container image. Loading a published runtime
-archive preserves its executable identity. Locally compiled engines have their own identity
-and are measured separately.

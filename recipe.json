@@ -1,10 +1,10 @@
 {
   "schema": "glm53-zig-switch-tp4/v3",
   "created_utc": "2026-11-16T16:23:10.101437+00:00",
-  "release_status": "QUALIFIED_TP4_RELEASE_CONTENT",
-  "source_commit": "1e3ba2cf32cb1dea035e38ad41adffc7ea402c6d",
-  "native_sha256": "9c877e091f0aa4aa8f489576b9640d346c1d1056987a2a16e9d6605823ad5259",
-  "source_manifest_sha256": "40c907eee2dc870b0744ab1e29e007b816b25c98bb65275f5919b70bc1a2ab0a",
+  "release_status": "UNIFIED_EXL3_RELEASE_CONTENT",
+  "source_commit": "26e17d87954d29a0dfbd31d8e6dc7453fd564d61",
+  "native_sha256": "025ce1efce4a1d341b1b75d04e5bf0d998d25dfc7f56a98cb255e5b988c24907",
+  "source_manifest_sha256": "270170a49b5d008576fcd2ade5f0b4424d588f683752447300ed1cdee7645b17",
   "runtime_assets": [
     {
       "name": "dflash_reference.fatbin",
@@ -62,25 +62,9 @@
       "sha256": "1bf5042123f471a1c2c90ea67d262c2986e00a7eb34c98724a14f22945eba3b0"
     },
     {
-      "name": "libtfgrammar.so",
-      "bytes": 2980008,
-      "sha256": "abad72a824800ec45e07d2c4416bf4249266f70bf86046a0f0770653068eb09e"
-    },
-    {
       "name": "rdma_gather_deployed.fatbin",
       "bytes": 51640,
       "sha256": "23affd2303d7da3077ef6afc97f09e1c607f1325aacbb9a24842388389c3bd80"
-    },
-    {
-      "name": "tensorfold-native",
-      "bytes": 51273480,
-      "sha256": "9c877e091f0aa4aa8f489576b9640d346c1d1056987a2a16e9d6605823ad5259",
-      "profiles": [
-        "exl3-bf16",
-        "exl3-q4",
-        "exl3-q4-fp8",
-        "exl3-q8"
-      ]
     },
     {
       "name": "thinking-off.jinja",
@@ -102,7 +86,8 @@
       "sha256": "0e3d6e28130225f7c7fb633d23b27f20f347e23b017599793d8e6d4e1a08a0ad",
       "bytes": 80152,
       "profiles": [
-        "exl3-q4-fp8"
+        "exl3-q4-fp8",
+        "exl3-q4"
       ]
     },
     {
@@ -121,6 +106,100 @@
         "exl3-bf16",
         "exl3-q8"
       ]
+    },
+    {
+      "name": "tensorfold-native",
+      "profiles": [
+        "exl3-bf16",
+        "exl3-q8",
+        "exl3-q4",
+        "exl3-q4-fp8"
+      ],
+      "bytes": 55973808,
+      "sha256": "025ce1efce4a1d341b1b75d04e5bf0d998d25dfc7f56a98cb255e5b988c24907"
+    },
+    {
+      "name": "libtfgrammar.so",
+      "profiles": [
+        "exl3-bf16",
+        "exl3-q8",
+        "exl3-q4",
+        "exl3-q4-fp8"
+      ],
+      "bytes": 3009200,
+      "sha256": "983f2323288bde6e6a6486984bdc32e8870172a30077fbeb30e647d04ee2c0d2"
+    },
+    {
+      "name": "libtfgrammar-retained.so",
+      "profiles": [
+        "nvfp4-bf16"
+      ],
+      "bytes": 2980008,
+      "sha256": "abad72a824800ec45e07d2c4416bf4249266f70bf86046a0f0770653068eb09e"
+    },
+    {
+      "name": "glm_exl3_combine_shared.fatbin",
+      "profiles": [
+        "exl3-bf16",
+        "exl3-q8",
+        "exl3-q4",
+        "exl3-q4-fp8"
+      ],
+      "bytes": 7400,
+      "sha256": "0cbf2a88946b3c6e622c315f24adaabb00163932838f315031c134a1a8e19071"
+    },
+    {
+      "name": "glm_exl3_prompt_ordered_items.fatbin",
+      "profiles": [
+        "exl3-bf16",
+        "exl3-q8",
+        "exl3-q4",
+        "exl3-q4-fp8"
+      ],
+      "bytes": 21232,
+      "sha256": "790f9c700849162f1b990ed3c7658881f04ad2193743ef21a21ad1b960e53d5f"
+    },
+    {
+      "name": "glm_kda_async_step.fatbin",
+      "profiles": [
+        "exl3-bf16",
+        "exl3-q8",
+        "exl3-q4",
+        "exl3-q4-fp8"
+      ],
+      "bytes": 33048,
+      "sha256": "1598b2092588300fe6c0ace6234b4b36c2f3f23d77e6d8345b15ab64c4b9362a"
+    },
+    {
+      "name": "glm_kda_prep_lane4.fatbin",
+      "profiles": [
+        "exl3-bf16",
+        "exl3-q8",
+        "exl3-q4",
+        "exl3-q4-fp8"
+      ],
+      "bytes": 41840,
+      "sha256": "86a8fca9e8802a0fdd51aebe4b87f167938f27de1179240df72adca1e76cc1eb"
+    },
+    {
+      "name": "prefill-glue.fatbin",
+      "profiles": [
+        "exl3-bf16",
+        "exl3-q8",
+        "exl3-q4",
+        "exl3-q4-fp8"
+      ],
+      "bytes": 1794008,
+      "sha256": "0671c791834fef7b9efcaf0cf2cb7fca1912790c26b6a2e78f029c8e54b026c5"
+    },
+    {
+      "name": "glm_latent_row_stage.fatbin",
+      "profiles": [
+        "exl3-q4",
+        "exl3-q4-fp8"
+      ],
+      "bytes": 93920,
+      "sha256": "6be1a1a57695feebb78c1fa91cf3361be24d408445e3237e59a621449a1f22c7"
     }
   ],
   "payload_template": {
@@ -153,7 +232,9 @@
       "--chat-template",
       "/opt/glm/thinking-off.jinja",
       "--temperature",
-      "0"
+      "0",
+      "--max-tokens",
+      "131072"
     ],
     "WorkingDir": "/opt/glm",
     "Labels": {
@@ -394,9 +475,20 @@
         "TF_GLM_EXL3_PROMPT_WHOLE": "1",
         "TF_GLM_MM": "1",
         "TF_GLM_ABSORB_MMA": "1",
-        "TF_GLM_LATENT_MMA_IMAGE": "/opt/glm/glm_latent_mma.fatbin"
+        "TF_GLM_LATENT_MMA_IMAGE": "/opt/glm/glm_latent_mma.fatbin",
+        "TF_GLM_EXL3_PROMPT_DIRECT_SLOT_IMAGE": "/opt/glm/glm_exl3_combine_shared.fatbin",
+        "TF_GLM_EXL3_PROMPT_ORDER_IMAGE": "/opt/glm/glm_exl3_prompt_ordered_items.fatbin",
+        "TF_GLM_KDA_ASYNC_STEP_IMAGE": "/opt/glm/glm_kda_async_step.fatbin",
+        "TF_GLM_KDA_PREP_LANE4_IMAGE": "/opt/glm/glm_kda_prep_lane4.fatbin",
+        "TF_GLM_OVERLAP_PIECES": "2",
+        "TF_GLM_PDL": "1",
+        "TF_GLM_PREFILL_GLUE_IMAGE": "/opt/glm/prefill-glue.fatbin",
+        "TF_GLM_PREFILL_OPT": "1",
+        "TF_GLM_HEAD_FP8_IMAGE": "/opt/glm/glm_head_fp8.fatbin",
+        "TF_KV_PAGES": "off",
+        "TF_KV_SHARE": "0"
       },
-      "qualification": "CLOSED_FULL959_MODEL_SMALL48_ORIGINAL_MIA63_TP4",
+      "qualification": "CLOSED_UNIFIED_MIA_BALANCED_PREFILL_TP4",
       "KV_cache": "FP8",
       "quality_score": {
         "correct": 881,
@@ -426,9 +518,21 @@
         "TF_GLM_NVFP4_FFN_GRAPHS": "0",
         "TF_GLM_EXL3_PROMPT_WHOLE": "1",
         "TF_GLM_MM": "1",
-        "TF_GLM_ABSORB_MMA": "0"
+        "TF_GLM_ABSORB_MMA": "0",
+        "TF_GLM_EXL3_PROMPT_DIRECT_SLOT_IMAGE": "/opt/glm/glm_exl3_combine_shared.fatbin",
+        "TF_GLM_EXL3_PROMPT_ORDER_IMAGE": "/opt/glm/glm_exl3_prompt_ordered_items.fatbin",
+        "TF_GLM_KDA_ASYNC_STEP_IMAGE": "/opt/glm/glm_kda_async_step.fatbin",
+        "TF_GLM_KDA_PREP_LANE4_IMAGE": "/opt/glm/glm_kda_prep_lane4.fatbin",
+        "TF_GLM_LATENT_ROW_STAGE_IMAGE": "/opt/glm/glm_latent_row_stage.fatbin",
+        "TF_GLM_OVERLAP_PIECES": "2",
+        "TF_GLM_PDL": "1",
+        "TF_GLM_PREFILL_GLUE_IMAGE": "/opt/glm/prefill-glue.fatbin",
+        "TF_GLM_PREFILL_OPT": "1",
+        "TF_GLM_HEAD_FP8_IMAGE": "/opt/glm/glm_head_fp8_g64.fatbin",
+        "TF_KV_PAGES": "off",
+        "TF_KV_SHARE": "0"
       },
-      "qualification": "CLOSED_FULL959_MODEL_SMALL48_ORIGINAL_MIA63_TP4",
+      "qualification": "CLOSED_UNIFIED_MIA_BALANCED_PREFILL_TP4",
       "KV_cache": "FP8",
       "quality_score": {
         "correct": 878,
@@ -459,9 +563,20 @@
         "TF_GLM_EXL3_PROMPT_WHOLE": "1",
         "TF_GLM_HEAD_FP8_IMAGE": "/opt/glm/glm_head_fp8_g64.fatbin",
         "TF_GLM_MM": "1",
-        "TF_GLM_ABSORB_MMA": "0"
+        "TF_GLM_ABSORB_MMA": "0",
+        "TF_GLM_EXL3_PROMPT_DIRECT_SLOT_IMAGE": "/opt/glm/glm_exl3_combine_shared.fatbin",
+        "TF_GLM_EXL3_PROMPT_ORDER_IMAGE": "/opt/glm/glm_exl3_prompt_ordered_items.fatbin",
+        "TF_GLM_KDA_ASYNC_STEP_IMAGE": "/opt/glm/glm_kda_async_step.fatbin",
+        "TF_GLM_KDA_PREP_LANE4_IMAGE": "/opt/glm/glm_kda_prep_lane4.fatbin",
+        "TF_GLM_LATENT_ROW_STAGE_IMAGE": "/opt/glm/glm_latent_row_stage.fatbin",
+        "TF_GLM_OVERLAP_PIECES": "2",
+        "TF_GLM_PDL": "1",
+        "TF_GLM_PREFILL_GLUE_IMAGE": "/opt/glm/prefill-glue.fatbin",
+        "TF_GLM_PREFILL_OPT": "1",
+        "TF_KV_PAGES": "off",
+        "TF_KV_SHARE": "0"
       },
-      "qualification": "CLOSED_FULL959_MODEL_SMALL48_ORIGINAL_MIA63_TP4",
+      "qualification": "CLOSED_UNIFIED_MIA_BALANCED_PREFILL_TP4",
       "KV_cache": "FP8",
       "quality_score": {
         "correct": 882,
@@ -505,7 +620,8 @@
         "native_binary": "tensorfold-native-nvfp4"
       },
       "NVMe_tier_qualification": false,
-      "historical_source_commit": "41ac49d260d30e648cea6792c0ed2fd5f31e1611"
+      "historical_source_commit": "41ac49d260d30e648cea6792c0ed2fd5f31e1611",
+      "grammar_override": "libtfgrammar-retained.so"
     },
     "exl3-q8": {
       "expert_checkpoint": "exl3",
@@ -525,9 +641,20 @@
         "TF_GLM_EXL3_PROMPT_WHOLE": "1",
         "TF_GLM_MM": "1",
         "TF_GLM_ABSORB_MMA": "1",
-        "TF_GLM_LATENT_MMA_IMAGE": "/opt/glm/glm_latent_mma.fatbin"
+        "TF_GLM_LATENT_MMA_IMAGE": "/opt/glm/glm_latent_mma.fatbin",
+        "TF_GLM_EXL3_PROMPT_DIRECT_SLOT_IMAGE": "/opt/glm/glm_exl3_combine_shared.fatbin",
+        "TF_GLM_EXL3_PROMPT_ORDER_IMAGE": "/opt/glm/glm_exl3_prompt_ordered_items.fatbin",
+        "TF_GLM_KDA_ASYNC_STEP_IMAGE": "/opt/glm/glm_kda_async_step.fatbin",
+        "TF_GLM_KDA_PREP_LANE4_IMAGE": "/opt/glm/glm_kda_prep_lane4.fatbin",
+        "TF_GLM_OVERLAP_PIECES": "2",
+        "TF_GLM_PDL": "1",
+        "TF_GLM_PREFILL_GLUE_IMAGE": "/opt/glm/prefill-glue.fatbin",
+        "TF_GLM_PREFILL_OPT": "1",
+        "TF_GLM_HEAD_FP8_IMAGE": "/opt/glm/glm_head_fp8.fatbin",
+        "TF_KV_PAGES": "off",
+        "TF_KV_SHARE": "0"
       },
-      "qualification": "CLOSED_FULL959_MODEL_SMALL48_ORIGINAL_MIA63_TP4",
+      "qualification": "CLOSED_UNIFIED_MIA_BALANCED_PREFILL_TP4",
       "KV_cache": "FP8",
       "quality_score": {
         "correct": 878,
@@ -565,7 +692,7 @@
     "context": 1048576,
     "parallel": 1,
     "prompt_cache_gib": 1.75,
-    "tier": "off",
+    "tier": "nvme",
     "prefill": "stepped",
     "warm_turns": false,
     "learn_gib": 32,
