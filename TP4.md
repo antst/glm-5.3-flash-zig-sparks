@@ -47,7 +47,7 @@ Source and model licenses are separate. Read the pinned model cards before use. 
 specifies CC BY-NC-ND4.0 for research/evaluation and separate commercial licensing from its provider.
 Weights are downloaded separately and are not redistributed in the runtime package.
 
-Current EXL3 runtime archive and checksums. [Download](https://github.com/antst/glm-5.3-flash-zig-sparks/releases/tag/v1.3.1-tp2-tp4) · [Archive hashes](RELEASE-ASSETS.json)
+Current EXL3 runtime archive and checksums. [Download](https://github.com/antst/glm-5.3-flash-zig-sparks/releases/tag/v1.3.2-tp2-tp4) · [Archive hashes](RELEASE-ASSETS.json)
 
 ## Serving configuration
 

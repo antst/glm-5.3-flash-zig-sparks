@@ -2,9 +2,9 @@
   "schema": "glm53-zig-switch-tp4/v3",
   "created_utc": "2026-11-16T16:23:10.101437+00:00",
   "release_status": "UNIFIED_EXL3_LINEAR_PAGING_RELEASE",
-  "source_commit": "daf5ce6b13e6aba594f85048533d69e32c132188",
-  "native_sha256": "8f5b6aaa4b6fee632bb0733ee66cfd6c5d92945a9dc6c6e073943f4d747856f3",
-  "source_manifest_sha256": "9ed03777b73b8e7916ac04826a7a14d550215c353b7f6f43a1cfb5314f342d8f",
+  "source_commit": "75429cd5d594cab8a3ebd06c22b1329e1cc9a138",
+  "native_sha256": "94cca5e087ee73db71ceafc10822da8fe95a8c4e041f97dce5fcbe80c1445a3b",
+  "source_manifest_sha256": "05b48ef0654e4c38bd7e06175bf755d681f7aaf4c33b1dde5662cc0bbb120ed8",
   "runtime_assets": [
     {
       "name": "dflash_reference.fatbin",
@@ -115,8 +115,8 @@
         "exl3-q4",
         "exl3-q4-fp8"
       ],
-      "bytes": 56008112,
-      "sha256": "8f5b6aaa4b6fee632bb0733ee66cfd6c5d92945a9dc6c6e073943f4d747856f3"
+      "bytes": 56008240,
+      "sha256": "94cca5e087ee73db71ceafc10822da8fe95a8c4e041f97dce5fcbe80c1445a3b"
     },
     {
       "name": "libtfgrammar.so",
@@ -747,6 +747,6 @@
     "scope": "Original Mia Zig source and runtime; only switched-network/traffic-class104 configuration supplied. Separate controlled BF16 run is a quality reference, not the actual-default speed row."
   },
   "profile_specific_runtime_supported": true,
-  "source_tree": "77ad5365dea2cacfd3d00b3a7a72cca14ab15126",
+  "source_tree": "aa99bc61664477e109c128ceb25658c3a1166a19",
   "default_reference": "Untouched actual-default Mia Zig 80be4d6; EXL3/Q8/BF16,FP8 KV,P4,pagesON,8GiB RAM prompt cache configured; actual timedhits0."
 }

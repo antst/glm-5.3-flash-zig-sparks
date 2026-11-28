@@ -1,10 +1,10 @@
 # Building the native engine
 
 Both topologies and all four EXL3 precision profiles use TensorFold native
-1.3.0 with linear KV paging. The tested source commit is `daf5ce6b13e6aba594f85048533d69e32c132188`
-and its tree is `77ad5365dea2cacfd3d00b3a7a72cca14ab15126`. The signed archive snapshot
+1.3.0 with linear KV paging. The tested source commit is `75429cd5d594cab8a3ebd06c22b1329e1cc9a138`
+and its tree is `aa99bc61664477e109c128ceb25658c3a1166a19`. The signed archive snapshot
 preserves that tree. The qualified executable SHA-256 is
-`8f5b6aaa4b6fee632bb0733ee66cfd6c5d92945a9dc6c6e073943f4d747856f3`.
+`94cca5e087ee73db71ceafc10822da8fe95a8c4e041f97dce5fcbe80c1445a3b`.
 [Signed source and manifest](SOURCE.json) · [Build inputs](BUILD-RECEIPTS.json)
 
 ## Native executable and CUDA assets
@@ -29,7 +29,7 @@ The optimized prefill modules load from the runtime archive. Their translation
 units, local includes and per-module build information are supplied in
 `glm53-unified-prefill-sources.tar.gz`. TP2 loads the 32-head module. The Q4
 profiles load row-staged latent projection, while BF16 and Q8 use latent MMA.
-[Release downloads](https://github.com/antst/glm-5.3-flash-zig-sparks/releases/tag/v1.3.1-tp2-tp4)
+[Release downloads](https://github.com/antst/glm-5.3-flash-zig-sparks/releases/tag/v1.3.2-tp2-tp4)
 
 ## Retained NVFP4 executable
 

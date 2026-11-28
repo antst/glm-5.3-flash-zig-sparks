@@ -39,7 +39,7 @@ verify that a full-window snapshot fits at startup, and allow **256 GiB of NVMe
 history per rank**. Use `--learn-gib` to set the history limit to suit your disk.
 
 1. Download the pinned model and drafter once per host and mount them read-only. [Weights and dependencies](TP4.md#weights-and-dependencies)
-2. Install the shared ARM64 runtime image and the current archive for your topology and profile. The renderer checks the installed runtime against its inventory by default. [Current runtime downloads](https://github.com/antst/glm-5.3-flash-zig-sparks/releases/tag/v1.3.1-tp2-tp4) · [TP2 hashes](tp2/RELEASE-ASSETS.json) · [TP4 hashes](RELEASE-ASSETS.json) · [Shared ARM64 runtime image](https://github.com/antst/glm-5.3-flash-zig-sparks/releases/tag/v1.2.12-tp4)
+2. Install the shared ARM64 runtime image and the current archive for your topology and profile. The renderer checks the installed runtime against its inventory by default. [Current runtime downloads](https://github.com/antst/glm-5.3-flash-zig-sparks/releases/tag/v1.3.2-tp2-tp4) · [TP2 hashes](tp2/RELEASE-ASSETS.json) · [TP4 hashes](RELEASE-ASSETS.json) · [Shared ARM64 runtime image](https://github.com/antst/glm-5.3-flash-zig-sparks/releases/tag/v1.2.12-tp4)
 3. Run `python3 render_config.py --tp 2` or `--tp 4` with the paths and network settings in the launch guide. Use `--verify-runtime` to check the extracted assets. The renderer writes per-rank Docker commands and cache paths into the output directory.
 4. Run the generated commands on their assigned hosts. Start the followers before rank 0. Connect clients to rank 0 and use `GLM-5.3-Flash` as the API model name. Stop rank 0 first to let the followers close.
 
@@ -154,14 +154,19 @@ overhead. [TP2 cache settings](TP2.md#ram-and-nvme) · [TP4 cache settings](TP4.
 
 ### Linear paging qualification
 
-All eight EXL3 profiles completed the serving matrix with their default lane
+In v1.3.1, all eight EXL3 profiles completed the serving matrix with their default lane
 limits and 1,048,576-token context. In the TP4 Q4/FP8 test, a fresh process
 restored 1,046,528 tokens from NVMe and returned the first token in 10.37 s
 with exact output token parity. Matched TP4 Q4/FP8 decode waves were within
 0.6% of the contiguous control, with exact outputs for those requests.
 [Paging qualification](benchmarks/linear-paging-qualification.json)
 
+The v1.3.2 runtime also returns follower GPUs to idle after background NVMe
+commands. A TP4 Q4/FP8 replay verified a checkpoint on each rank, idle
+followers, and exact output on the cold request and its cached follow-up.
+[Follower idle qualification](benchmarks/follower-idle-qualification.json)
+
 ## Source builds
 
-Use `engine/unified` for all eight EXL3 configurations. The release archives contain the executable used for the linear paging qualification. The signed source snapshot records the exact source tree.
+Use `engine/unified` for all eight EXL3 configurations. The release archives contain the executable used for the follower idle qualification. The signed source snapshot records the exact source tree.
 [Build instructions](BUILDING.md) · [Unified engine source](https://github.com/antst/glm-5.3-flash-zig-sparks/tree/engine/unified) · [TP2 archive sources](tp2/SOURCE.json) · [TP4 archive sources](SOURCE.json) · [Signatures](SIGNING.md) · [Licenses](RECIPE-NOTICE.md)

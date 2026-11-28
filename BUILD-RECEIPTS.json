@@ -571,6 +571,161 @@
   },
   "unified": {
     "source": {
+      "source_commit": "75429cd5d594cab8a3ebd06c22b1329e1cc9a138",
+      "native_sha256": "94cca5e087ee73db71ceafc10822da8fe95a8c4e041f97dce5fcbe80c1445a3b",
+      "source_tree": "aa99bc61664477e109c128ceb25658c3a1166a19",
+      "source_manifest_sha256": "05b48ef0654e4c38bd7e06175bf755d681f7aaf4c33b1dde5662cc0bbb120ed8",
+      "branch": "engine/unified",
+      "tag": "v1.3.2-tp2-tp4-engine",
+      "signed_snapshot_commit": "ec051ff8d4c8d5a444c60702e6f7d5739e43bb12",
+      "source_archive": "tensorfold-glm53-paged-source.tar.gz",
+      "source_manifest": "source-sha256.json",
+      "files": 12807,
+      "signature_verified": true
+    },
+    "native_version": "1.3.0",
+    "native_target": "aarch64-linux-gnu.2.28",
+    "optimization": "safe",
+    "target_architecture": "sm_121",
+    "embedded_images": 157,
+    "native_bytes": 56008240,
+    "native_sha256": "94cca5e087ee73db71ceafc10822da8fe95a8c4e041f97dce5fcbe80c1445a3b",
+    "optional_prefill_modules": {
+      "prefill-glue.fatbin": {
+        "environment": "TF_GLM_PREFILL_GLUE_IMAGE",
+        "asset_sha256": "0671c791834fef7b9efcaf0cf2cb7fca1912790c26b6a2e78f029c8e54b026c5",
+        "translation_unit": "glm_glue.cu",
+        "source_sha256": {
+          "glm_glue.cu": "8c71cb95fafdcc6a1540cb260edc40f5ef280b2d549e5b39a66ecdc60fbdaa9b",
+          "glm_glue_norm.cuh": "7efd71df53fbf664d2f6d13b8aa7a9f0483f50f3d26574360d7ad8f4361cd453",
+          "glm_triton.cuh": "8eee12f24bbf283a08a29f9396e3db5588b48fce85abe74de7f85adc12fa94f4",
+          "glm_glue_rows.cuh": "877435e26841813d5891697682488a5eeb78a15d0e0d219972cec7fdd139b960",
+          "glm_glue_hc.cuh": "c3aa26475c6ce05d2508c300c8e88d429adea4c0c173e3909734bb0ece06da2a",
+          "glm_glue_moe.cuh": "e39f5de255684c81f9a005ea40048b474ce8910ee76e84bb4deac81ec6d055a4",
+          "glm_glue_router.cuh": "8a4501b9e6ce07b47b2abd553da7479b4ad8f6d9c08034ea131aaabded578c4c",
+          "common/qmm_frag.cuh": "418dce9d64df0b8751c8ca982ae3f93c5fc54e4aecb9a8df3f0780129dcb675a",
+          "common/fp_pairs.cuh": "eaad7943c3e4ce23ef5eb8f20dc0694bbabee3bf63f22379ba9c2b88ae5e1a03",
+          "common/cp_async.cuh": "96e5fc28e8d096f73e03f7b9151c3d76dfd5a66093b19a3c2dc4f87e12d3ec40",
+          "glm_glue_latent.cuh": "47c26f8f6cbeaf69042290f54cfe99316e9a4ff3f780e2edd38809eec6415910",
+          "kv_fp8.cuh": "5dbc97c48b49be48eb0a436f6ee83595cecd94cdaabc3844ab1fdf3fe0126010",
+          "glm_glue_index.cuh": "73fbdf6dea2cfc13275169ac2e7ea4d670611145c1e738529a05b23d63f39abf",
+          "glm_glue_bmm.cuh": "1accfc9285deabb63a6cf6d70dc11544ebcb1654a8eb6c7159927d8c1d5177dc",
+          "glm_glue_attn.cuh": "bf6f103d1eda376de5d98b800c0b03586a528ca37c3cff6bf16c8a3f178cba60",
+          "glm_glue_attn_paged.cuh": "258f5631b9c6ac7b0fbf6cc39a1270cb464c1ba0cb1b0547984254c0e2cd762b"
+        },
+        "compiler_flags": null
+      },
+      "glm_prefill_fp8_h32.fatbin": {
+        "environment": "TF_GLM_PREFILL_H32_IMAGE",
+        "asset_sha256": "d8a23632ad033d1d4a0be4fbe5536f1d484cbfa3d7cb215c8716cd15103e52d8",
+        "translation_unit": "glm_prefill_fp8_h32.cu",
+        "source_sha256": {
+          "glm_prefill_fp8_h32.cu": "176a4528ff602853f55dd179f3838f94c24deb99096e2bf789105a7a5b3bd9a3",
+          "glm_glue_router.cuh": "99911df38e6ad2826491b3fa5efd47aea5e54eebb7cd83eed586ba0dd9305658",
+          "glm_router_mma.cuh": "1a0b3d892dc5627f0da57a43e8380aae444d257e3101477241b17afcdd623dbc",
+          "glm_triton.cuh": "8eee12f24bbf283a08a29f9396e3db5588b48fce85abe74de7f85adc12fa94f4",
+          "common/qmm_frag.cuh": "418dce9d64df0b8751c8ca982ae3f93c5fc54e4aecb9a8df3f0780129dcb675a",
+          "common/fp_pairs.cuh": "0d75c866957f1b7bae0b46fd7795d9487da033ed215dbbb5284d8dbb85027a67",
+          "common/cp_async.cuh": "96e5fc28e8d096f73e03f7b9151c3d76dfd5a66093b19a3c2dc4f87e12d3ec40"
+        },
+        "compiler_flags": null
+      },
+      "glm_kda_prep_lane4.fatbin": {
+        "environment": "TF_GLM_KDA_PREP_LANE4_IMAGE",
+        "asset_sha256": "86a8fca9e8802a0fdd51aebe4b87f167938f27de1179240df72adca1e76cc1eb",
+        "translation_unit": "glm_kda_prep_lane4.cu",
+        "source_sha256": {
+          "glm_kda_prep_lane4.cu": "ec834b3eb530024349a984b0467e1051f66ebe9958eb5983529552a20438df9f",
+          "common/act.cuh": "d7cc2ffa35ab64a0afdfb4d57301c8cb01aa0657537ceb3a2c581e00f0d7e9cc",
+          "common/reduce.cuh": "235dd0280f4d43b4db110c951f6c285c68be8205027f373560df24ba2bea6f25",
+          "common/vec.cuh": "03653c571e4bd7aea1b29b992650d0b93bd0d06aa5bb1249fd9d27e145aefcd0"
+        },
+        "compiler_flags": [
+          "-fatbin",
+          "-std=c++20",
+          "-O3",
+          "--fmad=false",
+          "--expt-relaxed-constexpr",
+          "--resource-usage",
+          "-gencode=arch=compute_121,code=sm_121"
+        ]
+      },
+      "glm_kda_async_step.fatbin": {
+        "environment": "TF_GLM_KDA_ASYNC_STEP_IMAGE",
+        "asset_sha256": "1598b2092588300fe6c0ace6234b4b36c2f3f23d77e6d8345b15ab64c4b9362a",
+        "translation_unit": "glm_kda_async_step.cu",
+        "source_sha256": {
+          "glm_kda_async_step.cu": "ec8b616f9c7901fedd348091e8b7ea0b6a5959dcdc795351f54c754a11437b8e",
+          "common/reduce.cuh": "235dd0280f4d43b4db110c951f6c285c68be8205027f373560df24ba2bea6f25",
+          "common/vec.cuh": "03653c571e4bd7aea1b29b992650d0b93bd0d06aa5bb1249fd9d27e145aefcd0",
+          "common/act.cuh": "d7cc2ffa35ab64a0afdfb4d57301c8cb01aa0657537ceb3a2c581e00f0d7e9cc",
+          "common/cp_async.cuh": "96e5fc28e8d096f73e03f7b9151c3d76dfd5a66093b19a3c2dc4f87e12d3ec40"
+        },
+        "compiler_flags": [
+          "-fatbin",
+          "-std=c++20",
+          "-O3",
+          "--fmad=false",
+          "--expt-relaxed-constexpr",
+          "--resource-usage",
+          "-gencode=arch=compute_121,code=sm_121"
+        ]
+      },
+      "glm_latent_row_stage.fatbin": {
+        "environment": "TF_GLM_LATENT_ROW_STAGE_IMAGE",
+        "asset_sha256": "6be1a1a57695feebb78c1fa91cf3361be24d408445e3237e59a621449a1f22c7",
+        "translation_unit": "glm_latent_row_stage.cu",
+        "source_sha256": {
+          "glm_latent_row_stage.cu": "e4700dd3116f5f703118095f649b8b9fdbb9ef61931965f617aa474d949f76a8",
+          "glm_latent_projection.cuh": "0869c2fbc7348aa541b97ce909c8db1c45a54abc404355fc7e0e831489d217d5",
+          "glm_triton.cuh": "8eee12f24bbf283a08a29f9396e3db5588b48fce85abe74de7f85adc12fa94f4"
+        },
+        "compiler_flags": [
+          "-fatbin",
+          "-std=c++20",
+          "-O3",
+          "--expt-relaxed-constexpr",
+          "--resource-usage",
+          "-gencode=arch=compute_121,code=sm_121"
+        ]
+      },
+      "glm_exl3_prompt_ordered_items.fatbin": {
+        "environment": "TF_GLM_EXL3_PROMPT_ORDER_IMAGE",
+        "asset_sha256": "790f9c700849162f1b990ed3c7658881f04ad2193743ef21a21ad1b960e53d5f",
+        "translation_unit": "glm_exl3_prompt_ordered_items.cu",
+        "source_sha256": {
+          "glm_exl3_prompt_ordered_items.cu": "17f572db710b322c6e071a49c23f214b3eda5ea05707b22b5261214e3b3d31d2"
+        },
+        "compiler_flags": [
+          "-fatbin",
+          "-std=c++20",
+          "-O3",
+          "--resource-usage",
+          "-gencode=arch=compute_121,code=sm_121"
+        ]
+      },
+      "glm_exl3_combine_shared.fatbin": {
+        "environment": "TF_GLM_EXL3_PROMPT_DIRECT_SLOT_IMAGE",
+        "asset_sha256": "0cbf2a88946b3c6e622c315f24adaabb00163932838f315031c134a1a8e19071",
+        "translation_unit": "glm_exl3_combine_shared.cu",
+        "source_sha256": {
+          "glm_exl3_combine_shared.cu": "3326f3d7d9f021703608ccfbfb4589951628c8fcc26fb864192f330031e05331"
+        },
+        "compiler_flags": [
+          "-fatbin",
+          "-std=c++20",
+          "-O3",
+          "--expt-relaxed-constexpr",
+          "--resource-usage",
+          "-gencode=arch=compute_121,code=sm_121"
+        ]
+      }
+    },
+    "qualified_paging": "benchmarks/linear-paging-qualification.json",
+    "qualified_idle_fix": "benchmarks/follower-idle-qualification.json"
+  },
+  "unified_v1_3_1": {
+    "source": {
       "source_commit": "daf5ce6b13e6aba594f85048533d69e32c132188",
       "native_sha256": "8f5b6aaa4b6fee632bb0733ee66cfd6c5d92945a9dc6c6e073943f4d747856f3",
       "source_tree": "77ad5365dea2cacfd3d00b3a7a72cca14ab15126",

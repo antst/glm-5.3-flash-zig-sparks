@@ -1,0 +1,119 @@
+{
+  "source_commit": "75429cd5d594cab8a3ebd06c22b1329e1cc9a138",
+  "native_sha256": "94cca5e087ee73db71ceafc10822da8fe95a8c4e041f97dce5fcbe80c1445a3b",
+  "base_source_commit": "daf5ce6b13e6aba594f85048533d69e32c132188",
+  "base_native_sha256": "8f5b6aaa4b6fee632bb0733ee66cfd6c5d92945a9dc6c6e073943f4d747856f3",
+  "measured_scope": {
+    "topology": "TP4",
+    "precision": "q4-fp8",
+    "lanes": 8,
+    "context": 1048576,
+    "kv_mode": "linear-paged",
+    "nvme_gib_per_rank": 256
+  },
+  "host_tests_passed": 46,
+  "unchanged_embedded_cuda_images": 157,
+  "baseline_follower_sm_percent": 95,
+  "cold_prompt_tokens": 18558,
+  "followup_prompt_tokens": 18566,
+  "followup_cached_tokens": 18432,
+  "reply_token_hashes_match_baseline": true,
+  "per_rank": [
+    {
+      "rank": 0,
+      "checkpoint_commits": 1,
+      "cold_gpu_idle_samples": [
+        [
+          "0",
+          "0"
+        ],
+        [
+          "0",
+          "0"
+        ]
+      ],
+      "followup_gpu_idle_samples": [
+        [
+          "-",
+          "-"
+        ],
+        [
+          "-",
+          "-"
+        ]
+      ]
+    },
+    {
+      "rank": 1,
+      "checkpoint_commits": 1,
+      "cold_gpu_idle_samples": [
+        [
+          "0",
+          "0"
+        ],
+        [
+          "0",
+          "0"
+        ]
+      ],
+      "followup_gpu_idle_samples": [
+        [
+          "-",
+          "-"
+        ],
+        [
+          "-",
+          "-"
+        ]
+      ]
+    },
+    {
+      "rank": 2,
+      "checkpoint_commits": 1,
+      "cold_gpu_idle_samples": [
+        [
+          "0",
+          "0"
+        ],
+        [
+          "0",
+          "0"
+        ]
+      ],
+      "followup_gpu_idle_samples": [
+        [
+          "0",
+          "0"
+        ],
+        [
+          "-",
+          "-"
+        ]
+      ]
+    },
+    {
+      "rank": 3,
+      "checkpoint_commits": 1,
+      "cold_gpu_idle_samples": [
+        [
+          "-",
+          "-"
+        ],
+        [
+          "-",
+          "-"
+        ]
+      ],
+      "followup_gpu_idle_samples": [
+        [
+          "0",
+          "0"
+        ],
+        [
+          "0",
+          "0"
+        ]
+      ]
+    }
+  ]
+}

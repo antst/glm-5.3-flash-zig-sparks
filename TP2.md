@@ -10,17 +10,17 @@ Exact sources for the published runtime archives are identified by signed tags.
 
 | Precision | Archive source commit | Runtime archive | Startup packing |
 |---|---|---|---|
-| BF16/BF16 | `daf5ce6b` | `glm53-tp2-bf16-paged-runtime.tar.gz` | BF16 projections and head |
-| Q4/BF16 | `daf5ce6b` | `glm53-tp2-q4-paged-runtime.tar.gz` | C24 activation-aware Q4, BF16 head |
-| Q4/FP8 (default) | `daf5ce6b` | `glm53-tp2-q4-paged-runtime.tar.gz` | C24 activation-aware Q4, grouped FP8 head |
-| Q8/BF16 | `daf5ce6b` | `glm53-tp2-q8-paged-runtime.tar.gz` | Activation-aware Q8 with correlated rounding |
+| BF16/BF16 | `75429cd5` | `glm53-tp2-bf16-paged-runtime.tar.gz` | BF16 projections and head |
+| Q4/BF16 | `75429cd5` | `glm53-tp2-q4-paged-runtime.tar.gz` | C24 activation-aware Q4, BF16 head |
+| Q4/FP8 (default) | `75429cd5` | `glm53-tp2-q4-paged-runtime.tar.gz` | C24 activation-aware Q4, grouped FP8 head |
+| Q8/BF16 | `75429cd5` | `glm53-tp2-q8-paged-runtime.tar.gz` | Activation-aware Q8 with correlated rounding |
 
 The Q4 and Q8 bundles include rank-specific calibration data used at weight load. Keep the
 calibration and correlation directories with the matching runtime. All four profiles use the
 same [EXL3 4.0 bpw weights and DFlash2 drafter](TP4.md#weights-and-dependencies).
 
 Download the matching archive and verify its SHA256 before extracting it.
-[TP2 runtime downloads](https://github.com/antst/glm-5.3-flash-zig-sparks/releases/tag/v1.3.1-tp2-tp4) · [Archive hashes](tp2/RELEASE-ASSETS.json)
+[TP2 runtime downloads](https://github.com/antst/glm-5.3-flash-zig-sparks/releases/tag/v1.3.2-tp2-tp4) · [Archive hashes](tp2/RELEASE-ASSETS.json)
 
 Extract the Q4 archive into `/srv/glm/tp2`, then render two ranks and verify the
 bundle. The serving defaults are Q4/FP8, four active lanes with 1,048,576 tokens
