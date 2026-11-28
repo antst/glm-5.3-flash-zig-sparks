@@ -164,9 +164,15 @@ pub fn invoke(e: *Engine, op: Op, options: follow.Header, ids: []const u32, repl
     var h = options;
     h.flags = @backingInt(op);
     const l = if (e.share.world > 1) disk.link orelse return error.NvmeProtocol else null;
+    const was_asleep = if (l) |link| link.asleep else false;
     if (l) |link| try (follow.Leader{ .e = e, .link = link }).disk(h, ids);
     const mine = outcome(e, h, ids);
-    if (l) |link| try ranks.gather(u64, e.d, link.lib, link.comm, link.stream, 0, mine, replies[0..e.share.world]) else replies[0] = mine;
+    if (l) |link| {
+        try ranks.gather(u64, e.d, link.lib, link.comm, link.stream, 0, mine, replies[0..e.share.world]);
+        // Background cache work can wake idle followers after the last lane leaves.
+        // Park them after the status gather, so they don't spin in the next receive.
+        if (was_asleep) try (follow.Leader{ .e = e, .link = link }).idle();
+    } else replies[0] = mine;
     return replies[0..e.share.world];
 }
 
